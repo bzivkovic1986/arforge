@@ -68,15 +68,30 @@ class Connection:
     operation: str | None = None
 
 @dataclass(frozen=True)
-class Instance:
+class ComponentPrototype:
     name: str
     typeRef: str
+
+
+@dataclass(frozen=True)
+class Composition:
+    name: str
+    components: List[ComponentPrototype]
+    connectors: List[Connection]
+
 
 @dataclass(frozen=True)
 class System:
     name: str
-    instances: List[Instance]
-    connections: List[Connection]
+    composition: Composition
+
+    @property
+    def instances(self) -> List[ComponentPrototype]:
+        return self.composition.components
+
+    @property
+    def connections(self) -> List[Connection]:
+        return self.composition.connectors
 
 @dataclass(frozen=True)
 class Project:
@@ -133,16 +148,18 @@ def from_dict(d: Dict[str, Any]) -> Project:
 
     system_data = d.get("system")
     if system_data:
-        instances = [Instance(name=i["name"], typeRef=i["typeRef"]) for i in system_data.get("instances", [])]
+        composition_data = system_data["composition"]
+        instances = [ComponentPrototype(name=i["name"], typeRef=i["typeRef"]) for i in composition_data.get("components", [])]
         conns: List[Connection] = []
-        for c in system_data.get("connections", []):
+        for c in composition_data.get("connectors", []):
             fs, fp = _split_endpoint(c["from"])
             ts, tp = _split_endpoint(c["to"])
             conns.append(Connection(
                 from_instance=fs, from_port=fp, to_instance=ts, to_port=tp,
                 dataElement=c.get("dataElement"), operation=c.get("operation")
             ))
-        system = System(name=system_data["name"], instances=instances, connections=conns)
+        composition = Composition(name=composition_data["name"], components=instances, connectors=conns)
+        system = System(name=system_data["name"], composition=composition)
     else:
         # Backward-compatible mode: old connections.yaml where endpoint prefix is SWC type.
         conns = []
@@ -153,8 +170,9 @@ def from_dict(d: Dict[str, Any]) -> Project:
                 from_instance=fs, from_port=fp, to_instance=ts, to_port=tp,
                 dataElement=c.get("dataElement"), operation=c.get("operation")
             ))
-        instances = [Instance(name=s.name, typeRef=s.name) for s in swcs]
-        system = System(name="System1", instances=instances, connections=conns)
+        instances = [ComponentPrototype(name=s.name, typeRef=s.name) for s in swcs]
+        composition = Composition(name="Composition_System1", components=instances, connectors=conns)
+        system = System(name="System1", composition=composition)
 
     return Project(
         autosar_version=autosar["version"],

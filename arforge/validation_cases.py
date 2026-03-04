@@ -20,8 +20,8 @@ class DuplicateNameCase(ValidationCase):
             findings.append(self.finding("Duplicate interface names found.", code="CORE-001-INTERFACE-DUPLICATE"))
         if len({s.name for s in project.swcs}) != len(project.swcs):
             findings.append(self.finding("Duplicate SWC names found.", code="CORE-001-SWC-DUPLICATE"))
-        if len({i.name for i in project.system.instances}) != len(project.system.instances):
-            findings.append(self.finding("System has duplicate instance names.", code="CORE-001-INSTANCE-DUPLICATE"))
+        if len({c.name for c in project.system.composition.components}) != len(project.system.composition.components):
+            findings.append(self.finding("System composition has duplicate component prototype names.", code="CORE-001-INSTANCE-DUPLICATE"))
 
         return findings
 
@@ -272,21 +272,21 @@ class RunnableAccessSemanticCase(ValidationCase):
 
 class SystemInstanceTypeCase(ValidationCase):
     case_id = "CORE-030"
-    description = "Validate system instances reference known SWC types."
+    description = "Validate composition component prototypes reference known SWC types."
     tags = ("core", "system")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
-        if not ctx.project.system.instances:
-            return False, "no system instances defined"
+        if not ctx.project.system.composition.components:
+            return False, "no system component prototypes defined"
         return True, None
 
     def run(self, ctx: ValidationContext) -> List[Finding]:
         findings: List[Finding] = []
-        for inst in ctx.project.system.instances:
+        for inst in sorted(ctx.project.system.composition.components, key=lambda c: c.name):
             if inst.typeRef not in ctx.swc_by_name:
                 findings.append(
                     self.finding(
-                        f"System instance '{inst.name}' references unknown SWC type '{inst.typeRef}'.",
+                        f"System component prototype '{inst.name}' references unknown SWC type '{inst.typeRef}'.",
                         code="CORE-030-UNKNOWN-SWC-TYPE",
                     )
                 )
@@ -299,13 +299,24 @@ class ConnectionSemanticCase(ValidationCase):
     tags = ("core", "system", "connections")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
-        if not ctx.project.system.connections:
-            return False, "no system connections defined"
+        if not ctx.project.system.composition.connectors:
+            return False, "no system connectors defined"
         return True, None
 
     def run(self, ctx: ValidationContext) -> List[Finding]:
         findings: List[Finding] = []
-        for conn in ctx.project.system.connections:
+        connectors = sorted(
+            ctx.project.system.composition.connectors,
+            key=lambda c: (
+                c.from_instance,
+                c.from_port,
+                c.to_instance,
+                c.to_port,
+                c.dataElement or "",
+                c.operation or "",
+            ),
+        )
+        for conn in connectors:
             from_inst = ctx.instance_by_name.get(conn.from_instance)
             if from_inst is None:
                 findings.append(
@@ -400,6 +411,13 @@ class ConnectionSemanticCase(ValidationCase):
                         )
                     )
                 data_elements = ctx.sr_data_elements_by_iface.get(itf.name, set())
+                if not conn.dataElement:
+                    findings.append(
+                        self.finding(
+                            f"SenderReceiver connector {conn.from_instance}.{conn.from_port} -> {conn.to_instance}.{conn.to_port} must set dataElement.",
+                            code="CORE-040-SR-MISSING-DATAELEMENT",
+                        )
+                    )
                 if conn.dataElement and conn.dataElement not in data_elements:
                     findings.append(
                         self.finding(
@@ -416,6 +434,13 @@ class ConnectionSemanticCase(ValidationCase):
                         )
                     )
                 operations = ctx.cs_operations_by_iface.get(itf.name, set())
+                if not conn.operation:
+                    findings.append(
+                        self.finding(
+                            f"ClientServer connector {conn.from_instance}.{conn.from_port} -> {conn.to_instance}.{conn.to_port} must set operation.",
+                            code="CORE-040-CS-MISSING-OPERATION",
+                        )
+                    )
                 if conn.operation and conn.operation not in operations:
                     findings.append(
                         self.finding(

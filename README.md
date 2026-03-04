@@ -11,7 +11,7 @@ It’s intentionally built around a simple pipeline:
 - AUTOSAR Classic **4.2**
 - One YAML per SWC (`swcs/*.yaml`)
 - One YAML per interface (`interfaces/*.yaml`)
-- One system YAML (`system.yaml`) with SWC instances + instance-to-instance connections
+- One system YAML (`system.yaml`) with explicit composition (component prototypes + connectors)
 - Legacy `connections.yaml` is still accepted for migration (implicit one-instance-per-SWC behavior)
 - Sender-Receiver interfaces + ports
 - Client-Server interfaces + ports
@@ -108,25 +108,27 @@ ports:
     interfaceRef: "If_Diagnostics"
 ```
 
-### System (instance-based connections)
+### System (composition-based)
 `from`/`to` endpoints are `INSTANCE.PORT`.
 `dataElement` and `operation` are optional selectors validated against interface type.
 
 ```yaml
 system:
   name: "DemoSystem"
-  instances:
-    - name: "SpeedSensor_1"
-      typeRef: "SpeedSensor"
-    - name: "SpeedConsumer_1"
-      typeRef: "SpeedConsumer"
-  connections:
-    - from: "SpeedSensor_1.Pp_VehicleSpeed"
-      to: "SpeedConsumer_1.Rp_VehicleSpeed"
-      dataElement: "VehicleSpeed"
-    - from: "SpeedSensor_1.Pp_Diag"
-      to: "SpeedConsumer_1.Rp_Diag"
-      operation: "ReadDTC"
+  composition:
+    name: "Composition_DemoSystem"
+    components:
+      - name: "SpeedSensor_1"
+        typeRef: "SpeedSensor"
+      - name: "SpeedConsumer_1"
+        typeRef: "SpeedConsumer"
+    connectors:
+      - from: "SpeedSensor_1.Pp_VehicleSpeed"
+        to: "SpeedConsumer_1.Rp_VehicleSpeed"
+        dataElement: "VehicleSpeed"
+      - from: "SpeedSensor_1.Pp_Diag"
+        to: "SpeedConsumer_1.Rp_Diag"
+        operation: "ReadDTC"
 ```
 
 ## VS Code
