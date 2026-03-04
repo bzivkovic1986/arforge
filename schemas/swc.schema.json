@@ -35,6 +35,69 @@
               "timingEventMs": {
                 "type": "integer",
                 "minimum": 1
+              },
+              "reads": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "port",
+                    "dataElement"
+                  ],
+                  "properties": {
+                    "port": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "dataElement": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "writes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "port",
+                    "dataElement"
+                  ],
+                  "properties": {
+                    "port": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "dataElement": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "calls": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "port",
+                    "operation"
+                  ],
+                  "properties": {
+                    "port": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "operation": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "additionalProperties": false
+                }
               }
             },
             "additionalProperties": false

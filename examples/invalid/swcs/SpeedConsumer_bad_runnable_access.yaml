@@ -5,6 +5,9 @@ swc:
       timingEventMs: 10
       reads:
         - port: "Rp_VehicleSpeed"
+          dataElement: "VehicleSpeed_Invalid"
+      writes:
+        - port: "Rp_VehicleSpeed"
           dataElement: "VehicleSpeed"
       calls:
         - port: "Rp_Diag"

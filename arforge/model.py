@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Tuple
 
 @dataclass(frozen=True)
@@ -29,6 +29,21 @@ class Interface:
 class Runnable:
     name: str
     timingEventMs: int
+    reads: List["SrAccess"] = field(default_factory=list)
+    writes: List["SrAccess"] = field(default_factory=list)
+    calls: List["CsCall"] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class SrAccess:
+    port: str
+    dataElement: str
+
+
+@dataclass(frozen=True)
+class CsCall:
+    port: str
+    operation: str
 
 @dataclass(frozen=True)
 class Port:
@@ -97,7 +112,16 @@ def from_dict(d: Dict[str, Any]) -> Project:
 
     swcs: List[Swc] = []
     for s in d.get("swcs", []):
-        runs = [Runnable(**r) for r in s.get("runnables", [])]
+        runs = [
+            Runnable(
+                name=r["name"],
+                timingEventMs=r["timingEventMs"],
+                reads=[SrAccess(**acc) for acc in r.get("reads", [])],
+                writes=[SrAccess(**acc) for acc in r.get("writes", [])],
+                calls=[CsCall(**acc) for acc in r.get("calls", [])],
+            )
+            for r in s.get("runnables", [])
+        ]
         ports: List[Port] = []
         for p in s.get("ports", []):
             it_name = p["interfaceRef"]

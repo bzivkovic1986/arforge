@@ -133,6 +133,143 @@ class SwcPortInterfaceCase(ValidationCase):
         return findings
 
 
+class RunnableAccessSemanticCase(ValidationCase):
+    case_id = "CORE-022"
+    description = "Validate runnable reads/writes/calls against SWC port and interface semantics."
+    tags = ("core", "swc", "runnables", "interfaces")
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.swcs:
+            return False, "no SWCs defined"
+        has_accesses = any(
+            runnable.reads or runnable.writes or runnable.calls
+            for swc in ctx.project.swcs
+            for runnable in swc.runnables
+        )
+        if not has_accesses:
+            return False, "no runnable accesses defined"
+        return True, None
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        findings: List[Finding] = []
+        for swc in sorted(ctx.project.swcs, key=lambda s: s.name):
+            for runnable in sorted(swc.runnables, key=lambda r: r.name):
+                location_base = f"SWC '{swc.name}' runnable '{runnable.name}'"
+
+                for read in sorted(runnable.reads, key=lambda a: (a.port, a.dataElement)):
+                    port = ctx.find_swc_port(swc.name, read.port)
+                    if port is None:
+                        findings.append(
+                            self.finding(
+                                f"{location_base} reads unknown port '{read.port}'.",
+                                code="CORE-022-READ-UNKNOWN-PORT",
+                            )
+                        )
+                        continue
+                    if port.direction != "requires":
+                        findings.append(
+                            self.finding(
+                                f"{location_base} read on port '{read.port}' requires direction 'requires', found '{port.direction}'.",
+                                code="CORE-022-READ-DIRECTION",
+                            )
+                        )
+                    itf = ctx.iface_by_name.get(port.interfaceRef)
+                    if itf is None:
+                        # Unknown interface reference is reported by CORE-021.
+                        continue
+                    if itf.type != "senderReceiver":
+                        findings.append(
+                            self.finding(
+                                f"{location_base} read on port '{read.port}' requires senderReceiver interface, found '{itf.type}'.",
+                                code="CORE-022-READ-INTERFACE-TYPE",
+                            )
+                        )
+                        continue
+                    if read.dataElement not in ctx.sr_data_elements_by_iface.get(itf.name, set()):
+                        findings.append(
+                            self.finding(
+                                f"{location_base} reads unknown dataElement '{read.dataElement}' from interface '{itf.name}'.",
+                                code="CORE-022-READ-UNKNOWN-DATAELEMENT",
+                            )
+                        )
+
+                for write in sorted(runnable.writes, key=lambda a: (a.port, a.dataElement)):
+                    port = ctx.find_swc_port(swc.name, write.port)
+                    if port is None:
+                        findings.append(
+                            self.finding(
+                                f"{location_base} writes unknown port '{write.port}'.",
+                                code="CORE-022-WRITE-UNKNOWN-PORT",
+                            )
+                        )
+                        continue
+                    if port.direction != "provides":
+                        findings.append(
+                            self.finding(
+                                f"{location_base} write on port '{write.port}' requires direction 'provides', found '{port.direction}'.",
+                                code="CORE-022-WRITE-DIRECTION",
+                            )
+                        )
+                    itf = ctx.iface_by_name.get(port.interfaceRef)
+                    if itf is None:
+                        # Unknown interface reference is reported by CORE-021.
+                        continue
+                    if itf.type != "senderReceiver":
+                        findings.append(
+                            self.finding(
+                                f"{location_base} write on port '{write.port}' requires senderReceiver interface, found '{itf.type}'.",
+                                code="CORE-022-WRITE-INTERFACE-TYPE",
+                            )
+                        )
+                        continue
+                    if write.dataElement not in ctx.sr_data_elements_by_iface.get(itf.name, set()):
+                        findings.append(
+                            self.finding(
+                                f"{location_base} writes unknown dataElement '{write.dataElement}' to interface '{itf.name}'.",
+                                code="CORE-022-WRITE-UNKNOWN-DATAELEMENT",
+                            )
+                        )
+
+                for call in sorted(runnable.calls, key=lambda a: (a.port, a.operation)):
+                    port = ctx.find_swc_port(swc.name, call.port)
+                    if port is None:
+                        findings.append(
+                            self.finding(
+                                f"{location_base} calls unknown port '{call.port}'.",
+                                code="CORE-022-CALL-UNKNOWN-PORT",
+                            )
+                        )
+                        continue
+                    if port.direction != "requires":
+                        findings.append(
+                            self.finding(
+                                f"{location_base} call on port '{call.port}' requires direction 'requires', found '{port.direction}'.",
+                                code="CORE-022-CALL-DIRECTION",
+                            )
+                        )
+                    itf = ctx.iface_by_name.get(port.interfaceRef)
+                    if itf is None:
+                        # Unknown interface reference is reported by CORE-021.
+                        continue
+                    if itf.type != "clientServer":
+                        findings.append(
+                            self.finding(
+                                f"{location_base} call on port '{call.port}' requires clientServer interface, found '{itf.type}'.",
+                                code="CORE-022-CALL-INTERFACE-TYPE",
+                            )
+                        )
+                        continue
+                    if call.operation not in ctx.cs_operations_by_iface.get(itf.name, set()):
+                        findings.append(
+                            self.finding(
+                                f"{location_base} calls unknown operation '{call.operation}' on interface '{itf.name}'.",
+                                code="CORE-022-CALL-UNKNOWN-OPERATION",
+                            )
+                        )
+
+        return findings
+
+
 class SystemInstanceTypeCase(ValidationCase):
     case_id = "CORE-030"
     description = "Validate system instances reference known SWC types."
@@ -296,6 +433,7 @@ def core_validation_cases() -> List[ValidationCase]:
         InterfaceSemanticCase(),
         SwcStructureCase(),
         SwcPortInterfaceCase(),
+        RunnableAccessSemanticCase(),
         SystemInstanceTypeCase(),
         ConnectionSemanticCase(),
     ]
