@@ -1,0 +1,3 @@
+implementationDataTypes:
+  - name: "UInt16"
+    baseTypeRef: "uint16_missing"

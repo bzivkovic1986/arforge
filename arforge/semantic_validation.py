@@ -72,7 +72,10 @@ class CaseResult:
 class ValidationContext:
     def __init__(self, project: Project):
         self.project = project
-        self.datatype_by_name = {d.name: d for d in project.datatypes}
+        self.base_type_by_name = {d.name: d for d in project.baseTypes}
+        self.implementation_type_by_name = {d.name: d for d in project.implementationDataTypes}
+        self.application_type_by_name = {d.name: d for d in project.applicationDataTypes}
+        self.datatype_by_name = {**self.base_type_by_name, **self.implementation_type_by_name, **self.application_type_by_name}
         self.iface_by_name = {i.name: i for i in project.interfaces}
         self.swc_by_name = {s.name: s for s in project.swcs}
         self.instance_by_name = {i.name: i for i in project.system.composition.components}

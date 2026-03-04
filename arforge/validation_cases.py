@@ -14,7 +14,12 @@ class DuplicateNameCase(ValidationCase):
         findings: List[Finding] = []
         project = ctx.project
 
-        if len({d.name for d in project.datatypes}) != len(project.datatypes):
+        type_names = (
+            [d.name for d in project.baseTypes]
+            + [d.name for d in project.implementationDataTypes]
+            + [d.name for d in project.applicationDataTypes]
+        )
+        if len(set(type_names)) != len(type_names):
             findings.append(self.finding("Duplicate datatype names found.", code="CORE-001-DATATYPE-DUPLICATE"))
         if len({i.name for i in project.interfaces}) != len(project.interfaces):
             findings.append(self.finding("Duplicate interface names found.", code="CORE-001-INTERFACE-DUPLICATE"))
@@ -39,6 +44,24 @@ class InterfaceSemanticCase(ValidationCase):
     def run(self, ctx: ValidationContext) -> List[Finding]:
         findings: List[Finding] = []
         dt_names = set(ctx.datatype_by_name.keys())
+
+        for impl in sorted(ctx.project.implementationDataTypes, key=lambda d: d.name):
+            if impl.baseTypeRef not in ctx.base_type_by_name:
+                findings.append(
+                    self.finding(
+                        f"ImplementationDataType '{impl.name}' references unknown baseTypeRef '{impl.baseTypeRef}'.",
+                        code="CORE-010-IMPLEMENTATION-UNKNOWN-BASETYPE",
+                    )
+                )
+
+        for app in sorted(ctx.project.applicationDataTypes, key=lambda d: d.name):
+            if app.implementationTypeRef not in ctx.implementation_type_by_name:
+                findings.append(
+                    self.finding(
+                        f"ApplicationDataType '{app.name}' references unknown implementationTypeRef '{app.implementationTypeRef}'.",
+                        code="CORE-010-APPLICATION-UNKNOWN-IMPLEMENTATION",
+                    )
+                )
 
         for itf in sorted(ctx.project.interfaces, key=lambda i: i.name):
             if itf.type == "senderReceiver":

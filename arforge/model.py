@@ -4,10 +4,20 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Tuple
 
 @dataclass(frozen=True)
-class DataType:
+class BaseType:
     name: str
-    category: str
-    baseType: str | None = None
+
+
+@dataclass(frozen=True)
+class ImplementationDataType:
+    name: str
+    baseTypeRef: str
+
+
+@dataclass(frozen=True)
+class ApplicationDataType:
+    name: str
+    implementationTypeRef: str
 
 @dataclass(frozen=True)
 class DataElement:
@@ -113,10 +123,17 @@ class System:
 class Project:
     autosar_version: str
     rootPackage: str
-    datatypes: List[DataType]
+    baseTypes: List[BaseType]
+    implementationDataTypes: List[ImplementationDataType]
+    applicationDataTypes: List[ApplicationDataType]
     interfaces: List[Interface]
     swcs: List[Swc]
     system: System
+
+    @property
+    def datatypes(self) -> List[ImplementationDataType]:
+        # Backward-compatibility alias used in parts of the codebase.
+        return self.implementationDataTypes
 
     @property
     def connections(self) -> List[Connection]:
@@ -128,7 +145,9 @@ def _split_endpoint(ep: str) -> Tuple[str, str]:
 
 def from_dict(d: Dict[str, Any]) -> Project:
     autosar = d["autosar"]
-    dts = [DataType(**dt) for dt in d.get("datatypes", [])]
+    base_types = [BaseType(**bt) for bt in d.get("baseTypes", [])]
+    impl_types = [ImplementationDataType(**idt) for idt in d.get("implementationDataTypes", [])]
+    app_types = [ApplicationDataType(**adt) for adt in d.get("applicationDataTypes", [])]
 
     ifaces: List[Interface] = []
     for itf in d.get("interfaces", []):
@@ -203,7 +222,9 @@ def from_dict(d: Dict[str, Any]) -> Project:
     return Project(
         autosar_version=autosar["version"],
         rootPackage=autosar["rootPackage"],
-        datatypes=dts,
+        baseTypes=base_types,
+        implementationDataTypes=impl_types,
+        applicationDataTypes=app_types,
         interfaces=ifaces,
         swcs=swcs,
         system=system,

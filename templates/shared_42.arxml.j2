@@ -8,13 +8,35 @@
       <AR-PACKAGES>
 
         <AR-PACKAGE>
-          <SHORT-NAME>DataTypes</SHORT-NAME>
+          <SHORT-NAME>BaseTypes</SHORT-NAME>
           <ELEMENTS>
-            {% for dt in datatypes %}
+            {% for dt in base_types %}
+            <SW-BASE-TYPE>
+              <SHORT-NAME>{{ dt.name }}</SHORT-NAME>
+            </SW-BASE-TYPE>
+            {% endfor %}
+          </ELEMENTS>
+        </AR-PACKAGE>
+
+        <AR-PACKAGE>
+          <SHORT-NAME>ImplementationDataTypes</SHORT-NAME>
+          <ELEMENTS>
+            {% for dt in implementation_types %}
             <IMPLEMENTATION-DATA-TYPE>
               <SHORT-NAME>{{ dt.name }}</SHORT-NAME>
               <CATEGORY>TYPE_REFERENCE</CATEGORY>
             </IMPLEMENTATION-DATA-TYPE>
+            {% endfor %}
+          </ELEMENTS>
+        </AR-PACKAGE>
+
+        <AR-PACKAGE>
+          <SHORT-NAME>ApplicationDataTypes</SHORT-NAME>
+          <ELEMENTS>
+            {% for dt in application_types %}
+            <APPLICATION-PRIMITIVE-DATA-TYPE>
+              <SHORT-NAME>{{ dt.name }}</SHORT-NAME>
+            </APPLICATION-PRIMITIVE-DATA-TYPE>
             {% endfor %}
           </ELEMENTS>
         </AR-PACKAGE>
@@ -30,7 +52,8 @@
                 {% for de in itf.dataElements %}
                 <VARIABLE-DATA-PROTOTYPE>
                   <SHORT-NAME>{{ de.name }}</SHORT-NAME>
-                  <TYPE-TREF DEST="IMPLEMENTATION-DATA-TYPE">/{{ root_pkg }}/DataTypes/{{ de.typeRef }}</TYPE-TREF>
+                  {% set tref = type_trefs.get(de.typeRef) %}
+                  <TYPE-TREF DEST="{{ tref.dest if tref else 'IMPLEMENTATION-DATA-TYPE' }}">/{{ root_pkg }}/{{ tref.package if tref else 'ImplementationDataTypes' }}/{{ de.typeRef }}</TYPE-TREF>
                 </VARIABLE-DATA-PROTOTYPE>
                 {% endfor %}
               </DATA-ELEMENTS>

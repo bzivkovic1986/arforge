@@ -1,0 +1,3 @@
+applicationDataTypes:
+  - name: "VehicleSpeed_T"
+    implementationTypeRef: "UInt16_Missing"

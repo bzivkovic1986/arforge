@@ -7,7 +7,7 @@ import sys
 import pytest
 import yaml
 
-from arforge.validate import ValidationError, load_and_validate_aggregator
+from arforge.validate import ValidationError, load_aggregator, load_and_validate_aggregator
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -49,3 +49,9 @@ def test_cli_validate_smoke() -> None:
         text=True,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_legacy_datatypes_input_emits_deprecation_warning() -> None:
+    legacy_project = INVALID_DIR / "project_bad_operation.yaml"
+    with pytest.warns(DeprecationWarning, match="Legacy 'inputs.datatypes' format is deprecated"):
+        _ = load_aggregator(legacy_project)
