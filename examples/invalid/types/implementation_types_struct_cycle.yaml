@@ -8,3 +8,13 @@ implementationDataTypes:
         typeRef: "UInt16"
       - name: "wheel"
         typeRef: "UInt16"
+  - name: "CycleA_T"
+    kind: "struct"
+    fields:
+      - name: "b"
+        typeRef: "CycleB_T"
+  - name: "CycleB_T"
+    kind: "struct"
+    fields:
+      - name: "a"
+        typeRef: "CycleA_T"

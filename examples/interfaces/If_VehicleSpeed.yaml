@@ -5,4 +5,4 @@ interface:
     - name: "VehicleSpeed"
       typeRef: "UInt16"
     - name: "WheelSpeed"
-      typeRef: "UInt16"
+      typeRef: "SpeedPair_T"

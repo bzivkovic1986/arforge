@@ -9,9 +9,21 @@ class BaseType:
 
 
 @dataclass(frozen=True)
+class ImplementationField:
+    name: str
+    typeRef: str
+
+
+@dataclass(frozen=True)
 class ImplementationDataType:
     name: str
-    baseTypeRef: str
+    baseTypeRef: str | None = None
+    kind: str | None = None
+    fields: List[ImplementationField] = field(default_factory=list)
+
+    @property
+    def is_struct(self) -> bool:
+        return bool(self.fields) or self.kind == "struct"
 
 
 @dataclass(frozen=True)
@@ -146,7 +158,16 @@ def _split_endpoint(ep: str) -> Tuple[str, str]:
 def from_dict(d: Dict[str, Any]) -> Project:
     autosar = d["autosar"]
     base_types = [BaseType(**bt) for bt in d.get("baseTypes", [])]
-    impl_types = [ImplementationDataType(**idt) for idt in d.get("implementationDataTypes", [])]
+    impl_types = []
+    for idt in d.get("implementationDataTypes", []):
+        impl_types.append(
+            ImplementationDataType(
+                name=idt["name"],
+                baseTypeRef=idt.get("baseTypeRef"),
+                kind=idt.get("kind"),
+                fields=[ImplementationField(**f) for f in idt.get("fields", [])],
+            )
+        )
     app_types = [ApplicationDataType(**adt) for adt in d.get("applicationDataTypes", [])]
 
     ifaces: List[Interface] = []

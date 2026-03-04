@@ -24,7 +24,20 @@
             {% for dt in implementation_types %}
             <IMPLEMENTATION-DATA-TYPE>
               <SHORT-NAME>{{ dt.name }}</SHORT-NAME>
+              {% if dt.is_struct %}
+              <CATEGORY>STRUCTURE</CATEGORY>
+              <SUB-ELEMENTS>
+                {% for f in dt.fields %}
+                <IMPLEMENTATION-DATA-TYPE-ELEMENT>
+                  <SHORT-NAME>{{ f.name }}</SHORT-NAME>
+                  {% set tref = type_trefs.get(f.typeRef) %}
+                  <TYPE-TREF DEST="{{ tref.dest if tref else 'IMPLEMENTATION-DATA-TYPE' }}">/{{ root_pkg }}/{{ tref.package if tref else 'ImplementationDataTypes' }}/{{ f.typeRef }}</TYPE-TREF>
+                </IMPLEMENTATION-DATA-TYPE-ELEMENT>
+                {% endfor %}
+              </SUB-ELEMENTS>
+              {% else %}
               <CATEGORY>TYPE_REFERENCE</CATEGORY>
+              {% endif %}
             </IMPLEMENTATION-DATA-TYPE>
             {% endfor %}
           </ELEMENTS>

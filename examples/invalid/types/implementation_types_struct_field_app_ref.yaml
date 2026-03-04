@@ -8,3 +8,8 @@ implementationDataTypes:
         typeRef: "UInt16"
       - name: "wheel"
         typeRef: "UInt16"
+  - name: "BadStruct_T"
+    kind: "struct"
+    fields:
+      - name: "app_field"
+        typeRef: "VehicleSpeed_T"

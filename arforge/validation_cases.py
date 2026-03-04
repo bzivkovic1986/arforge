@@ -46,11 +46,90 @@ class InterfaceSemanticCase(ValidationCase):
         dt_names = set(ctx.datatype_by_name.keys())
 
         for impl in sorted(ctx.project.implementationDataTypes, key=lambda d: d.name):
-            if impl.baseTypeRef not in ctx.base_type_by_name:
+            if impl.is_struct:
+                if not impl.fields:
+                    findings.append(
+                        self.finding(
+                            f"Struct ImplementationDataType '{impl.name}' must define at least one field.",
+                            code="CORE-010-STRUCT-EMPTY",
+                        )
+                    )
+                    continue
+                field_names = [f.name for f in impl.fields]
+                if len(set(field_names)) != len(field_names):
+                    findings.append(
+                        self.finding(
+                            f"Struct ImplementationDataType '{impl.name}' has duplicate field names.",
+                            code="CORE-010-STRUCT-DUPLICATE-FIELD",
+                        )
+                    )
+                for field in sorted(impl.fields, key=lambda f: f.name):
+                    if field.typeRef not in ctx.datatype_by_name:
+                        findings.append(
+                            self.finding(
+                                f"Struct ImplementationDataType '{impl.name}' field '{field.name}' references unknown typeRef '{field.typeRef}'.",
+                                code="CORE-010-STRUCT-UNKNOWN-TYPE",
+                            )
+                        )
+                        continue
+                    if field.typeRef in ctx.application_type_by_name:
+                        findings.append(
+                            self.finding(
+                                f"Struct ImplementationDataType '{impl.name}' field '{field.name}' must not reference application data type '{field.typeRef}'.",
+                                code="CORE-010-STRUCT-APPLICATION-TYPE",
+                            )
+                        )
+            else:
+                if not impl.baseTypeRef:
+                    findings.append(
+                        self.finding(
+                            f"ImplementationDataType '{impl.name}' must define baseTypeRef.",
+                            code="CORE-010-IMPLEMENTATION-MISSING-BASETYPE",
+                        )
+                    )
+                elif impl.baseTypeRef not in ctx.base_type_by_name:
+                    findings.append(
+                        self.finding(
+                            f"ImplementationDataType '{impl.name}' references unknown baseTypeRef '{impl.baseTypeRef}'.",
+                            code="CORE-010-IMPLEMENTATION-UNKNOWN-BASETYPE",
+                        )
+                    )
+
+        impl_by_name = {i.name: i for i in ctx.project.implementationDataTypes}
+
+        def _detect_impl_cycle(start: str, node: str, visiting: set[str], path: list[str]) -> list[str] | None:
+            if node in visiting:
+                cycle_start = path.index(node) if node in path else 0
+                return path[cycle_start:] + [node]
+            it = impl_by_name.get(node)
+            if it is None or not it.is_struct:
+                return None
+            visiting.add(node)
+            path.append(node)
+            for f in sorted(it.fields, key=lambda x: x.name):
+                if f.typeRef in impl_by_name:
+                    cycle = _detect_impl_cycle(start, f.typeRef, visiting, path)
+                    if cycle:
+                        return cycle
+            path.pop()
+            visiting.remove(node)
+            return None
+
+        reported_cycles: set[str] = set()
+        for impl in sorted(ctx.project.implementationDataTypes, key=lambda d: d.name):
+            if not impl.is_struct:
+                continue
+            cycle = _detect_impl_cycle(impl.name, impl.name, set(), [])
+            if cycle:
+                cycle_txt = " -> ".join(cycle)
+                cycle_key = "->".join(sorted(set(cycle[:-1])))
+                if cycle_key in reported_cycles:
+                    continue
+                reported_cycles.add(cycle_key)
                 findings.append(
                     self.finding(
-                        f"ImplementationDataType '{impl.name}' references unknown baseTypeRef '{impl.baseTypeRef}'.",
-                        code="CORE-010-IMPLEMENTATION-UNKNOWN-BASETYPE",
+                        f"Struct type cycle detected: {cycle_txt}.",
+                        code="CORE-010-STRUCT-CYCLE",
                     )
                 )
 

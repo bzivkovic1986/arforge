@@ -9,22 +9,71 @@
     "implementationDataTypes": {
       "type": "array",
       "items": {
-        "type": "object",
-        "required": [
-          "name",
-          "baseTypeRef"
-        ],
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1
+        "allOf": [
+          {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "struct"
+                ]
+              },
+              "baseTypeRef": {
+                "type": "string",
+                "minLength": 1
+              },
+              "fields": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "typeRef"
+                  ],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "typeRef": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
           },
-          "baseTypeRef": {
-            "type": "string",
-            "minLength": 1
+          {
+            "oneOf": [
+              {
+                "required": [
+                  "baseTypeRef"
+                ],
+                "not": {
+                  "required": [
+                    "fields"
+                  ]
+                }
+              },
+              {
+                "required": [
+                  "fields"
+                ]
+              }
+            ]
           }
-        },
-        "additionalProperties": false
+        ]
       }
     }
   },
