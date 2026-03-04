@@ -20,8 +20,8 @@ class DuplicateNameCase(ValidationCase):
             findings.append(self.finding("Duplicate interface names found.", code="CORE-001-INTERFACE-DUPLICATE"))
         if len({s.name for s in project.swcs}) != len(project.swcs):
             findings.append(self.finding("Duplicate SWC names found.", code="CORE-001-SWC-DUPLICATE"))
-        if len({i.name for i in project.system.instances}) != len(project.system.instances):
-            findings.append(self.finding("System has duplicate instance names.", code="CORE-001-INSTANCE-DUPLICATE"))
+        if len({c.name for c in project.system.composition.components}) != len(project.system.composition.components):
+            findings.append(self.finding("System composition has duplicate component prototype names.", code="CORE-001-INSTANCE-DUPLICATE"))
 
         return findings
 
@@ -133,23 +133,160 @@ class SwcPortInterfaceCase(ValidationCase):
         return findings
 
 
-class SystemInstanceTypeCase(ValidationCase):
-    case_id = "CORE-030"
-    description = "Validate system instances reference known SWC types."
-    tags = ("core", "system")
+class RunnableAccessSemanticCase(ValidationCase):
+    case_id = "CORE-022"
+    description = "Validate runnable reads/writes/calls against SWC port and interface semantics."
+    tags = ("core", "swc", "runnables", "interfaces")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
-        if not ctx.project.system.instances:
-            return False, "no system instances defined"
+        if not ctx.project.swcs:
+            return False, "no SWCs defined"
+        has_accesses = any(
+            runnable.reads or runnable.writes or runnable.calls
+            for swc in ctx.project.swcs
+            for runnable in swc.runnables
+        )
+        if not has_accesses:
+            return False, "no runnable accesses defined"
         return True, None
 
     def run(self, ctx: ValidationContext) -> List[Finding]:
         findings: List[Finding] = []
-        for inst in ctx.project.system.instances:
+        for swc in sorted(ctx.project.swcs, key=lambda s: s.name):
+            for runnable in sorted(swc.runnables, key=lambda r: r.name):
+                location_base = f"SWC '{swc.name}' runnable '{runnable.name}'"
+
+                for read in sorted(runnable.reads, key=lambda a: (a.port, a.dataElement)):
+                    port = ctx.find_swc_port(swc.name, read.port)
+                    if port is None:
+                        findings.append(
+                            self.finding(
+                                f"{location_base} reads unknown port '{read.port}'.",
+                                code="CORE-022-READ-UNKNOWN-PORT",
+                            )
+                        )
+                        continue
+                    if port.direction != "requires":
+                        findings.append(
+                            self.finding(
+                                f"{location_base} read on port '{read.port}' requires direction 'requires', found '{port.direction}'.",
+                                code="CORE-022-READ-DIRECTION",
+                            )
+                        )
+                    itf = ctx.iface_by_name.get(port.interfaceRef)
+                    if itf is None:
+                        # Unknown interface reference is reported by CORE-021.
+                        continue
+                    if itf.type != "senderReceiver":
+                        findings.append(
+                            self.finding(
+                                f"{location_base} read on port '{read.port}' requires senderReceiver interface, found '{itf.type}'.",
+                                code="CORE-022-READ-INTERFACE-TYPE",
+                            )
+                        )
+                        continue
+                    if read.dataElement not in ctx.sr_data_elements_by_iface.get(itf.name, set()):
+                        findings.append(
+                            self.finding(
+                                f"{location_base} reads unknown dataElement '{read.dataElement}' from interface '{itf.name}'.",
+                                code="CORE-022-READ-UNKNOWN-DATAELEMENT",
+                            )
+                        )
+
+                for write in sorted(runnable.writes, key=lambda a: (a.port, a.dataElement)):
+                    port = ctx.find_swc_port(swc.name, write.port)
+                    if port is None:
+                        findings.append(
+                            self.finding(
+                                f"{location_base} writes unknown port '{write.port}'.",
+                                code="CORE-022-WRITE-UNKNOWN-PORT",
+                            )
+                        )
+                        continue
+                    if port.direction != "provides":
+                        findings.append(
+                            self.finding(
+                                f"{location_base} write on port '{write.port}' requires direction 'provides', found '{port.direction}'.",
+                                code="CORE-022-WRITE-DIRECTION",
+                            )
+                        )
+                    itf = ctx.iface_by_name.get(port.interfaceRef)
+                    if itf is None:
+                        # Unknown interface reference is reported by CORE-021.
+                        continue
+                    if itf.type != "senderReceiver":
+                        findings.append(
+                            self.finding(
+                                f"{location_base} write on port '{write.port}' requires senderReceiver interface, found '{itf.type}'.",
+                                code="CORE-022-WRITE-INTERFACE-TYPE",
+                            )
+                        )
+                        continue
+                    if write.dataElement not in ctx.sr_data_elements_by_iface.get(itf.name, set()):
+                        findings.append(
+                            self.finding(
+                                f"{location_base} writes unknown dataElement '{write.dataElement}' to interface '{itf.name}'.",
+                                code="CORE-022-WRITE-UNKNOWN-DATAELEMENT",
+                            )
+                        )
+
+                for call in sorted(runnable.calls, key=lambda a: (a.port, a.operation)):
+                    port = ctx.find_swc_port(swc.name, call.port)
+                    if port is None:
+                        findings.append(
+                            self.finding(
+                                f"{location_base} calls unknown port '{call.port}'.",
+                                code="CORE-022-CALL-UNKNOWN-PORT",
+                            )
+                        )
+                        continue
+                    if port.direction != "requires":
+                        findings.append(
+                            self.finding(
+                                f"{location_base} call on port '{call.port}' requires direction 'requires', found '{port.direction}'.",
+                                code="CORE-022-CALL-DIRECTION",
+                            )
+                        )
+                    itf = ctx.iface_by_name.get(port.interfaceRef)
+                    if itf is None:
+                        # Unknown interface reference is reported by CORE-021.
+                        continue
+                    if itf.type != "clientServer":
+                        findings.append(
+                            self.finding(
+                                f"{location_base} call on port '{call.port}' requires clientServer interface, found '{itf.type}'.",
+                                code="CORE-022-CALL-INTERFACE-TYPE",
+                            )
+                        )
+                        continue
+                    if call.operation not in ctx.cs_operations_by_iface.get(itf.name, set()):
+                        findings.append(
+                            self.finding(
+                                f"{location_base} calls unknown operation '{call.operation}' on interface '{itf.name}'.",
+                                code="CORE-022-CALL-UNKNOWN-OPERATION",
+                            )
+                        )
+
+        return findings
+
+
+class SystemInstanceTypeCase(ValidationCase):
+    case_id = "CORE-030"
+    description = "Validate composition component prototypes reference known SWC types."
+    tags = ("core", "system")
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.system.composition.components:
+            return False, "no system component prototypes defined"
+        return True, None
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        findings: List[Finding] = []
+        for inst in sorted(ctx.project.system.composition.components, key=lambda c: c.name):
             if inst.typeRef not in ctx.swc_by_name:
                 findings.append(
                     self.finding(
-                        f"System instance '{inst.name}' references unknown SWC type '{inst.typeRef}'.",
+                        f"System component prototype '{inst.name}' references unknown SWC type '{inst.typeRef}'.",
                         code="CORE-030-UNKNOWN-SWC-TYPE",
                     )
                 )
@@ -162,13 +299,24 @@ class ConnectionSemanticCase(ValidationCase):
     tags = ("core", "system", "connections")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
-        if not ctx.project.system.connections:
-            return False, "no system connections defined"
+        if not ctx.project.system.composition.connectors:
+            return False, "no system connectors defined"
         return True, None
 
     def run(self, ctx: ValidationContext) -> List[Finding]:
         findings: List[Finding] = []
-        for conn in ctx.project.system.connections:
+        connectors = sorted(
+            ctx.project.system.composition.connectors,
+            key=lambda c: (
+                c.from_instance,
+                c.from_port,
+                c.to_instance,
+                c.to_port,
+                c.dataElement or "",
+                c.operation or "",
+            ),
+        )
+        for conn in connectors:
             from_inst = ctx.instance_by_name.get(conn.from_instance)
             if from_inst is None:
                 findings.append(
@@ -263,6 +411,13 @@ class ConnectionSemanticCase(ValidationCase):
                         )
                     )
                 data_elements = ctx.sr_data_elements_by_iface.get(itf.name, set())
+                if not conn.dataElement:
+                    findings.append(
+                        self.finding(
+                            f"SenderReceiver connector {conn.from_instance}.{conn.from_port} -> {conn.to_instance}.{conn.to_port} must set dataElement.",
+                            code="CORE-040-SR-MISSING-DATAELEMENT",
+                        )
+                    )
                 if conn.dataElement and conn.dataElement not in data_elements:
                     findings.append(
                         self.finding(
@@ -279,6 +434,13 @@ class ConnectionSemanticCase(ValidationCase):
                         )
                     )
                 operations = ctx.cs_operations_by_iface.get(itf.name, set())
+                if not conn.operation:
+                    findings.append(
+                        self.finding(
+                            f"ClientServer connector {conn.from_instance}.{conn.from_port} -> {conn.to_instance}.{conn.to_port} must set operation.",
+                            code="CORE-040-CS-MISSING-OPERATION",
+                        )
+                    )
                 if conn.operation and conn.operation not in operations:
                     findings.append(
                         self.finding(
@@ -296,6 +458,7 @@ def core_validation_cases() -> List[ValidationCase]:
         InterfaceSemanticCase(),
         SwcStructureCase(),
         SwcPortInterfaceCase(),
+        RunnableAccessSemanticCase(),
         SystemInstanceTypeCase(),
         ConnectionSemanticCase(),
     ]

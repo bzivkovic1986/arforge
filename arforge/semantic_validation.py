@@ -75,7 +75,7 @@ class ValidationContext:
         self.datatype_by_name = {d.name: d for d in project.datatypes}
         self.iface_by_name = {i.name: i for i in project.interfaces}
         self.swc_by_name = {s.name: s for s in project.swcs}
-        self.instance_by_name = {i.name: i for i in project.system.instances}
+        self.instance_by_name = {i.name: i for i in project.system.composition.components}
 
         self.ports_by_swc: Dict[str, Dict[str, Port]] = {
             swc.name: {p.name: p for p in swc.ports} for swc in project.swcs

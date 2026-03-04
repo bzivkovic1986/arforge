@@ -118,7 +118,7 @@
           <SHORT-NAME>System</SHORT-NAME>
           <ELEMENTS>
             <COMPOSITION-SW-COMPONENT-TYPE>
-              <SHORT-NAME>Composition_{{ system_name }}</SHORT-NAME>
+              <SHORT-NAME>{{ composition_name }}</SHORT-NAME>
               <COMPONENTS>
                 {% for i in instances %}
                 <SW-COMPONENT-PROTOTYPE>
@@ -130,14 +130,14 @@
               <CONNECTORS>
                 {% for c in connections %}
                 <ASSEMBLY-SW-CONNECTOR>
-                  <SHORT-NAME>Conn_{{ loop.index }}</SHORT-NAME>
+                  <SHORT-NAME>{{ c.short_name }}</SHORT-NAME>
                   <PROVIDER-IREF>
-                    <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/{{ root_pkg }}/System/Composition_{{ system_name }}/{{ c.from_instance }}</CONTEXT-COMPONENT-REF>
-                    <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/{{ root_pkg }}/Components/{{ c.from_type }}/{{ c.from_port }}</TARGET-P-PORT-REF>
+                    <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/{{ root_pkg }}/System/{{ composition_name }}/{{ c.from_instance }}</CONTEXT-COMPONENT-REF>
+                    <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/{{ root_pkg }}/System/{{ composition_name }}/{{ c.from_instance }}/{{ c.from_port }}</TARGET-P-PORT-REF>
                   </PROVIDER-IREF>
                   <REQUESTER-IREF>
-                    <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/{{ root_pkg }}/System/Composition_{{ system_name }}/{{ c.to_instance }}</CONTEXT-COMPONENT-REF>
-                    <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/{{ root_pkg }}/Components/{{ c.to_type }}/{{ c.to_port }}</TARGET-R-PORT-REF>
+                    <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/{{ root_pkg }}/System/{{ composition_name }}/{{ c.to_instance }}</CONTEXT-COMPONENT-REF>
+                    <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/{{ root_pkg }}/System/{{ composition_name }}/{{ c.to_instance }}/{{ c.to_port }}</TARGET-R-PORT-REF>
                   </REQUESTER-IREF>
                 </ASSEMBLY-SW-CONNECTOR>
                 {% endfor %}
@@ -148,7 +148,7 @@
               <ROOT-SOFTWARE-COMPOSITIONS>
                 <ROOT-SW-COMPOSITION-PROTOTYPE>
                   <SHORT-NAME>RootComposition</SHORT-NAME>
-                  <SOFTWARE-COMPOSITION-TREF DEST="COMPOSITION-SW-COMPONENT-TYPE">/{{ root_pkg }}/System/Composition_{{ system_name }}</SOFTWARE-COMPOSITION-TREF>
+                  <SOFTWARE-COMPOSITION-TREF DEST="COMPOSITION-SW-COMPONENT-TYPE">/{{ root_pkg }}/System/{{ composition_name }}</SOFTWARE-COMPOSITION-TREF>
                 </ROOT-SW-COMPOSITION-PROTOTYPE>
               </ROOT-SOFTWARE-COMPOSITIONS>
             </SYSTEM>

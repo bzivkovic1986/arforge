@@ -1,0 +1,11 @@
+autosar:
+  version: "4.2"
+  rootPackage: "DEMO"
+
+inputs:
+  datatypes: "../datatypes.yaml"
+  interfaces:
+    - "../interfaces/*.yaml"
+  swcs:
+    - "../swcs/*.yaml"
+  system: "system_unknown_instance.yaml"

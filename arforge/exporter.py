@@ -85,25 +85,34 @@ def _model_summary(project: Project) -> ExportModelSummary:
         sr_interfaces_count=len(sr),
         cs_interfaces_count=len(cs),
         swcs_count=len(project.swcs),
-        instances_count=len(project.system.instances),
-        connectors_count=len(project.system.connections),
+        instances_count=len(project.system.composition.components),
+        connectors_count=len(project.system.composition.connectors),
     )
 
 
 def _build_connections(project: Project) -> List[Dict[str, object]]:
-    instance_type = {i.name: i.typeRef for i in project.system.instances}
+    connectors = sorted(
+        project.system.composition.connectors,
+        key=lambda c: (
+            c.from_instance,
+            c.from_port,
+            c.to_instance,
+            c.to_port,
+            c.dataElement or "",
+            c.operation or "",
+        ),
+    )
     return [
         {
             "from_instance": c.from_instance,
             "from_port": c.from_port,
             "to_instance": c.to_instance,
             "to_port": c.to_port,
-            "from_type": instance_type[c.from_instance],
-            "to_type": instance_type[c.to_instance],
             "dataElement": c.dataElement,
             "operation": c.operation,
+            "short_name": f"Conn_{idx}",
         }
-        for c in project.system.connections
+        for idx, c in enumerate(connectors, start=1)
     ]
 
 
@@ -128,7 +137,8 @@ def render_system(project: Project, template_dir: Path, template_name: str = SYS
     return tpl.render(
         root_pkg=project.rootPackage,
         system_name=project.system.name,
-        instances=sorted(project.system.instances, key=lambda x: x.name),
+        composition_name=project.system.composition.name,
+        components=sorted(project.system.composition.components, key=lambda x: x.name),
         connections=connections,
     )
 
@@ -163,7 +173,8 @@ def write_outputs_with_report(
                 cs_interfaces=cs,
                 swcs=swcs,
                 system_name=project.system.name,
-                instances=sorted(project.system.instances, key=lambda x: x.name),
+                composition_name=project.system.composition.name,
+                instances=sorted(project.system.composition.components, key=lambda x: x.name),
                 connections=connections,
             )
         }
