@@ -4,6 +4,7 @@ swc:
     - name: "Runnable_ReadSpeed"
       timingEventMs: 10
     - name: "Runnable_DiagServer"
+      timingEventMs: 100
       operationInvokedEvents:
         - port: "Pp_Diag"
           operation: "ReadDTC"

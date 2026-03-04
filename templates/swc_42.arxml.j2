@@ -52,11 +52,19 @@
 
                   <EVENTS>
                     {% for r in swc.runnables %}
+                    {% if r.timingEventMs is not none %}
                     <TIMING-EVENT>
                       <SHORT-NAME>TE_{{ r.name }}</SHORT-NAME>
                       <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/{{ root_pkg }}/Components/{{ swc.name }}/IB_{{ swc.name }}/{{ r.name }}</START-ON-EVENT-REF>
                       <PERIOD>{{ (r.timingEventMs / 1000.0) }}</PERIOD>
                     </TIMING-EVENT>
+                    {% endif %}
+                    {% for oie in r.operationInvokedEvents %}
+                    <OPERATION-INVOKED-EVENT>
+                      <SHORT-NAME>OIE_{{ r.name }}_{{ oie.port }}_{{ oie.operation }}</SHORT-NAME>
+                      <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/{{ root_pkg }}/Components/{{ swc.name }}/IB_{{ swc.name }}/{{ r.name }}</START-ON-EVENT-REF>
+                    </OPERATION-INVOKED-EVENT>
+                    {% endfor %}
                     {% endfor %}
                   </EVENTS>
 

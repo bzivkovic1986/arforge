@@ -313,6 +313,128 @@ class RunnableAccessSemanticCase(ValidationCase):
         return findings
 
 
+class OperationInvokedEventCase(ValidationCase):
+    case_id = "CORE-023"
+    description = "Validate operation-invoked event bindings for provided clientServer operations."
+    tags = ("core", "swc", "runnables", "interfaces")
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.swcs:
+            return False, "no SWCs defined"
+        has_cs_provider = any(
+            port.direction == "provides"
+            and ((itf := ctx.iface_by_name.get(port.interfaceRef)) is not None)
+            and itf.type == "clientServer"
+            for swc in ctx.project.swcs
+            for port in swc.ports
+        )
+        has_events = any(
+            runnable.operationInvokedEvents
+            for swc in ctx.project.swcs
+            for runnable in swc.runnables
+        )
+        if not has_cs_provider and not has_events:
+            return False, "no provided clientServer ports or operationInvokedEvents"
+        return True, None
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        findings: List[Finding] = []
+        valid_bindings: set[tuple[str, str, str]] = set()
+
+        for swc in sorted(ctx.project.swcs, key=lambda s: s.name):
+            for runnable in sorted(swc.runnables, key=lambda r: r.name):
+                location_base = f"SWC '{swc.name}' runnable '{runnable.name}'"
+                for event in sorted(runnable.operationInvokedEvents, key=lambda e: (e.port, e.operation)):
+                    port = ctx.find_swc_port(swc.name, event.port)
+                    if port is None:
+                        findings.append(
+                            self.finding(
+                                f"{location_base} operationInvokedEvents references unknown port '{event.port}'.",
+                                code="CORE-023-OIE-UNKNOWN-PORT",
+                            )
+                        )
+                        continue
+                    if port.direction != "provides":
+                        findings.append(
+                            self.finding(
+                                f"{location_base} operationInvokedEvents on port '{event.port}' requires direction 'provides', found '{port.direction}'.",
+                                code="CORE-023-OIE-DIRECTION",
+                            )
+                        )
+                    itf = ctx.iface_by_name.get(port.interfaceRef)
+                    if itf is None:
+                        # Unknown interface reference is reported by CORE-021.
+                        continue
+                    if itf.type != "clientServer":
+                        findings.append(
+                            self.finding(
+                                f"{location_base} operationInvokedEvents on port '{event.port}' requires clientServer interface, found '{itf.type}'.",
+                                code="CORE-023-OIE-INTERFACE-TYPE",
+                            )
+                        )
+                        continue
+                    operations = ctx.cs_operations_by_iface.get(itf.name, set())
+                    if event.operation not in operations:
+                        findings.append(
+                            self.finding(
+                                f"{location_base} operationInvokedEvents references unknown operation '{event.operation}' on interface '{itf.name}'.",
+                                code="CORE-023-OIE-UNKNOWN-OPERATION",
+                            )
+                        )
+                        continue
+                    valid_bindings.add((swc.name, event.port, event.operation))
+
+            for port in sorted(swc.ports, key=lambda p: p.name):
+                if port.direction != "provides":
+                    continue
+                itf = ctx.iface_by_name.get(port.interfaceRef)
+                if itf is None or itf.type != "clientServer":
+                    continue
+                for op in sorted(itf.operations or [], key=lambda o: o.name):
+                    if (swc.name, port.name, op.name) not in valid_bindings:
+                        findings.append(
+                            self.finding(
+                                f"SWC '{swc.name}' provides-port '{port.name}' is missing operationInvokedEvents binding for operation '{op.name}'.",
+                                code="CORE-023-CS-UNBOUND-OPERATION",
+                            )
+                        )
+
+        return findings
+
+
+class RunnableTriggerPolicyCase(ValidationCase):
+    case_id = "CORE-024"
+    description = "Enforce runnable trigger policy: exactly one trigger style per runnable."
+    tags = ("core", "swc", "runnables")
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.swcs:
+            return False, "no SWCs defined"
+        return True, None
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        findings: List[Finding] = []
+        for swc in sorted(ctx.project.swcs, key=lambda s: s.name):
+            for runnable in sorted(swc.runnables, key=lambda r: r.name):
+                has_timing = runnable.timingEventMs is not None
+                has_oie = bool(runnable.operationInvokedEvents)
+                if has_timing and has_oie:
+                    findings.append(
+                        self.finding(
+                            f"Runnable '{runnable.name}' must not define timingEventMs when operationInvokedEvents is used.",
+                            code="CORE-024-MULTIPLE-TRIGGERS",
+                        )
+                    )
+                if not has_timing and not has_oie:
+                    findings.append(
+                        self.finding(
+                            f"SWC '{swc.name}' runnable '{runnable.name}' must define at least one trigger: timingEventMs or operationInvokedEvents.",
+                            code="CORE-024-MISSING-TRIGGER",
+                        )
+                    )
+        return findings
+
+
 class SystemInstanceTypeCase(ValidationCase):
     case_id = "CORE-030"
     description = "Validate composition component prototypes reference known SWC types."
@@ -502,6 +624,8 @@ def core_validation_cases() -> List[ValidationCase]:
         SwcStructureCase(),
         SwcPortInterfaceCase(),
         RunnableAccessSemanticCase(),
+        OperationInvokedEventCase(),
+        RunnableTriggerPolicyCase(),
         SystemInstanceTypeCase(),
         ConnectionSemanticCase(),
     ]

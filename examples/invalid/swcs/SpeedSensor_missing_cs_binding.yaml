@@ -4,11 +4,10 @@ swc:
     - name: "Runnable_ReadSpeed"
       timingEventMs: 10
     - name: "Runnable_DiagServer"
+      timingEventMs: 100
       operationInvokedEvents:
         - port: "Pp_Diag"
           operation: "ReadDTC"
-        - port: "Pp_Diag"
-          operation: "ClearDTC"
   ports:
     - name: "Pp_VehicleSpeed"
       direction: "provides"

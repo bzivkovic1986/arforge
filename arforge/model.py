@@ -37,10 +37,11 @@ class Interface:
 @dataclass(frozen=True)
 class Runnable:
     name: str
-    timingEventMs: int
+    timingEventMs: int | None = None
     reads: List["SrAccess"] = field(default_factory=list)
     writes: List["SrAccess"] = field(default_factory=list)
     calls: List["CsCall"] = field(default_factory=list)
+    operationInvokedEvents: List["OperationInvokedEvent"] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -51,6 +52,12 @@ class SrAccess:
 
 @dataclass(frozen=True)
 class CsCall:
+    port: str
+    operation: str
+
+
+@dataclass(frozen=True)
+class OperationInvokedEvent:
     port: str
     operation: str
 
@@ -148,10 +155,11 @@ def from_dict(d: Dict[str, Any]) -> Project:
         runs = [
             Runnable(
                 name=r["name"],
-                timingEventMs=r["timingEventMs"],
+                timingEventMs=r.get("timingEventMs"),
                 reads=[SrAccess(**acc) for acc in r.get("reads", [])],
                 writes=[SrAccess(**acc) for acc in r.get("writes", [])],
                 calls=[CsCall(**acc) for acc in r.get("calls", [])],
+                operationInvokedEvents=[OperationInvokedEvent(**e) for e in r.get("operationInvokedEvents", [])],
             )
             for r in s.get("runnables", [])
         ]
