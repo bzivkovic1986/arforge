@@ -69,6 +69,7 @@ def load_and_validate_aggregator(agg_path: Path, schema_path: Optional[Path] = N
         "datatypes": [],
         "interfaces": [],
         "swcs": [],
+        "system": None,
         "connections": [],
     }
 
@@ -102,13 +103,25 @@ def load_and_validate_aggregator(agg_path: Path, schema_path: Optional[Path] = N
             raise ValidationError(errs)
         merged["swcs"].append(data["swc"])
 
-    c_path = (base_dir / inputs["connections"]).resolve()
-    c_data = _load_yaml(c_path)
-    c_schema = _load_json(_schema_dir() / "connections.schema.json")
-    errs = _validate_with_schema(c_data, c_schema, str(c_path))
-    if errs:
-        raise ValidationError(errs)
-    merged["connections"] = c_data.get("connections", [])
+    if "system" in inputs and "connections" in inputs:
+        raise ValidationError([f"{agg_path}:inputs: define only one of 'system' or legacy 'connections'."])
+
+    if "system" in inputs:
+        s_path = (base_dir / inputs["system"]).resolve()
+        s_data = _load_yaml(s_path)
+        s_schema = _load_json(_schema_dir() / "system.schema.json")
+        errs = _validate_with_schema(s_data, s_schema, str(s_path))
+        if errs:
+            raise ValidationError(errs)
+        merged["system"] = s_data.get("system")
+    else:
+        c_path = (base_dir / inputs["connections"]).resolve()
+        c_data = _load_yaml(c_path)
+        c_schema = _load_json(_schema_dir() / "connections.schema.json")
+        errs = _validate_with_schema(c_data, c_schema, str(c_path))
+        if errs:
+            raise ValidationError(errs)
+        merged["connections"] = c_data.get("connections", [])
 
     project = from_dict(merged)
     sem_errs = validate_semantic(project)
@@ -126,6 +139,8 @@ def validate_semantic(project: Project) -> List[str]:
         errs.append("Duplicate interface names found.")
     if len({s.name for s in project.swcs}) != len(project.swcs):
         errs.append("Duplicate SWC names found.")
+    if len({i.name for i in project.system.instances}) != len(project.system.instances):
+        errs.append("System has duplicate instance names.")
 
     iface_by_name = {i.name: i for i in project.interfaces}
     dt_names = {d.name for d in project.datatypes}
@@ -163,36 +178,51 @@ def validate_semantic(project: Project) -> List[str]:
                 if p.interfaceType != itf.type:
                     errs.append(f"Internal mismatch: port '{s.name}.{p.name}' interfaceType '{p.interfaceType}' != interface '{itf.type}'.")
 
-    # connections
-    for c in project.connections:
-        if c.from_swc not in swc_by_name:
-            errs.append(f"Connection references unknown from SWC '{c.from_swc}'.")
+    instance_by_name = {i.name: i for i in project.system.instances}
+    for inst in project.system.instances:
+        if inst.typeRef not in swc_by_name:
+            errs.append(f"System instance '{inst.name}' references unknown SWC type '{inst.typeRef}'.")
+
+    # instance connections
+    for c in project.system.connections:
+        from_inst = instance_by_name.get(c.from_instance)
+        if from_inst is None:
+            errs.append(f"Connection references unknown from instance '{c.from_instance}'.")
             continue
-        if c.to_swc not in swc_by_name:
-            errs.append(f"Connection references unknown to SWC '{c.to_swc}'.")
+        to_inst = instance_by_name.get(c.to_instance)
+        if to_inst is None:
+            errs.append(f"Connection references unknown to instance '{c.to_instance}'.")
             continue
 
-        from_swc = swc_by_name[c.from_swc]
-        to_swc = swc_by_name[c.to_swc]
+        from_swc = swc_by_name.get(from_inst.typeRef)
+        to_swc = swc_by_name.get(to_inst.typeRef)
+        if from_swc is None or to_swc is None:
+            # instance.typeRef errors already reported above
+            continue
+
         from_port = next((p for p in from_swc.ports if p.name == c.from_port), None)
         to_port = next((p for p in to_swc.ports if p.name == c.to_port), None)
 
         if from_port is None:
-            errs.append(f"Connection from '{c.from_swc}.{c.from_port}' references unknown port.")
+            errs.append(
+                f"Connection from '{c.from_instance}.{c.from_port}' references unknown port on type '{from_swc.name}'."
+            )
             continue
         if to_port is None:
-            errs.append(f"Connection to '{c.to_swc}.{c.to_port}' references unknown port.")
+            errs.append(
+                f"Connection to '{c.to_instance}.{c.to_port}' references unknown port on type '{to_swc.name}'."
+            )
             continue
 
         if from_port.direction != "provides":
-            errs.append(f"Connection from '{c.from_swc}.{c.from_port}' must be a provides-port.")
+            errs.append(f"Connection from '{c.from_instance}.{c.from_port}' must be a provides-port.")
         if to_port.direction != "requires":
-            errs.append(f"Connection to '{c.to_swc}.{c.to_port}' must be a requires-port.")
+            errs.append(f"Connection to '{c.to_instance}.{c.to_port}' must be a requires-port.")
 
         if from_port.interfaceRef != to_port.interfaceRef:
             errs.append(
-                f"Connection interface mismatch: '{c.from_swc}.{c.from_port}' uses '{from_port.interfaceRef}' but "
-                f"'{c.to_swc}.{c.to_port}' uses '{to_port.interfaceRef}'."
+                f"Connection interface mismatch: '{c.from_instance}.{c.from_port}' uses '{from_port.interfaceRef}' but "
+                f"'{c.to_instance}.{c.to_port}' uses '{to_port.interfaceRef}'."
             )
             continue
 
@@ -200,18 +230,26 @@ def validate_semantic(project: Project) -> List[str]:
         if not itf:
             continue
 
-        # SR must specify dataElement; CS must specify operation
+        if c.dataElement and c.operation:
+            errs.append(
+                f"Connection {c.from_instance}.{c.from_port} -> {c.to_instance}.{c.to_port} must not define both dataElement and operation."
+            )
+            continue
+
+        # SR/CS selector is optional but validated if provided.
         if itf.type == "senderReceiver":
-            if not c.dataElement or c.operation:
-                errs.append(f"SenderReceiver connection {c.from_swc}.{c.from_port} -> {c.to_swc}.{c.to_port} must specify dataElement only.")
-            else:
-                if c.dataElement not in {de.name for de in (itf.dataElements or [])}:
-                    errs.append(f"Connection dataElement '{c.dataElement}' not found in interface '{itf.name}'.")
+            if c.operation:
+                errs.append(
+                    f"SenderReceiver connection {c.from_instance}.{c.from_port} -> {c.to_instance}.{c.to_port} cannot set operation."
+                )
+            if c.dataElement and c.dataElement not in {de.name for de in (itf.dataElements or [])}:
+                errs.append(f"Connection dataElement '{c.dataElement}' not found in interface '{itf.name}'.")
         else:
-            if not c.operation or c.dataElement:
-                errs.append(f"ClientServer connection {c.from_swc}.{c.from_port} -> {c.to_swc}.{c.to_port} must specify operation only.")
-            else:
-                if c.operation not in {op.name for op in (itf.operations or [])}:
-                    errs.append(f"Connection operation '{c.operation}' not found in interface '{itf.name}'.")
+            if c.dataElement:
+                errs.append(
+                    f"ClientServer connection {c.from_instance}.{c.from_port} -> {c.to_instance}.{c.to_port} cannot set dataElement."
+                )
+            if c.operation and c.operation not in {op.name for op in (itf.operations or [])}:
+                errs.append(f"Connection operation '{c.operation}' not found in interface '{itf.name}'.")
 
     return errs

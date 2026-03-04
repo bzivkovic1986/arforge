@@ -45,12 +45,23 @@ class Swc:
 
 @dataclass(frozen=True)
 class Connection:
-    from_swc: str
+    from_instance: str
     from_port: str
-    to_swc: str
+    to_instance: str
     to_port: str
     dataElement: str | None = None
     operation: str | None = None
+
+@dataclass(frozen=True)
+class Instance:
+    name: str
+    typeRef: str
+
+@dataclass(frozen=True)
+class System:
+    name: str
+    instances: List[Instance]
+    connections: List[Connection]
 
 @dataclass(frozen=True)
 class Project:
@@ -59,7 +70,11 @@ class Project:
     datatypes: List[DataType]
     interfaces: List[Interface]
     swcs: List[Swc]
-    connections: List[Connection]
+    system: System
+
+    @property
+    def connections(self) -> List[Connection]:
+        return self.system.connections
 
 def _split_endpoint(ep: str) -> Tuple[str, str]:
     swc, port = ep.split(".", 1)
@@ -92,14 +107,30 @@ def from_dict(d: Dict[str, Any]) -> Project:
             ports.append(Port(name=p["name"], direction=p["direction"], interfaceRef=it_name, interfaceType=interfaceType))
         swcs.append(Swc(name=s["name"], runnables=runs, ports=ports))
 
-    conns: List[Connection] = []
-    for c in d.get("connections", []):
-        fs, fp = _split_endpoint(c["from"])
-        ts, tp = _split_endpoint(c["to"])
-        conns.append(Connection(
-            from_swc=fs, from_port=fp, to_swc=ts, to_port=tp,
-            dataElement=c.get("dataElement"), operation=c.get("operation")
-        ))
+    system_data = d.get("system")
+    if system_data:
+        instances = [Instance(name=i["name"], typeRef=i["typeRef"]) for i in system_data.get("instances", [])]
+        conns: List[Connection] = []
+        for c in system_data.get("connections", []):
+            fs, fp = _split_endpoint(c["from"])
+            ts, tp = _split_endpoint(c["to"])
+            conns.append(Connection(
+                from_instance=fs, from_port=fp, to_instance=ts, to_port=tp,
+                dataElement=c.get("dataElement"), operation=c.get("operation")
+            ))
+        system = System(name=system_data["name"], instances=instances, connections=conns)
+    else:
+        # Backward-compatible mode: old connections.yaml where endpoint prefix is SWC type.
+        conns = []
+        for c in d.get("connections", []):
+            fs, fp = _split_endpoint(c["from"])
+            ts, tp = _split_endpoint(c["to"])
+            conns.append(Connection(
+                from_instance=fs, from_port=fp, to_instance=ts, to_port=tp,
+                dataElement=c.get("dataElement"), operation=c.get("operation")
+            ))
+        instances = [Instance(name=s.name, typeRef=s.name) for s in swcs]
+        system = System(name="System1", instances=instances, connections=conns)
 
     return Project(
         autosar_version=autosar["version"],
@@ -107,5 +138,5 @@ def from_dict(d: Dict[str, Any]) -> Project:
         datatypes=dts,
         interfaces=ifaces,
         swcs=swcs,
-        connections=conns,
+        system=system,
     )

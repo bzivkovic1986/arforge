@@ -32,8 +32,19 @@
       "required": [
         "datatypes",
         "interfaces",
-        "swcs",
-        "connections"
+        "swcs"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "system"
+          ]
+        },
+        {
+          "required": [
+            "connections"
+          ]
+        }
       ],
       "properties": {
         "datatypes": {
@@ -55,6 +66,10 @@
             "type": "string",
             "minLength": 1
           }
+        },
+        "system": {
+          "type": "string",
+          "minLength": 1
         },
         "connections": {
           "type": "string",

@@ -8,4 +8,4 @@ inputs:
     - "interfaces/*.yaml"
   swcs:
     - "swcs/*.yaml"
-  connections: "connections.yaml"
+  system: "system.yaml"

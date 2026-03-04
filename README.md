@@ -11,6 +11,8 @@ It’s intentionally built around a simple pipeline:
 - AUTOSAR Classic **4.2**
 - One YAML per SWC (`swcs/*.yaml`)
 - One YAML per interface (`interfaces/*.yaml`)
+- One system YAML (`system.yaml`) with SWC instances + instance-to-instance connections
+- Legacy `connections.yaml` is still accepted for migration (implicit one-instance-per-SWC behavior)
 - Sender-Receiver interfaces + ports
 - Client-Server interfaces + ports
 - Glob support in `autosar.project.yaml`
@@ -88,18 +90,25 @@ ports:
     interfaceRef: "If_Diagnostics"
 ```
 
-### Connections
-Sender-Receiver uses `dataElement`, Client-Server uses `operation`:
+### System (instance-based connections)
+`from`/`to` endpoints are `INSTANCE.PORT`.
+`dataElement` and `operation` are optional selectors validated against interface type.
 
 ```yaml
-connections:
-  - from: "SpeedSensor.Pp_VehicleSpeed"
-    to: "SpeedConsumer.Rp_VehicleSpeed"
-    dataElement: "VehicleSpeed"
-
-  - from: "SpeedSensor.Pp_Diag"
-    to: "SpeedConsumer.Rp_Diag"
-    operation: "ReadDTC"
+system:
+  name: "DemoSystem"
+  instances:
+    - name: "SpeedSensor_1"
+      typeRef: "SpeedSensor"
+    - name: "SpeedConsumer_1"
+      typeRef: "SpeedConsumer"
+  connections:
+    - from: "SpeedSensor_1.Pp_VehicleSpeed"
+      to: "SpeedConsumer_1.Rp_VehicleSpeed"
+      dataElement: "VehicleSpeed"
+    - from: "SpeedSensor_1.Pp_Diag"
+      to: "SpeedConsumer_1.Rp_Diag"
+      operation: "ReadDTC"
 ```
 
 ## VS Code
@@ -110,7 +119,6 @@ Install:
 This repo includes `.vscode/settings.json` which maps schemas to the YAML files, so you get validation and autocomplete while editing.
 
 ## Next steps (planned)
-- composition + component instances (more realistic system modeling)
 - runnable read/write semantics and validation
 - richer datatype and interface modeling
 - plugin system for OEM-specific rules

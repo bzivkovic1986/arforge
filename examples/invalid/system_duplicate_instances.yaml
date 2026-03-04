@@ -1,0 +1,10 @@
+system:
+  name: "BadSystem_DuplicateInstances"
+  instances:
+    - name: "SpeedSensor_1"
+      typeRef: "SpeedSensor"
+    - name: "SpeedSensor_1"
+      typeRef: "SpeedConsumer"
+  connections:
+    - from: "SpeedSensor_1.Pp_VehicleSpeed"
+      to: "SpeedSensor_1.Rp_VehicleSpeed"
