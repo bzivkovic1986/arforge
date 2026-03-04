@@ -1,26 +1,44 @@
 from __future__ import annotations
 
 from pathlib import Path
+
 import typer
 from rich.console import Console
 from rich.panel import Panel
 
-from .validate import ValidationError, build_semantic_report, format_finding, load_aggregator, load_and_validate_aggregator
 from .exporter import write_outputs
+from .validate import (
+    ValidationError,
+    build_semantic_report,
+    format_finding,
+    load_aggregator,
+    load_and_validate_aggregator,
+)
 
-app = typer.Typer(add_completion=False, help="ARForge (AUTOSAR Classic 4.2 YAML → ARXML)")
+app = typer.Typer(
+    add_completion=False,
+    help="ARForge (AUTOSAR Classic 4.2 YAML -> ARXML). validate supports -v/-vv verbosity.",
+)
 
 console = Console()
+
 
 def _default_template_dir() -> Path:
     return Path(__file__).resolve().parent.parent / "templates"
 
+
 @app.command()
 def validate(
     project: Path,
-    verbose: int = typer.Option(0, "--verbose", "-v", count=True, help="Show validation case execution details (-vv adds timing)."),
+    verbose: int = typer.Option(
+        0,
+        "--verbose",
+        "-v",
+        count=True,
+        help="Validation verbosity: -v shows case execution, -vv adds timing and finding counts.",
+    ),
 ):
-    """Validate the aggregator project and all referenced YAML files (supports globs)."""
+    """Validate project YAMLs (supports globs, -v/-vv for semantic execution details)."""
     try:
         if verbose <= 0:
             _ = load_and_validate_aggregator(project)
@@ -58,11 +76,16 @@ def validate(
             console.print(f" - {msg}")
         raise typer.Exit(code=2)
 
+
 @app.command()
 def export(
     project: Path,
     out: Path = typer.Option(..., help="Output ARXML path (file) or directory when --split-by-swc"),
-    split_by_swc: bool = typer.Option(False, "--split-by-swc", help="Write shared.arxml + one <SWC>.arxml per component + system.arxml"),
+    split_by_swc: bool = typer.Option(
+        False,
+        "--split-by-swc",
+        help="Write shared.arxml + one <SWC>.arxml per component + system.arxml",
+    ),
     templates: Path = typer.Option(None, help="Template directory"),
 ):
     """Validate then export ARXML using Jinja2 templates."""
@@ -89,6 +112,7 @@ def export(
     console.print(Panel.fit("[green]Export complete[/green]", title="export"))
     for wp in written:
         console.print(f" - {wp}")
+
 
 if __name__ == "__main__":
     app()
