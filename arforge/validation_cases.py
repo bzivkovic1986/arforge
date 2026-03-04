@@ -31,6 +31,11 @@ class InterfaceSemanticCase(ValidationCase):
     description = "Validate interface structure and datatype references."
     tags = ("core", "interfaces")
 
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.interfaces:
+            return False, "no interfaces defined"
+        return True, None
+
     def run(self, ctx: ValidationContext) -> List[Finding]:
         findings: List[Finding] = []
         dt_names = set(ctx.datatype_by_name.keys())
@@ -77,6 +82,11 @@ class SwcStructureCase(ValidationCase):
     description = "Validate SWC internal uniqueness constraints."
     tags = ("core", "swc")
 
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.swcs:
+            return False, "no SWCs defined"
+        return True, None
+
     def run(self, ctx: ValidationContext) -> List[Finding]:
         findings: List[Finding] = []
         for swc in sorted(ctx.project.swcs, key=lambda s: s.name):
@@ -93,6 +103,11 @@ class SwcPortInterfaceCase(ValidationCase):
     case_id = "CORE-021"
     description = "Validate SWC ports against interface model."
     tags = ("core", "swc", "interfaces")
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.swcs:
+            return False, "no SWCs defined"
+        return True, None
 
     def run(self, ctx: ValidationContext) -> List[Finding]:
         findings: List[Finding] = []
@@ -123,6 +138,11 @@ class SystemInstanceTypeCase(ValidationCase):
     description = "Validate system instances reference known SWC types."
     tags = ("core", "system")
 
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.system.instances:
+            return False, "no system instances defined"
+        return True, None
+
     def run(self, ctx: ValidationContext) -> List[Finding]:
         findings: List[Finding] = []
         for inst in ctx.project.system.instances:
@@ -140,6 +160,11 @@ class ConnectionSemanticCase(ValidationCase):
     case_id = "CORE-040"
     description = "Validate system connections and selector compatibility."
     tags = ("core", "system", "connections")
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.system.connections:
+            return False, "no system connections defined"
+        return True, None
 
     def run(self, ctx: ValidationContext) -> List[Finding]:
         findings: List[Finding] = []

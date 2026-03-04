@@ -56,7 +56,7 @@ def _expand_patterns(base_dir: Path, patterns: Sequence[str]) -> List[Path]:
             seen.add(p)
     return uniq
 
-def load_and_validate_aggregator(agg_path: Path, schema_path: Optional[Path] = None) -> Project:
+def load_aggregator(agg_path: Path, schema_path: Optional[Path] = None) -> Project:
     agg = _load_yaml(agg_path)
     agg_schema = _load_json(schema_path or (_schema_dir() / "aggregator.schema.json"))
     errs = _validate_with_schema(agg, agg_schema, str(agg_path))
@@ -125,7 +125,11 @@ def load_and_validate_aggregator(agg_path: Path, schema_path: Optional[Path] = N
             raise ValidationError(errs)
         merged["connections"] = c_data.get("connections", [])
 
-    project = from_dict(merged)
+    return from_dict(merged)
+
+
+def load_and_validate_aggregator(agg_path: Path, schema_path: Optional[Path] = None) -> Project:
+    project = load_aggregator(agg_path, schema_path=schema_path)
     sem_errs = validate_semantic(project)
     if sem_errs:
         raise ValidationError(sem_errs)
@@ -148,7 +152,9 @@ def build_semantic_report(
     *,
     ruleset: str = "core",
 ) -> ValidationReport:
-    return ValidationReport(ruleset=ruleset, findings=run_semantic_validation(project, ctx, ruleset=ruleset))
+    context = ctx or ValidationContext(project)
+    runner = ValidationRunner(get_ruleset(ruleset))
+    return runner.run_report(context, ruleset=ruleset)
 
 
 def validate_semantic(project: Project) -> List[str]:

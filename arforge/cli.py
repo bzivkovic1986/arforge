@@ -5,7 +5,7 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 
-from .validate import load_and_validate_aggregator, ValidationError
+from .validate import ValidationError, build_semantic_report, format_finding, load_aggregator, load_and_validate_aggregator
 from .exporter import write_outputs
 
 app = typer.Typer(add_completion=False, help="ARForge (AUTOSAR Classic 4.2 YAML → ARXML)")
@@ -16,10 +16,41 @@ def _default_template_dir() -> Path:
     return Path(__file__).resolve().parent.parent / "templates"
 
 @app.command()
-def validate(project: Path):
+def validate(
+    project: Path,
+    verbose: int = typer.Option(0, "--verbose", "-v", count=True, help="Show validation case execution details (-vv adds timing)."),
+):
     """Validate the aggregator project and all referenced YAML files (supports globs)."""
     try:
-        _ = load_and_validate_aggregator(project)
+        if verbose <= 0:
+            _ = load_and_validate_aggregator(project)
+            console.print(Panel.fit(f"[green]OK[/green] Valid: {project}", title="validate"))
+            return
+
+        parsed = load_aggregator(project)
+        report = build_semantic_report(parsed, ruleset="core")
+        error_messages = [format_finding(f) for f in report.error_findings()]
+
+        console.print(f"ruleset={report.ruleset} cases={len(report.case_results)}")
+        for case in report.case_results:
+            if case.status == "skip":
+                if verbose >= 2:
+                    console.print(f" - {case.case_id} SKIP ({case.reason}) (ms=0.00 findings=0)")
+                else:
+                    console.print(f" - {case.case_id} SKIP ({case.reason})")
+                continue
+
+            line = f" - {case.case_id} RUN {case.outcome.upper()}"
+            if verbose >= 2:
+                line += f" (ms={case.duration_ms:.2f} findings={case.finding_count})"
+            console.print(line)
+
+        if error_messages:
+            console.print(Panel.fit(f"[red]FAILED[/red] {project}", title="validate"))
+            for msg in error_messages:
+                console.print(f" - {msg}")
+            raise typer.Exit(code=2)
+
         console.print(Panel.fit(f"[green]OK[/green] Valid: {project}", title="validate"))
     except ValidationError as e:
         console.print(Panel.fit(f"[red]FAILED[/red] {project}", title="validate"))

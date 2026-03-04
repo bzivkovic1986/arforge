@@ -2,11 +2,14 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from time import perf_counter
 from typing import Dict, List, Literal, Optional, Sequence, Tuple
 
 from .model import Port, Project
 
 Severity = Literal["error", "warning", "info"]
+CaseStatus = Literal["run", "skip"]
+CaseOutcome = Literal["ok", "fail"]
 
 
 @dataclass(frozen=True)
@@ -20,6 +23,7 @@ class Finding:
 @dataclass(frozen=True)
 class ValidationReport:
     ruleset: str
+    case_results: List["CaseResult"]
     findings: List[Finding]
 
     def error_findings(self) -> List[Finding]:
@@ -29,6 +33,18 @@ class ValidationReport:
         # This keeps a machine-readable report shape ready for future CLI output.
         return {
             "ruleset": self.ruleset,
+            "cases": [
+                {
+                    "case_id": c.case_id,
+                    "description": c.description,
+                    "status": c.status,
+                    "outcome": c.outcome,
+                    "reason": c.reason,
+                    "duration_ms": c.duration_ms,
+                    "finding_count": c.finding_count,
+                }
+                for c in self.case_results
+            ],
             "findings": [
                 {
                     "code": f.code,
@@ -39,6 +55,18 @@ class ValidationReport:
                 for f in self.findings
             ],
         }
+
+
+@dataclass(frozen=True)
+class CaseResult:
+    case_id: str
+    description: str
+    status: CaseStatus
+    outcome: Optional[CaseOutcome]
+    reason: Optional[str]
+    duration_ms: float
+    finding_count: int
+    findings: List[Finding]
 
 
 class ValidationContext:
@@ -77,6 +105,9 @@ class ValidationCase(ABC):
     def run(self, ctx: ValidationContext) -> List[Finding]:
         raise NotImplementedError
 
+    def applicability(self, ctx: ValidationContext) -> Tuple[bool, Optional[str]]:
+        return True, None
+
     def finding(self, message: str, *, location: Optional[str] = None, code: Optional[str] = None) -> Finding:
         return Finding(
             code=code or self.case_id,
@@ -90,11 +121,52 @@ class ValidationRunner:
     def __init__(self, cases: Sequence[ValidationCase]):
         self.cases = list(cases)
 
-    def run(self, ctx: ValidationContext) -> List[Finding]:
-        findings: List[Finding] = []
+    def run_report(self, ctx: ValidationContext, *, ruleset: str) -> ValidationReport:
+        all_findings: List[Finding] = []
+        case_results: List[CaseResult] = []
         for case in sorted(self.cases, key=lambda c: c.case_id):
-            findings.extend(case.run(ctx))
-        return sorted(findings, key=_finding_sort_key)
+            applicable, reason = case.applicability(ctx)
+            if not applicable:
+                case_results.append(
+                    CaseResult(
+                        case_id=case.case_id,
+                        description=case.description,
+                        status="skip",
+                        outcome=None,
+                        reason=reason or "not applicable",
+                        duration_ms=0.0,
+                        finding_count=0,
+                        findings=[],
+                    )
+                )
+                continue
+
+            started = perf_counter()
+            findings = sorted(case.run(ctx), key=_finding_sort_key)
+            duration_ms = (perf_counter() - started) * 1000.0
+            all_findings.extend(findings)
+            has_errors = any(f.severity == "error" for f in findings)
+            case_results.append(
+                CaseResult(
+                    case_id=case.case_id,
+                    description=case.description,
+                    status="run",
+                    outcome="fail" if has_errors else "ok",
+                    reason=None,
+                    duration_ms=duration_ms,
+                    finding_count=len(findings),
+                    findings=findings,
+                )
+            )
+
+        return ValidationReport(
+            ruleset=ruleset,
+            case_results=case_results,
+            findings=sorted(all_findings, key=_finding_sort_key),
+        )
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        return self.run_report(ctx, ruleset="core").findings
 
 
 def _severity_rank(severity: Severity) -> int:
