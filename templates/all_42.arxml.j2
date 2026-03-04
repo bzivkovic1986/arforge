@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AUTOSAR xmlns="http://autosar.org/schema/r4.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://autosar.org/schema/r4.0 AUTOSAR_4-2-2.xsd">
+  <AR-PACKAGES>
+    <AR-PACKAGE>
+      <SHORT-NAME>{{ root_pkg }}</SHORT-NAME>
+      <AR-PACKAGES>
+
+        <AR-PACKAGE>
+          <SHORT-NAME>DataTypes</SHORT-NAME>
+          <ELEMENTS>
+            {% for dt in datatypes %}
+            <IMPLEMENTATION-DATA-TYPE>
+              <SHORT-NAME>{{ dt.name }}</SHORT-NAME>
+              <CATEGORY>TYPE_REFERENCE</CATEGORY>
+            </IMPLEMENTATION-DATA-TYPE>
+            {% endfor %}
+          </ELEMENTS>
+        </AR-PACKAGE>
+
+        <AR-PACKAGE>
+          <SHORT-NAME>Interfaces</SHORT-NAME>
+          <ELEMENTS>
+
+            {% for itf in sr_interfaces %}
+            <SENDER-RECEIVER-INTERFACE>
+              <SHORT-NAME>{{ itf.name }}</SHORT-NAME>
+              <DATA-ELEMENTS>
+                {% for de in itf.dataElements %}
+                <VARIABLE-DATA-PROTOTYPE>
+                  <SHORT-NAME>{{ de.name }}</SHORT-NAME>
+                  <TYPE-TREF DEST="IMPLEMENTATION-DATA-TYPE">/{{ root_pkg }}/DataTypes/{{ de.typeRef }}</TYPE-TREF>
+                </VARIABLE-DATA-PROTOTYPE>
+                {% endfor %}
+              </DATA-ELEMENTS>
+            </SENDER-RECEIVER-INTERFACE>
+            {% endfor %}
+
+            {% for itf in cs_interfaces %}
+            <CLIENT-SERVER-INTERFACE>
+              <SHORT-NAME>{{ itf.name }}</SHORT-NAME>
+              <OPERATIONS>
+                {% for op in itf.operations %}
+                <CLIENT-SERVER-OPERATION>
+                  <SHORT-NAME>{{ op.name }}</SHORT-NAME>
+                </CLIENT-SERVER-OPERATION>
+                {% endfor %}
+              </OPERATIONS>
+            </CLIENT-SERVER-INTERFACE>
+            {% endfor %}
+
+          </ELEMENTS>
+        </AR-PACKAGE>
+
+        <AR-PACKAGE>
+          <SHORT-NAME>Components</SHORT-NAME>
+          <ELEMENTS>
+            {% for swc in swcs %}
+            <APPLICATION-SW-COMPONENT-TYPE>
+              <SHORT-NAME>{{ swc.name }}</SHORT-NAME>
+
+              <PORTS>
+                {% for p in swc.ports %}
+                  {% if p.direction == "provides" %}
+                <P-PORT-PROTOTYPE>
+                  <SHORT-NAME>{{ p.name }}</SHORT-NAME>
+                  {% if p.interfaceType == "senderReceiver" %}
+                  <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/{{ root_pkg }}/Interfaces/{{ p.interfaceRef }}</PROVIDED-INTERFACE-TREF>
+                  {% else %}
+                  <PROVIDED-INTERFACE-TREF DEST="CLIENT-SERVER-INTERFACE">/{{ root_pkg }}/Interfaces/{{ p.interfaceRef }}</PROVIDED-INTERFACE-TREF>
+                  {% endif %}
+                </P-PORT-PROTOTYPE>
+                  {% else %}
+                <R-PORT-PROTOTYPE>
+                  <SHORT-NAME>{{ p.name }}</SHORT-NAME>
+                  {% if p.interfaceType == "senderReceiver" %}
+                  <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/{{ root_pkg }}/Interfaces/{{ p.interfaceRef }}</REQUIRED-INTERFACE-TREF>
+                  {% else %}
+                  <REQUIRED-INTERFACE-TREF DEST="CLIENT-SERVER-INTERFACE">/{{ root_pkg }}/Interfaces/{{ p.interfaceRef }}</REQUIRED-INTERFACE-TREF>
+                  {% endif %}
+                </R-PORT-PROTOTYPE>
+                  {% endif %}
+                {% endfor %}
+              </PORTS>
+
+              <INTERNAL-BEHAVIORS>
+                <SWC-INTERNAL-BEHAVIOR>
+                  <SHORT-NAME>IB_{{ swc.name }}</SHORT-NAME>
+
+                  <RUNNABLES>
+                    {% for r in swc.runnables %}
+                    <RUNNABLE-ENTITY>
+                      <SHORT-NAME>{{ r.name }}</SHORT-NAME>
+                      <CAN-BE-INVOKED-CONCURRENTLY>false</CAN-BE-INVOKED-CONCURRENTLY>
+                    </RUNNABLE-ENTITY>
+                    {% endfor %}
+                  </RUNNABLES>
+
+                  <EVENTS>
+                    {% for r in swc.runnables %}
+                    <TIMING-EVENT>
+                      <SHORT-NAME>TE_{{ r.name }}</SHORT-NAME>
+                      <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/{{ root_pkg }}/Components/{{ swc.name }}/IB_{{ swc.name }}/{{ r.name }}</START-ON-EVENT-REF>
+                      <PERIOD>{{ (r.timingEventMs / 1000.0) }}</PERIOD>
+                    </TIMING-EVENT>
+                    {% endfor %}
+                  </EVENTS>
+
+                </SWC-INTERNAL-BEHAVIOR>
+              </INTERNAL-BEHAVIORS>
+            </APPLICATION-SW-COMPONENT-TYPE>
+            {% endfor %}
+          </ELEMENTS>
+        </AR-PACKAGE>
+
+        <AR-PACKAGE>
+          <SHORT-NAME>System</SHORT-NAME>
+          <ELEMENTS>
+            <SYSTEM>
+              <SHORT-NAME>System1</SHORT-NAME>
+              <CONNECTORS>
+                {% for c in connections %}
+                <ASSEMBLY-SW-CONNECTOR>
+                  <SHORT-NAME>Conn_{{ loop.index }}</SHORT-NAME>
+                  <PROVIDER-IREF>
+                    <CONTEXT-COMPONENT-REF DEST="APPLICATION-SW-COMPONENT-TYPE">/{{ root_pkg }}/Components/{{ c.from_swc }}</CONTEXT-COMPONENT-REF>
+                    <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/{{ root_pkg }}/Components/{{ c.from_swc }}/{{ c.from_port }}</TARGET-P-PORT-REF>
+                  </PROVIDER-IREF>
+                  <REQUESTER-IREF>
+                    <CONTEXT-COMPONENT-REF DEST="APPLICATION-SW-COMPONENT-TYPE">/{{ root_pkg }}/Components/{{ c.to_swc }}</CONTEXT-COMPONENT-REF>
+                    <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/{{ root_pkg }}/Components/{{ c.to_swc }}/{{ c.to_port }}</TARGET-R-PORT-REF>
+                  </REQUESTER-IREF>
+                </ASSEMBLY-SW-CONNECTOR>
+                {% endfor %}
+              </CONNECTORS>
+            </SYSTEM>
+          </ELEMENTS>
+        </AR-PACKAGE>
+
+      </AR-PACKAGES>
+    </AR-PACKAGE>
+  </AR-PACKAGES>
+</AUTOSAR>

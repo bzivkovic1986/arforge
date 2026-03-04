@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "autosar-tool aggregator project schema (glob enabled)",
+  "type": "object",
+  "required": [
+    "autosar",
+    "inputs"
+  ],
+  "properties": {
+    "autosar": {
+      "type": "object",
+      "required": [
+        "version",
+        "rootPackage"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "enum": [
+            "4.2"
+          ]
+        },
+        "rootPackage": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "inputs": {
+      "type": "object",
+      "required": [
+        "datatypes",
+        "interfaces",
+        "swcs",
+        "connections"
+      ],
+      "properties": {
+        "datatypes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "interfaces": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "swcs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "connections": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

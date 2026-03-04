@@ -1,0 +1,12 @@
+swc:
+  name: "SpeedSensor"
+  runnables:
+    - name: "Runnable_ReadSpeed"
+      timingEventMs: 10
+  ports:
+    - name: "Pp_VehicleSpeed"
+      direction: "provides"
+      interfaceRef: "If_VehicleSpeed"
+    - name: "Pp_Diag"
+      direction: "provides"
+      interfaceRef: "If_Diagnostics"

@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "autosar: validate project",
+      "type": "shell",
+      "command": ".venv\\Scripts\\python.exe",
+      "args": ["-m", "arforge.cli", "validate", "examples/autosar.project.yaml"],
+      "problemMatcher": []
+    },
+    {
+      "label": "autosar: export split-by-swc",
+      "type": "shell",
+      "command": ".venv\\Scripts\\python.exe",
+      "args": ["-m", "arforge.cli", "export", "examples/autosar.project.yaml", "--out", "build/out", "--split-by-swc"],
+      "problemMatcher": []
+    },
+    {
+      "label": "autosar: export monolithic",
+      "type": "shell",
+      "command": ".venv\\Scripts\\python.exe",
+      "args": ["-m", "arforge.cli", "export", "examples/autosar.project.yaml", "--out", "build/all.arxml"],
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AUTOSAR xmlns="http://autosar.org/schema/r4.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://autosar.org/schema/r4.0 AUTOSAR_4-2-2.xsd">
+  <AR-PACKAGES>
+    <AR-PACKAGE>
+      <SHORT-NAME>{{ root_pkg }}</SHORT-NAME>
+      <AR-PACKAGES>
+
+        <AR-PACKAGE>
+          <SHORT-NAME>Components</SHORT-NAME>
+          <ELEMENTS>
+            <APPLICATION-SW-COMPONENT-TYPE>
+              <SHORT-NAME>{{ swc.name }}</SHORT-NAME>
+
+              <PORTS>
+                {% for p in swc.ports %}
+                  {% if p.direction == "provides" %}
+                <P-PORT-PROTOTYPE>
+                  <SHORT-NAME>{{ p.name }}</SHORT-NAME>
+                  {% if p.interfaceType == "senderReceiver" %}
+                  <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/{{ root_pkg }}/Interfaces/{{ p.interfaceRef }}</PROVIDED-INTERFACE-TREF>
+                  {% else %}
+                  <PROVIDED-INTERFACE-TREF DEST="CLIENT-SERVER-INTERFACE">/{{ root_pkg }}/Interfaces/{{ p.interfaceRef }}</PROVIDED-INTERFACE-TREF>
+                  {% endif %}
+                </P-PORT-PROTOTYPE>
+                  {% else %}
+                <R-PORT-PROTOTYPE>
+                  <SHORT-NAME>{{ p.name }}</SHORT-NAME>
+                  {% if p.interfaceType == "senderReceiver" %}
+                  <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/{{ root_pkg }}/Interfaces/{{ p.interfaceRef }}</REQUIRED-INTERFACE-TREF>
+                  {% else %}
+                  <REQUIRED-INTERFACE-TREF DEST="CLIENT-SERVER-INTERFACE">/{{ root_pkg }}/Interfaces/{{ p.interfaceRef }}</REQUIRED-INTERFACE-TREF>
+                  {% endif %}
+                </R-PORT-PROTOTYPE>
+                  {% endif %}
+                {% endfor %}
+              </PORTS>
+
+              <INTERNAL-BEHAVIORS>
+                <SWC-INTERNAL-BEHAVIOR>
+                  <SHORT-NAME>IB_{{ swc.name }}</SHORT-NAME>
+
+                  <RUNNABLES>
+                    {% for r in swc.runnables %}
+                    <RUNNABLE-ENTITY>
+                      <SHORT-NAME>{{ r.name }}</SHORT-NAME>
+                      <CAN-BE-INVOKED-CONCURRENTLY>false</CAN-BE-INVOKED-CONCURRENTLY>
+                    </RUNNABLE-ENTITY>
+                    {% endfor %}
+                  </RUNNABLES>
+
+                  <EVENTS>
+                    {% for r in swc.runnables %}
+                    <TIMING-EVENT>
+                      <SHORT-NAME>TE_{{ r.name }}</SHORT-NAME>
+                      <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/{{ root_pkg }}/Components/{{ swc.name }}/IB_{{ swc.name }}/{{ r.name }}</START-ON-EVENT-REF>
+                      <PERIOD>{{ (r.timingEventMs / 1000.0) }}</PERIOD>
+                    </TIMING-EVENT>
+                    {% endfor %}
+                  </EVENTS>
+
+                </SWC-INTERNAL-BEHAVIOR>
+              </INTERNAL-BEHAVIORS>
+            </APPLICATION-SW-COMPONENT-TYPE>
+          </ELEMENTS>
+        </AR-PACKAGE>
+
+      </AR-PACKAGES>
+    </AR-PACKAGE>
+  </AR-PACKAGES>
+</AUTOSAR>

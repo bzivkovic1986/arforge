@@ -1,0 +1,9 @@
+{
+  "yaml.schemas": {
+    "./schemas/aggregator.schema.json": ["**/autosar.project.yaml", "**/autosar.project.yml"],
+    "./schemas/datatypes.schema.json": ["**/datatypes.yaml", "**/datatypes.yml"],
+    "./schemas/interface.schema.json": ["**/interfaces/*.yaml", "**/interfaces/*.yml"],
+    "./schemas/swc.schema.json": ["**/swcs/*.yaml", "**/swcs/*.yml"],
+    "./schemas/connections.schema.json": ["**/connections.yaml", "**/connections.yml"]
+  }
+}

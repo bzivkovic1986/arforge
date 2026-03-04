@@ -1,0 +1,4 @@
+datatypes:
+  - name: "UInt16"
+    category: "implementation"
+    baseType: "uint16"

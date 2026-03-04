@@ -1,0 +1,5 @@
+interface:
+  name: "If_Diagnostics"
+  type: "clientServer"
+  operations:
+    - name: "ReadDTC"

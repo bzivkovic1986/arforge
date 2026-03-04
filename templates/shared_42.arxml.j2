@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AUTOSAR xmlns="http://autosar.org/schema/r4.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://autosar.org/schema/r4.0 AUTOSAR_4-2-2.xsd">
+  <AR-PACKAGES>
+    <AR-PACKAGE>
+      <SHORT-NAME>{{ root_pkg }}</SHORT-NAME>
+      <AR-PACKAGES>
+
+        <AR-PACKAGE>
+          <SHORT-NAME>DataTypes</SHORT-NAME>
+          <ELEMENTS>
+            {% for dt in datatypes %}
+            <IMPLEMENTATION-DATA-TYPE>
+              <SHORT-NAME>{{ dt.name }}</SHORT-NAME>
+              <CATEGORY>TYPE_REFERENCE</CATEGORY>
+            </IMPLEMENTATION-DATA-TYPE>
+            {% endfor %}
+          </ELEMENTS>
+        </AR-PACKAGE>
+
+        <AR-PACKAGE>
+          <SHORT-NAME>Interfaces</SHORT-NAME>
+          <ELEMENTS>
+
+            {% for itf in sr_interfaces %}
+            <SENDER-RECEIVER-INTERFACE>
+              <SHORT-NAME>{{ itf.name }}</SHORT-NAME>
+              <DATA-ELEMENTS>
+                {% for de in itf.dataElements %}
+                <VARIABLE-DATA-PROTOTYPE>
+                  <SHORT-NAME>{{ de.name }}</SHORT-NAME>
+                  <TYPE-TREF DEST="IMPLEMENTATION-DATA-TYPE">/{{ root_pkg }}/DataTypes/{{ de.typeRef }}</TYPE-TREF>
+                </VARIABLE-DATA-PROTOTYPE>
+                {% endfor %}
+              </DATA-ELEMENTS>
+            </SENDER-RECEIVER-INTERFACE>
+            {% endfor %}
+
+            {% for itf in cs_interfaces %}
+            <CLIENT-SERVER-INTERFACE>
+              <SHORT-NAME>{{ itf.name }}</SHORT-NAME>
+              <OPERATIONS>
+                {% for op in itf.operations %}
+                <CLIENT-SERVER-OPERATION>
+                  <SHORT-NAME>{{ op.name }}</SHORT-NAME>
+                </CLIENT-SERVER-OPERATION>
+                {% endfor %}
+              </OPERATIONS>
+            </CLIENT-SERVER-INTERFACE>
+            {% endfor %}
+
+          </ELEMENTS>
+        </AR-PACKAGE>
+
+      </AR-PACKAGES>
+    </AR-PACKAGE>
+  </AR-PACKAGES>
+</AUTOSAR>

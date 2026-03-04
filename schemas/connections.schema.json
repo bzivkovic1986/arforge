@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "autosar-tool connections schema (SR + CS)",
+  "type": "object",
+  "required": [
+    "connections"
+  ],
+  "properties": {
+    "connections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "from",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_]+\\.[A-Za-z0-9_]+$"
+          },
+          "to": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_]+\\.[A-Za-z0-9_]+$"
+          },
+          "dataElement": {
+            "type": "string",
+            "minLength": 1
+          },
+          "operation": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "dataElement"
+            ],
+            "not": {
+              "required": [
+                "operation"
+              ]
+            }
+          },
+          {
+            "required": [
+              "operation"
+            ],
+            "not": {
+              "required": [
+                "dataElement"
+              ]
+            }
+          }
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
