@@ -25,6 +25,10 @@ class DuplicateNameCase(ValidationCase):
             findings.append(self.finding("Duplicate interface names found.", code="CORE-001-INTERFACE-DUPLICATE"))
         if len({s.name for s in project.swcs}) != len(project.swcs):
             findings.append(self.finding("Duplicate SWC names found.", code="CORE-001-SWC-DUPLICATE"))
+        if len({u.name for u in project.units}) != len(project.units):
+            findings.append(self.finding("Duplicate unit names found.", code="CORE-001-UNIT-DUPLICATE"))
+        if len({c.name for c in project.compuMethods}) != len(project.compuMethods):
+            findings.append(self.finding("Duplicate compu method names found.", code="CORE-001-COMPU-METHOD-DUPLICATE"))
         if len({c.name for c in project.system.composition.components}) != len(project.system.composition.components):
             findings.append(self.finding("System composition has duplicate component prototype names.", code="CORE-001-INSTANCE-DUPLICATE"))
 
@@ -139,6 +143,67 @@ class InterfaceSemanticCase(ValidationCase):
                     self.finding(
                         f"ApplicationDataType '{app.name}' references unknown implementationTypeRef '{app.implementationTypeRef}'.",
                         code="CORE-010-APPLICATION-UNKNOWN-IMPLEMENTATION",
+                    )
+                )
+            if app.unitRef and app.unitRef not in ctx.unit_by_name:
+                findings.append(
+                    self.finding(
+                        f"ApplicationDataType '{app.name}' references unknown unitRef '{app.unitRef}'.",
+                        code="CORE-010-APPLICATION-UNKNOWN-UNIT",
+                    )
+                )
+            compu = None
+            if app.compuMethodRef:
+                compu = ctx.compu_method_by_name.get(app.compuMethodRef)
+                if compu is None:
+                    findings.append(
+                        self.finding(
+                            f"ApplicationDataType '{app.name}' references unknown compuMethodRef '{app.compuMethodRef}'.",
+                            code="CORE-010-APPLICATION-UNKNOWN-COMPU-METHOD",
+                        )
+                    )
+                if not app.unitRef:
+                    findings.append(
+                        self.finding(
+                            f"ApplicationDataType '{app.name}' must define unitRef when compuMethodRef is set.",
+                            code="CORE-010-APPLICATION-COMPU-REQUIRES-UNIT",
+                        )
+                    )
+            if app.unitRef and compu and app.unitRef != compu.unitRef:
+                findings.append(
+                    self.finding(
+                        f"ApplicationDataType '{app.name}' unitRef '{app.unitRef}' must match compuMethod '{compu.name}' unitRef '{compu.unitRef}'.",
+                        code="CORE-010-APPLICATION-UNIT-MISMATCH",
+                    )
+                )
+
+        for compu in sorted(ctx.project.compuMethods, key=lambda c: c.name):
+            if compu.category != "linear":
+                findings.append(
+                    self.finding(
+                        f"CompuMethod '{compu.name}' has unsupported category '{compu.category}'.",
+                        code="CORE-010-COMPU-CATEGORY",
+                    )
+                )
+            if compu.unitRef not in ctx.unit_by_name:
+                findings.append(
+                    self.finding(
+                        f"CompuMethod '{compu.name}' references unknown unitRef '{compu.unitRef}'.",
+                        code="CORE-010-COMPU-UNKNOWN-UNIT",
+                    )
+                )
+            if compu.factor == 0:
+                findings.append(
+                    self.finding(
+                        f"CompuMethod '{compu.name}' must have non-zero factor.",
+                        code="CORE-010-COMPU-FACTOR-ZERO",
+                    )
+                )
+            if compu.physMin is not None and compu.physMax is not None and compu.physMin > compu.physMax:
+                findings.append(
+                    self.finding(
+                        f"CompuMethod '{compu.name}' has invalid physical range: physMin '{compu.physMin}' > physMax '{compu.physMax}'.",
+                        code="CORE-010-COMPU-RANGE",
                     )
                 )
 
@@ -681,7 +746,7 @@ class ConnectionSemanticCase(ValidationCase):
                 if not conn.dataElement:
                     findings.append(
                         self.finding(
-                            "SR connector must specify dataElement",
+                            "SR connector must specify dataElement (required by arforge policy).",
                             code="CORE-040-SR-MISSING-DATAELEMENT",
                         )
                     )

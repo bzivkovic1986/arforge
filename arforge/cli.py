@@ -163,6 +163,14 @@ def export(
             base_types_file=load_report.base_types_file,
             implementation_types_file=load_report.implementation_types_file,
             application_types_file=load_report.application_types_file,
+            unit_patterns=[
+                InputPatternExpansion(pattern=p.pattern, matched_files=p.matched_files)
+                for p in load_report.unit_patterns
+            ],
+            compu_method_patterns=[
+                InputPatternExpansion(pattern=p.pattern, matched_files=p.matched_files)
+                for p in load_report.compu_method_patterns
+            ],
             interface_patterns=[
                 InputPatternExpansion(pattern=p.pattern, matched_files=p.matched_files)
                 for p in load_report.interface_patterns
@@ -199,6 +207,10 @@ def export(
                 console.print(f"implementationDataTypes: {export_report.input_summary.implementation_types_file}")
             if export_report.input_summary.application_types_file:
                 console.print(f"applicationDataTypes: {export_report.input_summary.application_types_file}")
+            if export_report.input_summary.unit_patterns:
+                _print_pattern_summary("units", export_report.input_summary.unit_patterns)
+            if export_report.input_summary.compu_method_patterns:
+                _print_pattern_summary("compuMethods", export_report.input_summary.compu_method_patterns)
             _print_pattern_summary("interfaces", export_report.input_summary.interface_patterns)
             _print_pattern_summary("swcs", export_report.input_summary.swc_patterns)
             if export_report.input_summary.system_file:

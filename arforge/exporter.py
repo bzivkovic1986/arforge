@@ -27,6 +27,8 @@ class ExportInputSummary:
     base_types_file: Optional[Path]
     implementation_types_file: Optional[Path]
     application_types_file: Optional[Path]
+    unit_patterns: List[InputPatternExpansion]
+    compu_method_patterns: List[InputPatternExpansion]
     interface_patterns: List[InputPatternExpansion]
     swc_patterns: List[InputPatternExpansion]
     system_file: Optional[Path]
@@ -83,7 +85,13 @@ def _split_interfaces(project: Project):
 def _model_summary(project: Project) -> ExportModelSummary:
     sr, cs = _split_interfaces(project)
     return ExportModelSummary(
-        datatypes_count=len(project.baseTypes) + len(project.implementationDataTypes) + len(project.applicationDataTypes),
+        datatypes_count=(
+            len(project.baseTypes)
+            + len(project.implementationDataTypes)
+            + len(project.applicationDataTypes)
+            + len(project.units)
+            + len(project.compuMethods)
+        ),
         interfaces_count=len(project.interfaces),
         sr_interfaces_count=len(sr),
         cs_interfaces_count=len(cs),
@@ -125,6 +133,8 @@ def render_shared(project: Project, template_dir: Path, template_name: str = SHA
     base_types = sorted(project.baseTypes, key=lambda x: x.name)
     implementation_types = sorted(project.implementationDataTypes, key=lambda x: x.name)
     application_types = sorted(project.applicationDataTypes, key=lambda x: x.name)
+    units = sorted(project.units, key=lambda x: x.name)
+    compu_methods = sorted(project.compuMethods, key=lambda x: x.name)
     type_trefs: Dict[str, Dict[str, str]] = {
         d.name: {"package": "BaseTypes", "dest": "SW-BASE-TYPE"} for d in base_types
     }
@@ -140,6 +150,8 @@ def render_shared(project: Project, template_dir: Path, template_name: str = SHA
         base_types=base_types,
         implementation_types=implementation_types,
         application_types=application_types,
+        units=units,
+        compu_methods=compu_methods,
         type_trefs=type_trefs,
         sr_interfaces=sr,
         cs_interfaces=cs,
@@ -186,6 +198,8 @@ def write_outputs_with_report(
         base_types = sorted(project.baseTypes, key=lambda x: x.name)
         implementation_types = sorted(project.implementationDataTypes, key=lambda x: x.name)
         application_types = sorted(project.applicationDataTypes, key=lambda x: x.name)
+        units = sorted(project.units, key=lambda x: x.name)
+        compu_methods = sorted(project.compuMethods, key=lambda x: x.name)
         type_trefs: Dict[str, Dict[str, str]] = {
             d.name: {"package": "BaseTypes", "dest": "SW-BASE-TYPE"} for d in base_types
         }
@@ -204,6 +218,8 @@ def write_outputs_with_report(
                 base_types=base_types,
                 implementation_types=implementation_types,
                 application_types=application_types,
+                units=units,
+                compu_methods=compu_methods,
                 type_trefs=type_trefs,
                 sr_interfaces=sr,
                 cs_interfaces=cs,

@@ -29,6 +29,8 @@ class AggregatorLoadReport:
     base_types_file: Optional[Path]
     implementation_types_file: Optional[Path]
     application_types_file: Optional[Path]
+    unit_patterns: List[InputPatternReport]
+    compu_method_patterns: List[InputPatternReport]
     interface_patterns: List[InputPatternReport]
     swc_patterns: List[InputPatternReport]
     system_file: Optional[Path]
@@ -108,6 +110,8 @@ def load_aggregator_with_report(agg_path: Path, schema_path: Optional[Path] = No
         "baseTypes": [],
         "implementationDataTypes": [],
         "applicationDataTypes": [],
+        "units": [],
+        "compuMethods": [],
         "interfaces": [],
         "swcs": [],
         "system": None,
@@ -118,6 +122,8 @@ def load_aggregator_with_report(agg_path: Path, schema_path: Optional[Path] = No
     base_types_file: Optional[Path] = None
     implementation_types_file: Optional[Path] = None
     application_types_file: Optional[Path] = None
+    unit_patterns: List[InputPatternReport] = []
+    compu_method_patterns: List[InputPatternReport] = []
 
     uses_legacy = "datatypes" in inputs
     uses_split = all(k in inputs for k in ["baseTypes", "implementationDataTypes", "applicationDataTypes"])
@@ -171,6 +177,26 @@ def load_aggregator_with_report(agg_path: Path, schema_path: Optional[Path] = No
         if errs:
             raise ValidationError(errs)
         merged["applicationDataTypes"] = application_types_data.get("applicationDataTypes", [])
+
+    if "units" in inputs:
+        units_schema = _load_json(_schema_dir() / "units.schema.json")
+        unit_files, unit_patterns = _expand_patterns_with_details(base_dir, inputs["units"])
+        for p in unit_files:
+            data = _load_yaml(p)
+            errs = _validate_with_schema(data, units_schema, str(p))
+            if errs:
+                raise ValidationError(errs)
+            merged["units"].extend(data.get("units", []))
+
+    if "compuMethods" in inputs:
+        compu_schema = _load_json(_schema_dir() / "compu_methods.schema.json")
+        compu_files, compu_method_patterns = _expand_patterns_with_details(base_dir, inputs["compuMethods"])
+        for p in compu_files:
+            data = _load_yaml(p)
+            errs = _validate_with_schema(data, compu_schema, str(p))
+            if errs:
+                raise ValidationError(errs)
+            merged["compuMethods"].extend(data.get("compuMethods", []))
 
     itf_schema = _load_json(_schema_dir() / "interface.schema.json")
     interface_files, interface_patterns = _expand_patterns_with_details(base_dir, inputs["interfaces"])
@@ -230,6 +256,8 @@ def load_aggregator_with_report(agg_path: Path, schema_path: Optional[Path] = No
         base_types_file=base_types_file,
         implementation_types_file=implementation_types_file,
         application_types_file=application_types_file,
+        unit_patterns=unit_patterns,
+        compu_method_patterns=compu_method_patterns,
         interface_patterns=interface_patterns,
         swc_patterns=swc_patterns,
         system_file=system_file,

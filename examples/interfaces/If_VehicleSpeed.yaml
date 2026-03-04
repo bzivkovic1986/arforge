@@ -3,6 +3,6 @@ interface:
   type: "senderReceiver"
   dataElements:
     - name: "VehicleSpeed"
-      typeRef: "UInt16"
+      typeRef: "App_VehicleSpeed"
     - name: "WheelSpeed"
       typeRef: "SpeedPair_T"

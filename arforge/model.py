@@ -30,6 +30,25 @@ class ImplementationDataType:
 class ApplicationDataType:
     name: str
     implementationTypeRef: str
+    unitRef: str | None = None
+    compuMethodRef: str | None = None
+
+
+@dataclass(frozen=True)
+class Unit:
+    name: str
+    displayName: str | None = None
+
+
+@dataclass(frozen=True)
+class CompuMethod:
+    name: str
+    category: str
+    unitRef: str
+    factor: float
+    offset: float
+    physMin: float | None = None
+    physMax: float | None = None
 
 @dataclass(frozen=True)
 class DataElement:
@@ -138,6 +157,8 @@ class Project:
     baseTypes: List[BaseType]
     implementationDataTypes: List[ImplementationDataType]
     applicationDataTypes: List[ApplicationDataType]
+    units: List[Unit]
+    compuMethods: List[CompuMethod]
     interfaces: List[Interface]
     swcs: List[Swc]
     system: System
@@ -169,6 +190,8 @@ def from_dict(d: Dict[str, Any]) -> Project:
             )
         )
     app_types = [ApplicationDataType(**adt) for adt in d.get("applicationDataTypes", [])]
+    units = [Unit(**u) for u in d.get("units", [])]
+    compu_methods = [CompuMethod(**cm) for cm in d.get("compuMethods", [])]
 
     ifaces: List[Interface] = []
     for itf in d.get("interfaces", []):
@@ -246,6 +269,8 @@ def from_dict(d: Dict[str, Any]) -> Project:
         baseTypes=base_types,
         implementationDataTypes=impl_types,
         applicationDataTypes=app_types,
+        units=units,
+        compuMethods=compu_methods,
         interfaces=ifaces,
         swcs=swcs,
         system=system,

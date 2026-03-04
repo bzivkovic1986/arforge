@@ -49,7 +49,48 @@
             {% for dt in application_types %}
             <APPLICATION-PRIMITIVE-DATA-TYPE>
               <SHORT-NAME>{{ dt.name }}</SHORT-NAME>
+              {% if dt.unitRef %}
+              <UNIT-REF DEST="UNIT">/{{ root_pkg }}/Units/{{ dt.unitRef }}</UNIT-REF>
+              {% endif %}
+              {% if dt.compuMethodRef %}
+              <COMPU-METHOD-REF DEST="COMPU-METHOD">/{{ root_pkg }}/CompuMethods/{{ dt.compuMethodRef }}</COMPU-METHOD-REF>
+              {% endif %}
             </APPLICATION-PRIMITIVE-DATA-TYPE>
+            {% endfor %}
+          </ELEMENTS>
+        </AR-PACKAGE>
+
+        <AR-PACKAGE>
+          <SHORT-NAME>Units</SHORT-NAME>
+          <ELEMENTS>
+            {% for u in units %}
+            <UNIT>
+              <SHORT-NAME>{{ u.name }}</SHORT-NAME>
+              {% if u.displayName %}
+              <DISPLAY-NAME>{{ u.displayName }}</DISPLAY-NAME>
+              {% endif %}
+            </UNIT>
+            {% endfor %}
+          </ELEMENTS>
+        </AR-PACKAGE>
+
+        <AR-PACKAGE>
+          <SHORT-NAME>CompuMethods</SHORT-NAME>
+          <ELEMENTS>
+            {% for c in compu_methods %}
+            <COMPU-METHOD>
+              <SHORT-NAME>{{ c.name }}</SHORT-NAME>
+              <CATEGORY>{{ c.category }}</CATEGORY>
+              <UNIT-REF DEST="UNIT">/{{ root_pkg }}/Units/{{ c.unitRef }}</UNIT-REF>
+              <FACTOR>{{ c.factor }}</FACTOR>
+              <OFFSET>{{ c.offset }}</OFFSET>
+              {% if c.physMin is not none %}
+              <PHYS-MIN>{{ c.physMin }}</PHYS-MIN>
+              {% endif %}
+              {% if c.physMax is not none %}
+              <PHYS-MAX>{{ c.physMax }}</PHYS-MAX>
+              {% endif %}
+            </COMPU-METHOD>
             {% endfor %}
           </ELEMENTS>
         </AR-PACKAGE>

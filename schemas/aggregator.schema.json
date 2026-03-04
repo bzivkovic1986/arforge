@@ -82,6 +82,20 @@
           "type": "string",
           "minLength": 1
         },
+        "units": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "compuMethods": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
         "interfaces": {
           "type": "array",
           "minItems": 1,

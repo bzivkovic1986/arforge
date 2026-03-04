@@ -1,33 +1,24 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "arforge application data types schema",
+  "title": "arforge units schema",
   "type": "object",
   "required": [
-    "applicationDataTypes"
+    "units"
   ],
   "properties": {
-    "applicationDataTypes": {
+    "units": {
       "type": "array",
       "items": {
         "type": "object",
         "required": [
-          "name",
-          "implementationTypeRef"
+          "name"
         ],
         "properties": {
           "name": {
             "type": "string",
             "minLength": 1
           },
-          "implementationTypeRef": {
-            "type": "string",
-            "minLength": 1
-          },
-          "unitRef": {
-            "type": "string",
-            "minLength": 1
-          },
-          "compuMethodRef": {
+          "displayName": {
             "type": "string",
             "minLength": 1
           }
