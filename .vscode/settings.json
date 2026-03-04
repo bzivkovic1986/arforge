@@ -1,10 +1,53 @@
 {
+  "yaml.validate": true,
+  "yaml.hover": true,
+  "yaml.completion": true,
+
   "yaml.schemas": {
-    "./schemas/aggregator.schema.json": ["**/autosar.project.yaml", "**/autosar.project.yml"],
-    "./schemas/datatypes.schema.json": ["**/datatypes.yaml", "**/datatypes.yml"],
-    "./schemas/interface.schema.json": ["**/interfaces/*.yaml", "**/interfaces/*.yml"],
-    "./schemas/swc.schema.json": ["**/swcs/*.yaml", "**/swcs/*.yml"],
-    "./schemas/system.schema.json": ["**/system.yaml", "**/system.yml"],
-    "./schemas/connections.schema.json": ["**/connections.yaml", "**/connections.yml"]
+    "./schemas/aggregator.schema.json": [
+      "**/autosar.project.yaml",
+      "**/*.project.yaml"
+    ],
+
+    "./schemas/interface.schema.json": [
+      "**/interfaces/*.yaml"
+    ],
+
+    "./schemas/swc.schema.json": [
+      "**/swcs/*.yaml"
+    ],
+
+    "./schemas/system.schema.json": [
+      "**/system.yaml"
+    ],
+
+    "./schemas/connections.schema.json": [
+      "**/connections.yaml"
+    ],
+
+    "./schemas/base_types.schema.json": [
+      "**/base_types.yaml",
+      "**/platform/base_types.yaml"
+    ],
+
+    "./schemas/implementation_types.schema.json": [
+      "**/implementation_types.yaml"
+    ],
+
+    "./schemas/application_types.schema.json": [
+      "**/application_types.yaml"
+    ],
+
+    "./schemas/units.schema.json": [
+      "**/units.yaml"
+    ],
+
+    "./schemas/compu_methods.schema.json": [
+      "**/compu_methods.yaml"
+    ],
+
+    "./schemas/datatypes.schema.json": [
+      "**/datatypes.yaml"
+    ]
   }
 }

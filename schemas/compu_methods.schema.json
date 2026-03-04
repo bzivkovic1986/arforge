@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "arforge compu methods schema",
+  "type": "object",
+  "required": [
+    "compuMethods"
+  ],
+  "properties": {
+    "compuMethods": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "category",
+          "unitRef",
+          "factor",
+          "offset"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "type": "string"
+          },
+          "unitRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "factor": {
+            "type": "number"
+          },
+          "offset": {
+            "type": "number"
+          },
+          "physMin": {
+            "type": "number"
+          },
+          "physMax": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

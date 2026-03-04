@@ -24,8 +24,7 @@
           "items": {
             "type": "object",
             "required": [
-              "name",
-              "timingEventMs"
+              "name"
             ],
             "properties": {
               "name": {
@@ -79,6 +78,27 @@
                 }
               },
               "calls": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "port",
+                    "operation"
+                  ],
+                  "properties": {
+                    "port": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "operation": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "operationInvokedEvents": {
                 "type": "array",
                 "items": {
                   "type": "object",

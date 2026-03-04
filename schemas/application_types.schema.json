@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "arforge application data types schema",
+  "type": "object",
+  "required": [
+    "applicationDataTypes"
+  ],
+  "properties": {
+    "applicationDataTypes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "implementationTypeRef"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "implementationTypeRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "unitRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "compuMethodRef": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -8,13 +8,89 @@
       <AR-PACKAGES>
 
         <AR-PACKAGE>
-          <SHORT-NAME>DataTypes</SHORT-NAME>
+          <SHORT-NAME>BaseTypes</SHORT-NAME>
           <ELEMENTS>
-            {% for dt in datatypes %}
+            {% for dt in base_types %}
+            <SW-BASE-TYPE>
+              <SHORT-NAME>{{ dt.name }}</SHORT-NAME>
+            </SW-BASE-TYPE>
+            {% endfor %}
+          </ELEMENTS>
+        </AR-PACKAGE>
+
+        <AR-PACKAGE>
+          <SHORT-NAME>ImplementationDataTypes</SHORT-NAME>
+          <ELEMENTS>
+            {% for dt in implementation_types %}
             <IMPLEMENTATION-DATA-TYPE>
               <SHORT-NAME>{{ dt.name }}</SHORT-NAME>
+              {% if dt.is_struct %}
+              <CATEGORY>STRUCTURE</CATEGORY>
+              <SUB-ELEMENTS>
+                {% for f in dt.fields %}
+                <IMPLEMENTATION-DATA-TYPE-ELEMENT>
+                  <SHORT-NAME>{{ f.name }}</SHORT-NAME>
+                  {% set tref = type_trefs.get(f.typeRef) %}
+                  <TYPE-TREF DEST="{{ tref.dest if tref else 'IMPLEMENTATION-DATA-TYPE' }}">/{{ root_pkg }}/{{ tref.package if tref else 'ImplementationDataTypes' }}/{{ f.typeRef }}</TYPE-TREF>
+                </IMPLEMENTATION-DATA-TYPE-ELEMENT>
+                {% endfor %}
+              </SUB-ELEMENTS>
+              {% else %}
               <CATEGORY>TYPE_REFERENCE</CATEGORY>
+              {% endif %}
             </IMPLEMENTATION-DATA-TYPE>
+            {% endfor %}
+          </ELEMENTS>
+        </AR-PACKAGE>
+
+        <AR-PACKAGE>
+          <SHORT-NAME>ApplicationDataTypes</SHORT-NAME>
+          <ELEMENTS>
+            {% for dt in application_types %}
+            <APPLICATION-PRIMITIVE-DATA-TYPE>
+              <SHORT-NAME>{{ dt.name }}</SHORT-NAME>
+              {% if dt.unitRef %}
+              <UNIT-REF DEST="UNIT">/{{ root_pkg }}/Units/{{ dt.unitRef }}</UNIT-REF>
+              {% endif %}
+              {% if dt.compuMethodRef %}
+              <COMPU-METHOD-REF DEST="COMPU-METHOD">/{{ root_pkg }}/CompuMethods/{{ dt.compuMethodRef }}</COMPU-METHOD-REF>
+              {% endif %}
+            </APPLICATION-PRIMITIVE-DATA-TYPE>
+            {% endfor %}
+          </ELEMENTS>
+        </AR-PACKAGE>
+
+        <AR-PACKAGE>
+          <SHORT-NAME>Units</SHORT-NAME>
+          <ELEMENTS>
+            {% for u in units %}
+            <UNIT>
+              <SHORT-NAME>{{ u.name }}</SHORT-NAME>
+              {% if u.displayName %}
+              <DISPLAY-NAME>{{ u.displayName }}</DISPLAY-NAME>
+              {% endif %}
+            </UNIT>
+            {% endfor %}
+          </ELEMENTS>
+        </AR-PACKAGE>
+
+        <AR-PACKAGE>
+          <SHORT-NAME>CompuMethods</SHORT-NAME>
+          <ELEMENTS>
+            {% for c in compu_methods %}
+            <COMPU-METHOD>
+              <SHORT-NAME>{{ c.name }}</SHORT-NAME>
+              <CATEGORY>{{ c.category }}</CATEGORY>
+              <UNIT-REF DEST="UNIT">/{{ root_pkg }}/Units/{{ c.unitRef }}</UNIT-REF>
+              <FACTOR>{{ c.factor }}</FACTOR>
+              <OFFSET>{{ c.offset }}</OFFSET>
+              {% if c.physMin is not none %}
+              <PHYS-MIN>{{ c.physMin }}</PHYS-MIN>
+              {% endif %}
+              {% if c.physMax is not none %}
+              <PHYS-MAX>{{ c.physMax }}</PHYS-MAX>
+              {% endif %}
+            </COMPU-METHOD>
             {% endfor %}
           </ELEMENTS>
         </AR-PACKAGE>
@@ -30,7 +106,8 @@
                 {% for de in itf.dataElements %}
                 <VARIABLE-DATA-PROTOTYPE>
                   <SHORT-NAME>{{ de.name }}</SHORT-NAME>
-                  <TYPE-TREF DEST="IMPLEMENTATION-DATA-TYPE">/{{ root_pkg }}/DataTypes/{{ de.typeRef }}</TYPE-TREF>
+                  {% set tref = type_trefs.get(de.typeRef) %}
+                  <TYPE-TREF DEST="{{ tref.dest if tref else 'IMPLEMENTATION-DATA-TYPE' }}">/{{ root_pkg }}/{{ tref.package if tref else 'ImplementationDataTypes' }}/{{ de.typeRef }}</TYPE-TREF>
                 </VARIABLE-DATA-PROTOTYPE>
                 {% endfor %}
               </DATA-ELEMENTS>

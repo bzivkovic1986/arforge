@@ -1,0 +1,12 @@
+autosar:
+  version: "4.2"
+  rootPackage: "DEMO"
+
+inputs:
+  datatypes: "../datatypes.yaml"
+  interfaces:
+    - "../interfaces/*.yaml"
+  swcs:
+    - "swcs/SpeedSensor_missing_cs_binding.yaml"
+    - "../swcs/SpeedConsumer.yaml"
+  system: "../system.yaml"

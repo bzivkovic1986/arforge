@@ -14,12 +14,21 @@ class DuplicateNameCase(ValidationCase):
         findings: List[Finding] = []
         project = ctx.project
 
-        if len({d.name for d in project.datatypes}) != len(project.datatypes):
+        type_names = (
+            [d.name for d in project.baseTypes]
+            + [d.name for d in project.implementationDataTypes]
+            + [d.name for d in project.applicationDataTypes]
+        )
+        if len(set(type_names)) != len(type_names):
             findings.append(self.finding("Duplicate datatype names found.", code="CORE-001-DATATYPE-DUPLICATE"))
         if len({i.name for i in project.interfaces}) != len(project.interfaces):
             findings.append(self.finding("Duplicate interface names found.", code="CORE-001-INTERFACE-DUPLICATE"))
         if len({s.name for s in project.swcs}) != len(project.swcs):
             findings.append(self.finding("Duplicate SWC names found.", code="CORE-001-SWC-DUPLICATE"))
+        if len({u.name for u in project.units}) != len(project.units):
+            findings.append(self.finding("Duplicate unit names found.", code="CORE-001-UNIT-DUPLICATE"))
+        if len({c.name for c in project.compuMethods}) != len(project.compuMethods):
+            findings.append(self.finding("Duplicate compu method names found.", code="CORE-001-COMPU-METHOD-DUPLICATE"))
         if len({c.name for c in project.system.composition.components}) != len(project.system.composition.components):
             findings.append(self.finding("System composition has duplicate component prototype names.", code="CORE-001-INSTANCE-DUPLICATE"))
 
@@ -39,6 +48,164 @@ class InterfaceSemanticCase(ValidationCase):
     def run(self, ctx: ValidationContext) -> List[Finding]:
         findings: List[Finding] = []
         dt_names = set(ctx.datatype_by_name.keys())
+
+        for impl in sorted(ctx.project.implementationDataTypes, key=lambda d: d.name):
+            if impl.is_struct:
+                if not impl.fields:
+                    findings.append(
+                        self.finding(
+                            f"Struct ImplementationDataType '{impl.name}' must define at least one field.",
+                            code="CORE-010-STRUCT-EMPTY",
+                        )
+                    )
+                    continue
+                field_names = [f.name for f in impl.fields]
+                if len(set(field_names)) != len(field_names):
+                    findings.append(
+                        self.finding(
+                            f"Struct ImplementationDataType '{impl.name}' has duplicate field names.",
+                            code="CORE-010-STRUCT-DUPLICATE-FIELD",
+                        )
+                    )
+                for field in sorted(impl.fields, key=lambda f: f.name):
+                    if field.typeRef not in ctx.datatype_by_name:
+                        findings.append(
+                            self.finding(
+                                f"Struct ImplementationDataType '{impl.name}' field '{field.name}' references unknown typeRef '{field.typeRef}'.",
+                                code="CORE-010-STRUCT-UNKNOWN-TYPE",
+                            )
+                        )
+                        continue
+                    if field.typeRef in ctx.application_type_by_name:
+                        findings.append(
+                            self.finding(
+                                f"Struct ImplementationDataType '{impl.name}' field '{field.name}' must not reference application data type '{field.typeRef}'.",
+                                code="CORE-010-STRUCT-APPLICATION-TYPE",
+                            )
+                        )
+            else:
+                if not impl.baseTypeRef:
+                    findings.append(
+                        self.finding(
+                            f"ImplementationDataType '{impl.name}' must define baseTypeRef.",
+                            code="CORE-010-IMPLEMENTATION-MISSING-BASETYPE",
+                        )
+                    )
+                elif impl.baseTypeRef not in ctx.base_type_by_name:
+                    findings.append(
+                        self.finding(
+                            f"ImplementationDataType '{impl.name}' references unknown baseTypeRef '{impl.baseTypeRef}'.",
+                            code="CORE-010-IMPLEMENTATION-UNKNOWN-BASETYPE",
+                        )
+                    )
+
+        impl_by_name = {i.name: i for i in ctx.project.implementationDataTypes}
+
+        def _detect_impl_cycle(start: str, node: str, visiting: set[str], path: list[str]) -> list[str] | None:
+            if node in visiting:
+                cycle_start = path.index(node) if node in path else 0
+                return path[cycle_start:] + [node]
+            it = impl_by_name.get(node)
+            if it is None or not it.is_struct:
+                return None
+            visiting.add(node)
+            path.append(node)
+            for f in sorted(it.fields, key=lambda x: x.name):
+                if f.typeRef in impl_by_name:
+                    cycle = _detect_impl_cycle(start, f.typeRef, visiting, path)
+                    if cycle:
+                        return cycle
+            path.pop()
+            visiting.remove(node)
+            return None
+
+        reported_cycles: set[str] = set()
+        for impl in sorted(ctx.project.implementationDataTypes, key=lambda d: d.name):
+            if not impl.is_struct:
+                continue
+            cycle = _detect_impl_cycle(impl.name, impl.name, set(), [])
+            if cycle:
+                cycle_txt = " -> ".join(cycle)
+                cycle_key = "->".join(sorted(set(cycle[:-1])))
+                if cycle_key in reported_cycles:
+                    continue
+                reported_cycles.add(cycle_key)
+                findings.append(
+                    self.finding(
+                        f"Struct type cycle detected: {cycle_txt}.",
+                        code="CORE-010-STRUCT-CYCLE",
+                    )
+                )
+
+        for app in sorted(ctx.project.applicationDataTypes, key=lambda d: d.name):
+            if app.implementationTypeRef not in ctx.implementation_type_by_name:
+                findings.append(
+                    self.finding(
+                        f"ApplicationDataType '{app.name}' references unknown implementationTypeRef '{app.implementationTypeRef}'.",
+                        code="CORE-010-APPLICATION-UNKNOWN-IMPLEMENTATION",
+                    )
+                )
+            if app.unitRef and app.unitRef not in ctx.unit_by_name:
+                findings.append(
+                    self.finding(
+                        f"ApplicationDataType '{app.name}' references unknown unitRef '{app.unitRef}'.",
+                        code="CORE-010-APPLICATION-UNKNOWN-UNIT",
+                    )
+                )
+            compu = None
+            if app.compuMethodRef:
+                compu = ctx.compu_method_by_name.get(app.compuMethodRef)
+                if compu is None:
+                    findings.append(
+                        self.finding(
+                            f"ApplicationDataType '{app.name}' references unknown compuMethodRef '{app.compuMethodRef}'.",
+                            code="CORE-010-APPLICATION-UNKNOWN-COMPU-METHOD",
+                        )
+                    )
+                if not app.unitRef:
+                    findings.append(
+                        self.finding(
+                            f"ApplicationDataType '{app.name}' must define unitRef when compuMethodRef is set.",
+                            code="CORE-010-APPLICATION-COMPU-REQUIRES-UNIT",
+                        )
+                    )
+            if app.unitRef and compu and app.unitRef != compu.unitRef:
+                findings.append(
+                    self.finding(
+                        f"ApplicationDataType '{app.name}' unitRef '{app.unitRef}' must match compuMethod '{compu.name}' unitRef '{compu.unitRef}'.",
+                        code="CORE-010-APPLICATION-UNIT-MISMATCH",
+                    )
+                )
+
+        for compu in sorted(ctx.project.compuMethods, key=lambda c: c.name):
+            if compu.category != "linear":
+                findings.append(
+                    self.finding(
+                        f"CompuMethod '{compu.name}' has unsupported category '{compu.category}'.",
+                        code="CORE-010-COMPU-CATEGORY",
+                    )
+                )
+            if compu.unitRef not in ctx.unit_by_name:
+                findings.append(
+                    self.finding(
+                        f"CompuMethod '{compu.name}' references unknown unitRef '{compu.unitRef}'.",
+                        code="CORE-010-COMPU-UNKNOWN-UNIT",
+                    )
+                )
+            if compu.factor == 0:
+                findings.append(
+                    self.finding(
+                        f"CompuMethod '{compu.name}' must have non-zero factor.",
+                        code="CORE-010-COMPU-FACTOR-ZERO",
+                    )
+                )
+            if compu.physMin is not None and compu.physMax is not None and compu.physMin > compu.physMax:
+                findings.append(
+                    self.finding(
+                        f"CompuMethod '{compu.name}' has invalid physical range: physMin '{compu.physMin}' > physMax '{compu.physMax}'.",
+                        code="CORE-010-COMPU-RANGE",
+                    )
+                )
 
         for itf in sorted(ctx.project.interfaces, key=lambda i: i.name):
             if itf.type == "senderReceiver":
@@ -66,6 +233,49 @@ class InterfaceSemanticCase(ValidationCase):
                             code="CORE-010-CS-MISSING-OPERATIONS",
                         )
                     )
+                else:
+                    op_names = [op.name for op in itf.operations]
+                    if len(set(op_names)) != len(op_names):
+                        findings.append(
+                            self.finding(
+                                f"ClientServer interface '{itf.name}' has duplicate operation names.",
+                                code="CORE-010-CS-OPERATION-DUPLICATE",
+                            )
+                        )
+
+                    for op in sorted(itf.operations, key=lambda o: o.name):
+                        arg_names = [arg.name for arg in op.arguments]
+                        if len(set(arg_names)) != len(arg_names):
+                            findings.append(
+                                self.finding(
+                                    f"Interface '{itf.name}' operation '{op.name}' has duplicate argument names.",
+                                    code="CORE-010-CS-ARGUMENT-DUPLICATE",
+                                )
+                            )
+
+                        for arg in sorted(op.arguments, key=lambda a: a.name):
+                            if arg.direction not in {"in", "out", "inout"}:
+                                findings.append(
+                                    self.finding(
+                                        f"Interface '{itf.name}' operation '{op.name}' argument '{arg.name}' has invalid direction '{arg.direction}'.",
+                                        code="CORE-010-CS-ARGUMENT-DIRECTION",
+                                    )
+                                )
+                            if arg.typeRef not in dt_names:
+                                findings.append(
+                                    self.finding(
+                                        f"Interface '{itf.name}' operation '{op.name}' argument '{arg.name}' references unknown datatype '{arg.typeRef}'.",
+                                        code="CORE-010-CS-ARGUMENT-UNKNOWN-DATATYPE",
+                                    )
+                                )
+
+                        if op.returnType != "void" and op.returnType not in dt_names:
+                            findings.append(
+                                self.finding(
+                                    f"Interface '{itf.name}' operation '{op.name}' references unknown returnType '{op.returnType}'.",
+                                    code="CORE-010-CS-RETURN-UNKNOWN-DATATYPE",
+                                )
+                            )
             else:
                 findings.append(
                     self.finding(
@@ -270,6 +480,128 @@ class RunnableAccessSemanticCase(ValidationCase):
         return findings
 
 
+class OperationInvokedEventCase(ValidationCase):
+    case_id = "CORE-023"
+    description = "Validate operation-invoked event bindings for provided clientServer operations."
+    tags = ("core", "swc", "runnables", "interfaces")
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.swcs:
+            return False, "no SWCs defined"
+        has_cs_provider = any(
+            port.direction == "provides"
+            and ((itf := ctx.iface_by_name.get(port.interfaceRef)) is not None)
+            and itf.type == "clientServer"
+            for swc in ctx.project.swcs
+            for port in swc.ports
+        )
+        has_events = any(
+            runnable.operationInvokedEvents
+            for swc in ctx.project.swcs
+            for runnable in swc.runnables
+        )
+        if not has_cs_provider and not has_events:
+            return False, "no provided clientServer ports or operationInvokedEvents"
+        return True, None
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        findings: List[Finding] = []
+        valid_bindings: set[tuple[str, str, str]] = set()
+
+        for swc in sorted(ctx.project.swcs, key=lambda s: s.name):
+            for runnable in sorted(swc.runnables, key=lambda r: r.name):
+                location_base = f"SWC '{swc.name}' runnable '{runnable.name}'"
+                for event in sorted(runnable.operationInvokedEvents, key=lambda e: (e.port, e.operation)):
+                    port = ctx.find_swc_port(swc.name, event.port)
+                    if port is None:
+                        findings.append(
+                            self.finding(
+                                f"{location_base} operationInvokedEvents references unknown port '{event.port}'.",
+                                code="CORE-023-OIE-UNKNOWN-PORT",
+                            )
+                        )
+                        continue
+                    if port.direction != "provides":
+                        findings.append(
+                            self.finding(
+                                f"{location_base} operationInvokedEvents on port '{event.port}' requires direction 'provides', found '{port.direction}'.",
+                                code="CORE-023-OIE-DIRECTION",
+                            )
+                        )
+                    itf = ctx.iface_by_name.get(port.interfaceRef)
+                    if itf is None:
+                        # Unknown interface reference is reported by CORE-021.
+                        continue
+                    if itf.type != "clientServer":
+                        findings.append(
+                            self.finding(
+                                f"{location_base} operationInvokedEvents on port '{event.port}' requires clientServer interface, found '{itf.type}'.",
+                                code="CORE-023-OIE-INTERFACE-TYPE",
+                            )
+                        )
+                        continue
+                    operations = ctx.cs_operations_by_iface.get(itf.name, set())
+                    if event.operation not in operations:
+                        findings.append(
+                            self.finding(
+                                f"{location_base} operationInvokedEvents references unknown operation '{event.operation}' on interface '{itf.name}'.",
+                                code="CORE-023-OIE-UNKNOWN-OPERATION",
+                            )
+                        )
+                        continue
+                    valid_bindings.add((swc.name, event.port, event.operation))
+
+            for port in sorted(swc.ports, key=lambda p: p.name):
+                if port.direction != "provides":
+                    continue
+                itf = ctx.iface_by_name.get(port.interfaceRef)
+                if itf is None or itf.type != "clientServer":
+                    continue
+                for op in sorted(itf.operations or [], key=lambda o: o.name):
+                    if (swc.name, port.name, op.name) not in valid_bindings:
+                        findings.append(
+                            self.finding(
+                                f"SWC '{swc.name}' provides-port '{port.name}' is missing operationInvokedEvents binding for operation '{op.name}'.",
+                                code="CORE-023-CS-UNBOUND-OPERATION",
+                            )
+                        )
+
+        return findings
+
+
+class RunnableTriggerPolicyCase(ValidationCase):
+    case_id = "CORE-024"
+    description = "Enforce runnable trigger policy: exactly one trigger style per runnable."
+    tags = ("core", "swc", "runnables")
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.swcs:
+            return False, "no SWCs defined"
+        return True, None
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        findings: List[Finding] = []
+        for swc in sorted(ctx.project.swcs, key=lambda s: s.name):
+            for runnable in sorted(swc.runnables, key=lambda r: r.name):
+                has_timing = runnable.timingEventMs is not None
+                has_oie = bool(runnable.operationInvokedEvents)
+                if has_timing and has_oie:
+                    findings.append(
+                        self.finding(
+                            f"Runnable '{runnable.name}' must not define timingEventMs when operationInvokedEvents is used.",
+                            code="CORE-024-MULTIPLE-TRIGGERS",
+                        )
+                    )
+                if not has_timing and not has_oie:
+                    findings.append(
+                        self.finding(
+                            f"SWC '{swc.name}' runnable '{runnable.name}' must define at least one trigger: timingEventMs or operationInvokedEvents.",
+                            code="CORE-024-MISSING-TRIGGER",
+                        )
+                    )
+        return findings
+
+
 class SystemInstanceTypeCase(ValidationCase):
     case_id = "CORE-030"
     description = "Validate composition component prototypes reference known SWC types."
@@ -414,7 +746,7 @@ class ConnectionSemanticCase(ValidationCase):
                 if not conn.dataElement:
                     findings.append(
                         self.finding(
-                            f"SenderReceiver connector {conn.from_instance}.{conn.from_port} -> {conn.to_instance}.{conn.to_port} must set dataElement.",
+                            "SR connector must specify dataElement (required by arforge policy).",
                             code="CORE-040-SR-MISSING-DATAELEMENT",
                         )
                     )
@@ -459,6 +791,8 @@ def core_validation_cases() -> List[ValidationCase]:
         SwcStructureCase(),
         SwcPortInterfaceCase(),
         RunnableAccessSemanticCase(),
+        OperationInvokedEventCase(),
+        RunnableTriggerPolicyCase(),
         SystemInstanceTypeCase(),
         ConnectionSemanticCase(),
     ]

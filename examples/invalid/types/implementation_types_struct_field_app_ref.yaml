@@ -1,0 +1,15 @@
+implementationDataTypes:
+  - name: "UInt16"
+    baseTypeRef: "uint16"
+  - name: "SpeedPair_T"
+    kind: "struct"
+    fields:
+      - name: "vehicle"
+        typeRef: "UInt16"
+      - name: "wheel"
+        typeRef: "UInt16"
+  - name: "BadStruct_T"
+    kind: "struct"
+    fields:
+      - name: "app_field"
+        typeRef: "VehicleSpeed_T"

@@ -58,6 +58,40 @@
               "name": {
                 "type": "string",
                 "minLength": 1
+              },
+              "arguments": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "direction",
+                    "typeRef"
+                  ],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "direction": {
+                      "type": "string",
+                      "enum": [
+                        "in",
+                        "out",
+                        "inout"
+                      ]
+                    },
+                    "typeRef": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "returnType": {
+                "type": "string",
+                "minLength": 1
               }
             },
             "additionalProperties": false

@@ -4,10 +4,51 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Tuple
 
 @dataclass(frozen=True)
-class DataType:
+class BaseType:
+    name: str
+
+
+@dataclass(frozen=True)
+class ImplementationField:
+    name: str
+    typeRef: str
+
+
+@dataclass(frozen=True)
+class ImplementationDataType:
+    name: str
+    baseTypeRef: str | None = None
+    kind: str | None = None
+    fields: List[ImplementationField] = field(default_factory=list)
+
+    @property
+    def is_struct(self) -> bool:
+        return bool(self.fields) or self.kind == "struct"
+
+
+@dataclass(frozen=True)
+class ApplicationDataType:
+    name: str
+    implementationTypeRef: str
+    unitRef: str | None = None
+    compuMethodRef: str | None = None
+
+
+@dataclass(frozen=True)
+class Unit:
+    name: str
+    displayName: str | None = None
+
+
+@dataclass(frozen=True)
+class CompuMethod:
     name: str
     category: str
-    baseType: str | None = None
+    unitRef: str
+    factor: float
+    offset: float
+    physMin: float | None = None
+    physMax: float | None = None
 
 @dataclass(frozen=True)
 class DataElement:
@@ -17,6 +58,15 @@ class DataElement:
 @dataclass(frozen=True)
 class Operation:
     name: str
+    arguments: List["OperationArgument"] = field(default_factory=list)
+    returnType: str = "void"
+
+
+@dataclass(frozen=True)
+class OperationArgument:
+    name: str
+    direction: str
+    typeRef: str
 
 @dataclass(frozen=True)
 class Interface:
@@ -28,10 +78,11 @@ class Interface:
 @dataclass(frozen=True)
 class Runnable:
     name: str
-    timingEventMs: int
+    timingEventMs: int | None = None
     reads: List["SrAccess"] = field(default_factory=list)
     writes: List["SrAccess"] = field(default_factory=list)
     calls: List["CsCall"] = field(default_factory=list)
+    operationInvokedEvents: List["OperationInvokedEvent"] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -42,6 +93,12 @@ class SrAccess:
 
 @dataclass(frozen=True)
 class CsCall:
+    port: str
+    operation: str
+
+
+@dataclass(frozen=True)
+class OperationInvokedEvent:
     port: str
     operation: str
 
@@ -97,10 +154,19 @@ class System:
 class Project:
     autosar_version: str
     rootPackage: str
-    datatypes: List[DataType]
+    baseTypes: List[BaseType]
+    implementationDataTypes: List[ImplementationDataType]
+    applicationDataTypes: List[ApplicationDataType]
+    units: List[Unit]
+    compuMethods: List[CompuMethod]
     interfaces: List[Interface]
     swcs: List[Swc]
     system: System
+
+    @property
+    def datatypes(self) -> List[ImplementationDataType]:
+        # Backward-compatibility alias used in parts of the codebase.
+        return self.implementationDataTypes
 
     @property
     def connections(self) -> List[Connection]:
@@ -112,7 +178,20 @@ def _split_endpoint(ep: str) -> Tuple[str, str]:
 
 def from_dict(d: Dict[str, Any]) -> Project:
     autosar = d["autosar"]
-    dts = [DataType(**dt) for dt in d.get("datatypes", [])]
+    base_types = [BaseType(**bt) for bt in d.get("baseTypes", [])]
+    impl_types = []
+    for idt in d.get("implementationDataTypes", []):
+        impl_types.append(
+            ImplementationDataType(
+                name=idt["name"],
+                baseTypeRef=idt.get("baseTypeRef"),
+                kind=idt.get("kind"),
+                fields=[ImplementationField(**f) for f in idt.get("fields", [])],
+            )
+        )
+    app_types = [ApplicationDataType(**adt) for adt in d.get("applicationDataTypes", [])]
+    units = [Unit(**u) for u in d.get("units", [])]
+    compu_methods = [CompuMethod(**cm) for cm in d.get("compuMethods", [])]
 
     ifaces: List[Interface] = []
     for itf in d.get("interfaces", []):
@@ -120,7 +199,16 @@ def from_dict(d: Dict[str, Any]) -> Project:
             des = [DataElement(**de) for de in itf.get("dataElements", [])]
             ifaces.append(Interface(name=itf["name"], type=itf["type"], dataElements=des, operations=None))
         else:
-            ops = [Operation(**op) for op in itf.get("operations", [])]
+            ops = []
+            for op in itf.get("operations", []):
+                op_args = [OperationArgument(**arg) for arg in op.get("arguments", [])]
+                ops.append(
+                    Operation(
+                        name=op["name"],
+                        arguments=op_args,
+                        returnType=op.get("returnType", "void"),
+                    )
+                )
             ifaces.append(Interface(name=itf["name"], type=itf["type"], dataElements=None, operations=ops))
 
     iface_by_name = {i.name: i for i in ifaces}
@@ -130,10 +218,11 @@ def from_dict(d: Dict[str, Any]) -> Project:
         runs = [
             Runnable(
                 name=r["name"],
-                timingEventMs=r["timingEventMs"],
+                timingEventMs=r.get("timingEventMs"),
                 reads=[SrAccess(**acc) for acc in r.get("reads", [])],
                 writes=[SrAccess(**acc) for acc in r.get("writes", [])],
                 calls=[CsCall(**acc) for acc in r.get("calls", [])],
+                operationInvokedEvents=[OperationInvokedEvent(**e) for e in r.get("operationInvokedEvents", [])],
             )
             for r in s.get("runnables", [])
         ]
@@ -177,7 +266,11 @@ def from_dict(d: Dict[str, Any]) -> Project:
     return Project(
         autosar_version=autosar["version"],
         rootPackage=autosar["rootPackage"],
-        datatypes=dts,
+        baseTypes=base_types,
+        implementationDataTypes=impl_types,
+        applicationDataTypes=app_types,
+        units=units,
+        compuMethods=compu_methods,
         interfaces=ifaces,
         swcs=swcs,
         system=system,

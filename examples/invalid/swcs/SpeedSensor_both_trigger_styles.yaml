@@ -1,0 +1,19 @@
+swc:
+  name: "SpeedSensor"
+  runnables:
+    - name: "Runnable_ReadSpeed"
+      timingEventMs: 10
+    - name: "Runnable_DiagServer"
+      timingEventMs: 100
+      operationInvokedEvents:
+        - port: "Pp_Diag"
+          operation: "ReadDTC"
+        - port: "Pp_Diag"
+          operation: "ClearDTC"
+  ports:
+    - name: "Pp_VehicleSpeed"
+      direction: "provides"
+      interfaceRef: "If_VehicleSpeed"
+    - name: "Pp_Diag"
+      direction: "provides"
+      interfaceRef: "If_Diagnostics"

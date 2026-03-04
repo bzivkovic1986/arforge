@@ -30,19 +30,38 @@
     "inputs": {
       "type": "object",
       "required": [
-        "datatypes",
         "interfaces",
         "swcs"
       ],
-      "anyOf": [
+      "allOf": [
         {
-          "required": [
-            "system"
+          "anyOf": [
+            {
+              "required": [
+                "datatypes"
+              ]
+            },
+            {
+              "required": [
+                "baseTypes",
+                "implementationDataTypes",
+                "applicationDataTypes"
+              ]
+            }
           ]
         },
         {
-          "required": [
-            "connections"
+          "anyOf": [
+            {
+              "required": [
+                "system"
+              ]
+            },
+            {
+              "required": [
+                "connections"
+              ]
+            }
           ]
         }
       ],
@@ -50,6 +69,32 @@
         "datatypes": {
           "type": "string",
           "minLength": 1
+        },
+        "baseTypes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "implementationDataTypes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "applicationDataTypes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "units": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "compuMethods": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         },
         "interfaces": {
           "type": "array",

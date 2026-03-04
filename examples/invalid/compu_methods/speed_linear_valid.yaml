@@ -1,0 +1,8 @@
+compuMethods:
+  - name: "CM_Speed_Kmh_Linear"
+    category: "linear"
+    unitRef: "km_h"
+    factor: 0.1
+    offset: 0.0
+    physMin: 0
+    physMax: 300

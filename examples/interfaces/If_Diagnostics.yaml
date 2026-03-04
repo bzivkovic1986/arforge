@@ -3,3 +3,10 @@ interface:
   type: "clientServer"
   operations:
     - name: "ReadDTC"
+      arguments:
+        - name: "DtcId"
+          direction: "in"
+          typeRef: "UInt16"
+      returnType: "UInt16"
+    - name: "ClearDTC"
+      returnType: "void"
