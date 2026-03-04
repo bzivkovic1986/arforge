@@ -414,7 +414,7 @@ class ConnectionSemanticCase(ValidationCase):
                 if not conn.dataElement:
                     findings.append(
                         self.finding(
-                            f"SenderReceiver connector {conn.from_instance}.{conn.from_port} -> {conn.to_instance}.{conn.to_port} must set dataElement.",
+                            "SR connector must specify dataElement",
                             code="CORE-040-SR-MISSING-DATAELEMENT",
                         )
                     )

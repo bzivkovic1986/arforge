@@ -4,3 +4,5 @@ interface:
   dataElements:
     - name: "VehicleSpeed"
       typeRef: "UInt16"
+    - name: "WheelSpeed"
+      typeRef: "UInt16"
