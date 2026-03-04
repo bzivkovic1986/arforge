@@ -4,6 +4,7 @@
     "./schemas/datatypes.schema.json": ["**/datatypes.yaml", "**/datatypes.yml"],
     "./schemas/interface.schema.json": ["**/interfaces/*.yaml", "**/interfaces/*.yml"],
     "./schemas/swc.schema.json": ["**/swcs/*.yaml", "**/swcs/*.yml"],
+    "./schemas/system.schema.json": ["**/system.yaml", "**/system.yml"],
     "./schemas/connections.schema.json": ["**/connections.yaml", "**/connections.yml"]
   }
 }

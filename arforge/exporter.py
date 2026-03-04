@@ -37,15 +37,23 @@ def render_swc(project: Project, swc: Swc, template_dir: Path, template_name: st
 def render_system(project: Project, template_dir: Path, template_name: str = "system_42.arxml.j2") -> str:
     env = _env(template_dir)
     tpl = env.get_template(template_name)
+    instance_type = {i.name: i.typeRef for i in project.system.instances}
     connections = [{
-        "from_swc": c.from_swc,
+        "from_instance": c.from_instance,
         "from_port": c.from_port,
-        "to_swc": c.to_swc,
+        "to_instance": c.to_instance,
         "to_port": c.to_port,
+        "from_type": instance_type[c.from_instance],
+        "to_type": instance_type[c.to_instance],
         "dataElement": c.dataElement,
         "operation": c.operation,
-    } for c in project.connections]
-    return tpl.render(root_pkg=project.rootPackage, connections=connections)
+    } for c in project.system.connections]
+    return tpl.render(
+        root_pkg=project.rootPackage,
+        system_name=project.system.name,
+        instances=sorted(project.system.instances, key=lambda x: x.name),
+        connections=connections,
+    )
 
 def write_outputs(project: Project, template_dir: Path, out: Path, split_by_swc: bool) -> List[Path]:
     written: List[Path] = []
@@ -55,15 +63,27 @@ def write_outputs(project: Project, template_dir: Path, out: Path, split_by_swc:
         datatypes = sorted(project.datatypes, key=lambda x: x.name)
         swcs = sorted(project.swcs, key=lambda x: x.name)
         sr, cs = _split_interfaces(project)
+        instance_type = {i.name: i.typeRef for i in project.system.instances}
         connections = [{
-            "from_swc": c.from_swc,
+            "from_instance": c.from_instance,
             "from_port": c.from_port,
-            "to_swc": c.to_swc,
+            "to_instance": c.to_instance,
             "to_port": c.to_port,
+            "from_type": instance_type[c.from_instance],
+            "to_type": instance_type[c.to_instance],
             "dataElement": c.dataElement,
             "operation": c.operation,
-        } for c in project.connections]
-        xml = tpl.render(root_pkg=project.rootPackage, datatypes=datatypes, sr_interfaces=sr, cs_interfaces=cs, swcs=swcs, connections=connections)
+        } for c in project.system.connections]
+        xml = tpl.render(
+            root_pkg=project.rootPackage,
+            datatypes=datatypes,
+            sr_interfaces=sr,
+            cs_interfaces=cs,
+            swcs=swcs,
+            system_name=project.system.name,
+            instances=sorted(project.system.instances, key=lambda x: x.name),
+            connections=connections,
+        )
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(xml, encoding="utf-8")
         written.append(out)

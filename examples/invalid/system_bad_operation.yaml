@@ -1,0 +1,11 @@
+system:
+  name: "BadSystem_UnknownOperation"
+  instances:
+    - name: "SpeedSensor_1"
+      typeRef: "SpeedSensor"
+    - name: "SpeedConsumer_1"
+      typeRef: "SpeedConsumer"
+  connections:
+    - from: "SpeedSensor_1.Pp_Diag"
+      to: "SpeedConsumer_1.Rp_Diag"
+      operation: "UnknownOp"

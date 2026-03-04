@@ -10,23 +10,40 @@
         <AR-PACKAGE>
           <SHORT-NAME>System</SHORT-NAME>
           <ELEMENTS>
-            <SYSTEM>
-              <SHORT-NAME>System1</SHORT-NAME>
+            <COMPOSITION-SW-COMPONENT-TYPE>
+              <SHORT-NAME>Composition_{{ system_name }}</SHORT-NAME>
+              <COMPONENTS>
+                {% for i in instances %}
+                <SW-COMPONENT-PROTOTYPE>
+                  <SHORT-NAME>{{ i.name }}</SHORT-NAME>
+                  <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/{{ root_pkg }}/Components/{{ i.typeRef }}</TYPE-TREF>
+                </SW-COMPONENT-PROTOTYPE>
+                {% endfor %}
+              </COMPONENTS>
               <CONNECTORS>
                 {% for c in connections %}
                 <ASSEMBLY-SW-CONNECTOR>
                   <SHORT-NAME>Conn_{{ loop.index }}</SHORT-NAME>
                   <PROVIDER-IREF>
-                    <CONTEXT-COMPONENT-REF DEST="APPLICATION-SW-COMPONENT-TYPE">/{{ root_pkg }}/Components/{{ c.from_swc }}</CONTEXT-COMPONENT-REF>
-                    <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/{{ root_pkg }}/Components/{{ c.from_swc }}/{{ c.from_port }}</TARGET-P-PORT-REF>
+                    <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/{{ root_pkg }}/System/Composition_{{ system_name }}/{{ c.from_instance }}</CONTEXT-COMPONENT-REF>
+                    <TARGET-P-PORT-REF DEST="P-PORT-PROTOTYPE">/{{ root_pkg }}/Components/{{ c.from_type }}/{{ c.from_port }}</TARGET-P-PORT-REF>
                   </PROVIDER-IREF>
                   <REQUESTER-IREF>
-                    <CONTEXT-COMPONENT-REF DEST="APPLICATION-SW-COMPONENT-TYPE">/{{ root_pkg }}/Components/{{ c.to_swc }}</CONTEXT-COMPONENT-REF>
-                    <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/{{ root_pkg }}/Components/{{ c.to_swc }}/{{ c.to_port }}</TARGET-R-PORT-REF>
+                    <CONTEXT-COMPONENT-REF DEST="SW-COMPONENT-PROTOTYPE">/{{ root_pkg }}/System/Composition_{{ system_name }}/{{ c.to_instance }}</CONTEXT-COMPONENT-REF>
+                    <TARGET-R-PORT-REF DEST="R-PORT-PROTOTYPE">/{{ root_pkg }}/Components/{{ c.to_type }}/{{ c.to_port }}</TARGET-R-PORT-REF>
                   </REQUESTER-IREF>
                 </ASSEMBLY-SW-CONNECTOR>
                 {% endfor %}
               </CONNECTORS>
+            </COMPOSITION-SW-COMPONENT-TYPE>
+            <SYSTEM>
+              <SHORT-NAME>{{ system_name }}</SHORT-NAME>
+              <ROOT-SOFTWARE-COMPOSITIONS>
+                <ROOT-SW-COMPOSITION-PROTOTYPE>
+                  <SHORT-NAME>RootComposition</SHORT-NAME>
+                  <SOFTWARE-COMPOSITION-TREF DEST="COMPOSITION-SW-COMPONENT-TYPE">/{{ root_pkg }}/System/Composition_{{ system_name }}</SOFTWARE-COMPOSITION-TREF>
+                </ROOT-SW-COMPOSITION-PROTOTYPE>
+              </ROOT-SOFTWARE-COMPOSITIONS>
             </SYSTEM>
           </ELEMENTS>
         </AR-PACKAGE>
