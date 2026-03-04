@@ -79,6 +79,11 @@ python -m arforge.cli export examples/autosar.project.yaml --out build/out --spl
 python -m arforge.cli export examples/autosar.project.yaml --out build/out --split-by-swc -vv
 ```
 
+### Running tests
+```bash
+pytest -q
+```
+
 ## YAML model examples
 
 ### Sender-Receiver interface

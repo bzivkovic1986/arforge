@@ -64,5 +64,12 @@
       "args": ["-m", "arforge.cli", "export", "-vv", "examples/autosar.project.yaml", "--out", "build/all.arxml"],
       "problemMatcher": []
     },
+    {
+      "label": "arforge: pytest",
+      "type": "shell",
+      "command": ".venv\\Scripts\\python.exe",
+      "args": ["-m", "pytest", "-q"],
+      "problemMatcher": []
+    }
   ]
 }
