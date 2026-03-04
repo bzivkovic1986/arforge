@@ -66,6 +66,49 @@ class InterfaceSemanticCase(ValidationCase):
                             code="CORE-010-CS-MISSING-OPERATIONS",
                         )
                     )
+                else:
+                    op_names = [op.name for op in itf.operations]
+                    if len(set(op_names)) != len(op_names):
+                        findings.append(
+                            self.finding(
+                                f"ClientServer interface '{itf.name}' has duplicate operation names.",
+                                code="CORE-010-CS-OPERATION-DUPLICATE",
+                            )
+                        )
+
+                    for op in sorted(itf.operations, key=lambda o: o.name):
+                        arg_names = [arg.name for arg in op.arguments]
+                        if len(set(arg_names)) != len(arg_names):
+                            findings.append(
+                                self.finding(
+                                    f"Interface '{itf.name}' operation '{op.name}' has duplicate argument names.",
+                                    code="CORE-010-CS-ARGUMENT-DUPLICATE",
+                                )
+                            )
+
+                        for arg in sorted(op.arguments, key=lambda a: a.name):
+                            if arg.direction not in {"in", "out", "inout"}:
+                                findings.append(
+                                    self.finding(
+                                        f"Interface '{itf.name}' operation '{op.name}' argument '{arg.name}' has invalid direction '{arg.direction}'.",
+                                        code="CORE-010-CS-ARGUMENT-DIRECTION",
+                                    )
+                                )
+                            if arg.typeRef not in dt_names:
+                                findings.append(
+                                    self.finding(
+                                        f"Interface '{itf.name}' operation '{op.name}' argument '{arg.name}' references unknown datatype '{arg.typeRef}'.",
+                                        code="CORE-010-CS-ARGUMENT-UNKNOWN-DATATYPE",
+                                    )
+                                )
+
+                        if op.returnType != "void" and op.returnType not in dt_names:
+                            findings.append(
+                                self.finding(
+                                    f"Interface '{itf.name}' operation '{op.name}' references unknown returnType '{op.returnType}'.",
+                                    code="CORE-010-CS-RETURN-UNKNOWN-DATATYPE",
+                                )
+                            )
             else:
                 findings.append(
                     self.finding(

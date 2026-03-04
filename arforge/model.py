@@ -17,6 +17,15 @@ class DataElement:
 @dataclass(frozen=True)
 class Operation:
     name: str
+    arguments: List["OperationArgument"] = field(default_factory=list)
+    returnType: str = "void"
+
+
+@dataclass(frozen=True)
+class OperationArgument:
+    name: str
+    direction: str
+    typeRef: str
 
 @dataclass(frozen=True)
 class Interface:
@@ -120,7 +129,16 @@ def from_dict(d: Dict[str, Any]) -> Project:
             des = [DataElement(**de) for de in itf.get("dataElements", [])]
             ifaces.append(Interface(name=itf["name"], type=itf["type"], dataElements=des, operations=None))
         else:
-            ops = [Operation(**op) for op in itf.get("operations", [])]
+            ops = []
+            for op in itf.get("operations", []):
+                op_args = [OperationArgument(**arg) for arg in op.get("arguments", [])]
+                ops.append(
+                    Operation(
+                        name=op["name"],
+                        arguments=op_args,
+                        returnType=op.get("returnType", "void"),
+                    )
+                )
             ifaces.append(Interface(name=itf["name"], type=itf["type"], dataElements=None, operations=ops))
 
     iface_by_name = {i.name: i for i in ifaces}
