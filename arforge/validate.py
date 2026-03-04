@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
+from time import perf_counter
 from typing import Any, Dict, List, Optional, Sequence
 
 import json
@@ -10,6 +12,26 @@ from jsonschema import Draft202012Validator
 from .model import Project, from_dict
 from .semantic_validation import Finding, ValidationContext, ValidationReport, ValidationRunner, format_finding
 from .validation_registry import get_ruleset
+
+
+@dataclass(frozen=True)
+class InputPatternReport:
+    pattern: str
+    matched_files: List[Path]
+
+
+@dataclass(frozen=True)
+class AggregatorLoadReport:
+    project_path: Path
+    autosar_version: str
+    datatypes_file: Path
+    interface_patterns: List[InputPatternReport]
+    swc_patterns: List[InputPatternReport]
+    system_file: Optional[Path]
+    connections_file: Optional[Path]
+    load_schema_ms: float
+    model_build_ms: float
+
 
 class ValidationError(Exception):
     def __init__(self, errors: List[str]):
@@ -40,13 +62,22 @@ def _schema_dir() -> Path:
     return Path(__file__).resolve().parent.parent / "schemas"
 
 def _expand_patterns(base_dir: Path, patterns: Sequence[str]) -> List[Path]:
+    return _expand_patterns_with_details(base_dir, patterns)[0]
+
+
+def _expand_patterns_with_details(base_dir: Path, patterns: Sequence[str]) -> tuple[List[Path], List[InputPatternReport]]:
     out: List[Path] = []
+    details: List[InputPatternReport] = []
     for pat in patterns:
         if any(ch in pat for ch in ["*", "?", "["]):
             matches = sorted(base_dir.glob(pat))
-            out.extend([m.resolve() for m in matches if m.is_file()])
+            files = [m.resolve() for m in matches if m.is_file()]
+            out.extend(files)
+            details.append(InputPatternReport(pattern=pat, matched_files=files))
         else:
-            out.append((base_dir / pat).resolve())
+            resolved = (base_dir / pat).resolve()
+            out.append(resolved)
+            details.append(InputPatternReport(pattern=pat, matched_files=[resolved] if resolved.is_file() else []))
 
     seen = set()
     uniq: List[Path] = []
@@ -54,9 +85,11 @@ def _expand_patterns(base_dir: Path, patterns: Sequence[str]) -> List[Path]:
         if p not in seen:
             uniq.append(p)
             seen.add(p)
-    return uniq
+    return uniq, details
 
-def load_aggregator(agg_path: Path, schema_path: Optional[Path] = None) -> Project:
+
+def load_aggregator_with_report(agg_path: Path, schema_path: Optional[Path] = None) -> tuple[Project, AggregatorLoadReport]:
+    load_started = perf_counter()
     agg = _load_yaml(agg_path)
     agg_schema = _load_json(schema_path or (_schema_dir() / "aggregator.schema.json"))
     errs = _validate_with_schema(agg, agg_schema, str(agg_path))
@@ -84,7 +117,7 @@ def load_aggregator(agg_path: Path, schema_path: Optional[Path] = None) -> Proje
     merged["datatypes"] = dt_data.get("datatypes", [])
 
     itf_schema = _load_json(_schema_dir() / "interface.schema.json")
-    interface_files = _expand_patterns(base_dir, inputs["interfaces"])
+    interface_files, interface_patterns = _expand_patterns_with_details(base_dir, inputs["interfaces"])
     if not interface_files:
         raise ValidationError([f"No interface files matched patterns in {agg_path}"])
     for p in interface_files:
@@ -95,7 +128,7 @@ def load_aggregator(agg_path: Path, schema_path: Optional[Path] = None) -> Proje
         merged["interfaces"].append(data["interface"])
 
     swc_schema = _load_json(_schema_dir() / "swc.schema.json")
-    swc_files = _expand_patterns(base_dir, inputs["swcs"])
+    swc_files, swc_patterns = _expand_patterns_with_details(base_dir, inputs["swcs"])
     if not swc_files:
         raise ValidationError([f"No SWC files matched patterns in {agg_path}"])
     for p in swc_files:
@@ -105,6 +138,8 @@ def load_aggregator(agg_path: Path, schema_path: Optional[Path] = None) -> Proje
             raise ValidationError(errs)
         merged["swcs"].append(data["swc"])
 
+    system_file: Optional[Path] = None
+    connections_file: Optional[Path] = None
     if "system" in inputs and "connections" in inputs:
         raise ValidationError([f"{agg_path}:inputs: define only one of 'system' or legacy 'connections'."])
 
@@ -116,6 +151,7 @@ def load_aggregator(agg_path: Path, schema_path: Optional[Path] = None) -> Proje
         if errs:
             raise ValidationError(errs)
         merged["system"] = s_data.get("system")
+        system_file = s_path
     else:
         c_path = (base_dir / inputs["connections"]).resolve()
         c_data = _load_yaml(c_path)
@@ -124,8 +160,29 @@ def load_aggregator(agg_path: Path, schema_path: Optional[Path] = None) -> Proje
         if errs:
             raise ValidationError(errs)
         merged["connections"] = c_data.get("connections", [])
+        connections_file = c_path
 
-    return from_dict(merged)
+    load_schema_ms = (perf_counter() - load_started) * 1000.0
+    model_started = perf_counter()
+    project = from_dict(merged)
+    model_build_ms = (perf_counter() - model_started) * 1000.0
+
+    report = AggregatorLoadReport(
+        project_path=agg_path,
+        autosar_version=project.autosar_version,
+        datatypes_file=dt_path,
+        interface_patterns=interface_patterns,
+        swc_patterns=swc_patterns,
+        system_file=system_file,
+        connections_file=connections_file,
+        load_schema_ms=load_schema_ms,
+        model_build_ms=model_build_ms,
+    )
+    return project, report
+
+def load_aggregator(agg_path: Path, schema_path: Optional[Path] = None) -> Project:
+    project, _ = load_aggregator_with_report(agg_path, schema_path=schema_path)
+    return project
 
 
 def load_and_validate_aggregator(agg_path: Path, schema_path: Optional[Path] = None) -> Project:
