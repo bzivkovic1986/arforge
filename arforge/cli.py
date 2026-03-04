@@ -19,7 +19,9 @@ from .validate import (
 
 app = typer.Typer(
     add_completion=False,
-    help="ARForge (AUTOSAR Classic 4.2 YAML -> ARXML). validate supports -v/-vv verbosity.",
+    help=(
+        "ARForge (AUTOSAR Classic YAML -> ARXML).\n"
+    ),
 )
 
 console = Console()
@@ -54,10 +56,15 @@ def validate(
         "--verbose",
         "-v",
         count=True,
-        help="Validation verbosity: -v shows case execution, -vv adds timing and finding counts.",
+        help=(
+            "Validation verbosity:\n"
+            "-v  show which validation cases ran (OK/SKIP/FAIL)\n"
+            "-vv also show per-case timing and finding counts"
+        ),
     ),
 ):
-    """Validate project YAMLs (supports globs, -v/-vv for semantic execution details)."""
+    """Validate project YAMLs (supports globs).
+    Use -v/-vv for semantic validation execution details."""
     try:
         if verbose <= 0:
             _ = load_and_validate_aggregator(project)
@@ -111,10 +118,15 @@ def export(
         "--verbose",
         "-v",
         count=True,
-        help="Export verbosity: -v shows input/layout/template details, -vv adds model/timing/size details.",
+        help=(
+            "Export verbosity:\n"
+            "-v  show resolved inputs (glob expansion), layout, and templates used\n"
+            "-vv also show model counts, stage timings, and output file sizes"
+        ),
     ),
 ):
-    """Validate then export ARXML using Jinja2 templates."""
+    """Validate then export ARXML using Jinja2 templates.
+    Use -v/-vv for detailed export diagnostics."""
     template_dir = templates or _default_template_dir()
 
     if split_by_swc:
