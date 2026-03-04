@@ -1,6 +1,6 @@
 # ARForge
 
-ARForge is a developer-oriented AUTOSAR Classic (4.2) modeling tool that lets you define software components in human-friendly **YAML** (with editor validation) and generate **ARXML** using **Jinja2** templates.
+ARForge is a developer-oriented AUTOSAR Classic modeling tool that lets you define software components in human-friendly **YAML** (with editor validation) and generate **ARXML** using **Jinja2** templates.
 
 It’s intentionally built around a simple pipeline:
 
@@ -51,6 +51,15 @@ pip install -r requirements.txt
 python -m arforge.cli validate examples/autosar.project.yaml
 ```
 
+Verbose validation:
+```bash
+# Show validation case execution (RUN/SKIP/FAIL)
+python -m arforge.cli validate examples/autosar.project.yaml -v
+
+# Add per-case timing and finding counts
+python -m arforge.cli validate examples/autosar.project.yaml -vv
+```
+
 ### 3) Export ARXML (split output)
 ```bash
 python -m arforge.cli export examples/autosar.project.yaml --out build/out --split-by-swc
@@ -60,6 +69,15 @@ Outputs:
 - `build/out/shared.arxml`
 - `build/out/<SWC>.arxml`
 - `build/out/system.arxml`
+
+Verbose export:
+```bash
+# Show resolved input files, layout, and templates
+python -m arforge.cli export examples/autosar.project.yaml --out build/out --split-by-swc -v
+
+# Add model counts, stage timings, and output sizes
+python -m arforge.cli export examples/autosar.project.yaml --out build/out --split-by-swc -vv
+```
 
 ## YAML model examples
 
@@ -118,7 +136,9 @@ Install:
 
 This repo includes `.vscode/settings.json` which maps schemas to the YAML files, so you get validation and autocomplete while editing.
 
-## Next steps (planned)
-- runnable read/write semantics and validation
-- richer datatype and interface modeling
-- plugin system for OEM-specific rules
+## Contact
+
+For questions, ideas or commerical usage of this project, feel free to reach out:
+- Email: bojan.zivkovic.ns@gmail.com
+- Linkedin: [Bojan Zivkovic](https://www.linkedin.com/in/bojanzivkovic86)
+
