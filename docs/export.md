@@ -29,6 +29,12 @@ Application data type links are emitted when present:
 
 - `UNIT-REF`
 - `COMPU-METHOD-REF`
+- `DATA-CONSTR-REF` (when `applicationDataTypes[*].constraint` is defined)
+
+Constraint rendering:
+
+- `DataConstrs` package with one `DATA-CONSTR` per constrained application data type
+- each constraint emits closed lower/upper limits from YAML `min`/`max`
 
 Compu method rendering:
 

@@ -52,6 +52,19 @@ compuMethods:
         label: "Failed"
 ```
 
+## Application data type constraints
+
+`applicationDataTypes[*]` may define an optional numeric range:
+
+```yaml
+applicationDataTypes:
+  - name: "App_VehicleSpeed"
+    implementationTypeRef: "UInt16"
+    constraint:
+      min: 0
+      max: 300
+```
+
 ## Interface files
 
 Sender-receiver:

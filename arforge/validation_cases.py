@@ -318,6 +318,113 @@ class InterfaceSemanticCase(ValidationCase):
         return findings
 
 
+class ApplicationConstraintCase(ValidationCase):
+    case_id = "CORE-011"
+    description = "Validate ApplicationDataType constraint ranges and compatibility with implementation types."
+    tags = ("core", "types", "constraints")
+
+    _INTEGER_BASE_RANGES = {
+        "uint8": (0, 255),
+        "uint16": (0, 65535),
+        "uint32": (0, 4294967295),
+        "sint8": (-128, 127),
+        "sint16": (-32768, 32767),
+        "sint32": (-2147483648, 2147483647),
+    }
+    _FLOAT_BASE_TYPES = {"float32", "float64"}
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        has_constraints = any(app.constraint is not None for app in ctx.project.applicationDataTypes)
+        if not has_constraints:
+            return False, "no application datatype constraints defined"
+        return True, None
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        findings: List[Finding] = []
+
+        for app in sorted(ctx.project.applicationDataTypes, key=lambda d: d.name):
+            if app.constraint is None:
+                continue
+
+            min_val = app.constraint.min
+            max_val = app.constraint.max
+
+            if min_val > max_val:
+                findings.append(
+                    self.finding(
+                        f"ApplicationDataType '{app.name}' has invalid constraint range: min '{min_val}' > max '{max_val}'.",
+                        code="CORE-011-CONSTRAINT-MIN-GT-MAX",
+                    )
+                )
+
+            impl = ctx.implementation_type_by_name.get(app.implementationTypeRef)
+            if impl is None:
+                # Unknown implementation ref is reported by CORE-010.
+                continue
+
+            if impl.is_struct or (impl.kind is not None and impl.kind != "struct"):
+                findings.append(
+                    self.finding(
+                        f"ApplicationDataType '{app.name}' uses implementation type '{impl.name}' of kind '{impl.kind or 'struct'}'; constraints are only allowed for scalar numeric implementation types in v0.",
+                        code="CORE-011-CONSTRAINT-NON-SCALAR",
+                    )
+                )
+                continue
+
+            if not impl.baseTypeRef:
+                # Missing base type ref is reported by CORE-010.
+                continue
+
+            base_type = ctx.base_type_by_name.get(impl.baseTypeRef)
+            if base_type is None:
+                # Unknown base type ref is reported by CORE-010.
+                continue
+
+            base_name = base_type.name.lower()
+            if base_name in self._INTEGER_BASE_RANGES:
+                if not isinstance(min_val, int) or not isinstance(max_val, int):
+                    findings.append(
+                        self.finding(
+                            f"ApplicationDataType '{app.name}' constraints must be integers for integer base type '{base_type.name}'.",
+                            code="CORE-011-CONSTRAINT-INTEGER-REQUIRED",
+                        )
+                    )
+                    continue
+
+                range_min, range_max = self._INTEGER_BASE_RANGES[base_name]
+                if base_name.startswith("uint") and min_val < 0:
+                    findings.append(
+                        self.finding(
+                            f"ApplicationDataType '{app.name}' constraints for unsigned base type '{base_type.name}' must have min >= 0.",
+                            code="CORE-011-CONSTRAINT-UNSIGNED-MIN",
+                        )
+                    )
+                    continue
+
+                if min_val < range_min or min_val > range_max or max_val < range_min or max_val > range_max:
+                    findings.append(
+                        self.finding(
+                            f"ApplicationDataType '{app.name}' constraints [{min_val}, {max_val}] are outside representable range [{range_min}, {range_max}] for base type '{base_type.name}'.",
+                            code="CORE-011-CONSTRAINT-OUT-OF-RANGE",
+                        )
+                    )
+                    continue
+                continue
+
+            if base_name in self._FLOAT_BASE_TYPES:
+                # For v0 float32/float64, int and float bounds are both allowed without strict magnitude checks.
+                continue
+
+            findings.append(
+                self.finding(
+                    f"ApplicationDataType '{app.name}' uses unsupported constrained base type '{base_type.name}'.",
+                    code="CORE-011-CONSTRAINT-UNSUPPORTED-BASETYPE",
+                )
+            )
+
+        return findings
+
+
 class SwcStructureCase(ValidationCase):
     case_id = "CORE-020"
     description = "Validate SWC internal uniqueness constraints."
@@ -819,6 +926,7 @@ def core_validation_cases() -> List[ValidationCase]:
     return [
         DuplicateNameCase(),
         InterfaceSemanticCase(),
+        ApplicationConstraintCase(),
         SwcStructureCase(),
         SwcPortInterfaceCase(),
         RunnableAccessSemanticCase(),
