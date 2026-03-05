@@ -1,0 +1,7 @@
+baseTypes:
+  - name: "uint8"
+    bitLength: 0
+    signedness: "unsigned"
+  - name: "uint16"
+    bitLength: 16
+    signedness: "UNSIGNED"

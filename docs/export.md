@@ -25,6 +25,16 @@ Monolithic mode:
 - `CompuMethods` package (`linear` and `textTable`)
 - Interfaces package (SR + CS)
 
+Base type rendering in `BaseTypes`:
+
+- one `SW-BASE-TYPE` per base type (sorted by name for deterministic output)
+- `SHORT-NAME` always
+- `BASE-TYPE-SIZE` when `bitLength` is defined
+- `BASE-TYPE-ENCODING`:
+  - `NONE` for `signedness: unsigned`
+  - `2C` for `signedness: signed`
+- `NATIVE-DECLARATION` when `nativeDeclaration` is defined
+
 Application data type links are emitted when present:
 
 - `UNIT-REF`

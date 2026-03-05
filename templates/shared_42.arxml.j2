@@ -13,6 +13,17 @@
             {% for dt in base_types %}
             <SW-BASE-TYPE>
               <SHORT-NAME>{{ dt.name }}</SHORT-NAME>
+              {% if dt.bitLength is not none %}
+              <BASE-TYPE-SIZE>{{ dt.bitLength }}</BASE-TYPE-SIZE>
+              {% endif %}
+              {% if dt.signedness == "signed" %}
+              <BASE-TYPE-ENCODING>2C</BASE-TYPE-ENCODING>
+              {% elif dt.signedness == "unsigned" %}
+              <BASE-TYPE-ENCODING>NONE</BASE-TYPE-ENCODING>
+              {% endif %}
+              {% if dt.nativeDeclaration %}
+              <NATIVE-DECLARATION>{{ dt.nativeDeclaration }}</NATIVE-DECLARATION>
+              {% endif %}
             </SW-BASE-TYPE>
             {% endfor %}
           </ELEMENTS>

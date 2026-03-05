@@ -65,6 +65,34 @@ applicationDataTypes:
       max: 300
 ```
 
+Constraint range validation for integer base types uses base type metadata:
+
+- unsigned: `0 .. (2^bitLength - 1)`
+- signed: `-(2^(bitLength-1)) .. (2^(bitLength-1) - 1)`
+
+Legacy base type definitions (`{ name }`) remain valid. For constraint range checks, ARForge currently applies fallback metadata only for `uint8` and `uint16`.
+
+## Base type files
+
+`baseTypes` supports two entry shapes:
+
+- legacy:
+
+```yaml
+baseTypes:
+  - name: "uint16"
+```
+
+- raw metadata:
+
+```yaml
+baseTypes:
+  - name: "uint16"
+    bitLength: 16
+    signedness: "unsigned"
+    nativeDeclaration: "uint16"
+```
+
 ## Interface files
 
 Sender-receiver:

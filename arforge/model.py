@@ -6,6 +6,9 @@ from typing import Any, Dict, List, Tuple
 @dataclass(frozen=True)
 class BaseType:
     name: str
+    bitLength: int | None = None
+    signedness: str | None = None
+    nativeDeclaration: str | None = None
 
 
 @dataclass(frozen=True)
