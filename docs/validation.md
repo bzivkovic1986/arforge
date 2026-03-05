@@ -24,6 +24,14 @@ Current core rules include:
 - uniqueness checks (types, interfaces, SWCs, units, compu methods, instances)
 - type graph checks (base/impl/app refs)
 - struct checks (field rules, no app fields, cycle detection)
+- compu method checks:
+  - category must be supported (`linear` or `textTable`)
+  - `linear`: known `unitRef`, non-zero `factor`, valid `physMin`/`physMax` ordering
+  - `textTable`: at least one entry, unique `value`, non-empty `label` after trim
+- application type + compu method checks:
+  - unknown `compuMethodRef` is rejected
+  - `linear` compu method requires `unitRef` on application type and exact unit match
+  - `textTable` compu method allows optional `unitRef` with no unit-match enforcement
 - interface checks (SR data elements, CS operations/args/returns)
 - runnable checks (reads/writes/calls)
 - operation-invoked event checks

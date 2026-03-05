@@ -1,0 +1,15 @@
+autosar:
+  version: "4.2"
+  rootPackage: "DEMO"
+
+inputs:
+  baseTypes: "../platform/base_types.yaml"
+  implementationDataTypes: "../types/implementation_types.yaml"
+  applicationDataTypes: "types/application_types_texttable.yaml"
+  compuMethods:
+    - "compu_methods/text_table_duplicate_values.yaml"
+  interfaces:
+    - "../interfaces/*.yaml"
+  swcs:
+    - "../swcs/*.yaml"
+  system: "../system.yaml"

@@ -1,2 +1,3 @@
 baseTypes:
+  - name: "uint8"
   - name: "uint16"

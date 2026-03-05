@@ -7,6 +7,6 @@ interface:
         - name: "DtcId"
           direction: "in"
           typeRef: "UInt16"
-      returnType: "UInt16"
+      returnType: "App_DtcStatus"
     - name: "ClearDTC"
       returnType: "void"

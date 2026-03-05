@@ -22,13 +22,20 @@ Monolithic mode:
 - `ImplementationDataTypes` package (including struct members)
 - `ApplicationDataTypes` package
 - `Units` package
-- `CompuMethods` package (linear entries)
+- `CompuMethods` package (`linear` and `textTable`)
 - Interfaces package (SR + CS)
 
 Application data type links are emitted when present:
 
 - `UNIT-REF`
 - `COMPU-METHOD-REF`
+
+Compu method rendering:
+
+- `linear` emits `UNIT-REF`, `FACTOR`, `OFFSET`, optional `PHYS-MIN`/`PHYS-MAX`
+- `textTable` emits internal-to-physical scales with per-entry:
+  - numeric value (lower/upper limit)
+  - label (`VT`)
 
 ## SWC ARXML content
 
