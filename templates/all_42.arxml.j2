@@ -193,6 +193,18 @@
                   <SHORT-NAME>{{ p.name }}</SHORT-NAME>
                   {% if p.interfaceType == "senderReceiver" %}
                   <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/{{ root_pkg }}/Interfaces/{{ p.interfaceRef }}</PROVIDED-INTERFACE-TREF>
+                  {% if p.comSpec %}
+                  <PROVIDED-COM-SPECS>
+                    {% if p.comSpec.mode == "queued" %}
+                    <QUEUED-SENDER-COM-SPEC>
+                      <QUEUE-LENGTH>{{ p.comSpec.queueLength }}</QUEUE-LENGTH>
+                    </QUEUED-SENDER-COM-SPEC>
+                    {% else %}
+                    <NONQUEUED-SENDER-COM-SPEC>
+                    </NONQUEUED-SENDER-COM-SPEC>
+                    {% endif %}
+                  </PROVIDED-COM-SPECS>
+                  {% endif %}
                   {% else %}
                   <PROVIDED-INTERFACE-TREF DEST="CLIENT-SERVER-INTERFACE">/{{ root_pkg }}/Interfaces/{{ p.interfaceRef }}</PROVIDED-INTERFACE-TREF>
                   {% endif %}
@@ -202,6 +214,18 @@
                   <SHORT-NAME>{{ p.name }}</SHORT-NAME>
                   {% if p.interfaceType == "senderReceiver" %}
                   <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">/{{ root_pkg }}/Interfaces/{{ p.interfaceRef }}</REQUIRED-INTERFACE-TREF>
+                  {% if p.comSpec %}
+                  <REQUIRED-COM-SPECS>
+                    {% if p.comSpec.mode == "queued" %}
+                    <QUEUED-RECEIVER-COM-SPEC>
+                      <QUEUE-LENGTH>{{ p.comSpec.queueLength }}</QUEUE-LENGTH>
+                    </QUEUED-RECEIVER-COM-SPEC>
+                    {% else %}
+                    <NONQUEUED-RECEIVER-COM-SPEC>
+                    </NONQUEUED-RECEIVER-COM-SPEC>
+                    {% endif %}
+                  </REQUIRED-COM-SPECS>
+                  {% endif %}
                   {% else %}
                   <REQUIRED-INTERFACE-TREF DEST="CLIENT-SERVER-INTERFACE">/{{ root_pkg }}/Interfaces/{{ p.interfaceRef }}</REQUIRED-INTERFACE-TREF>
                   {% endif %}

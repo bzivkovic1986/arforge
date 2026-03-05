@@ -7,6 +7,7 @@ import sys
 import pytest
 import yaml
 
+from arforge.exporter import write_outputs
 from arforge.validate import ValidationError, load_aggregator, load_and_validate_aggregator
 
 
@@ -49,6 +50,20 @@ def test_cli_validate_smoke() -> None:
         text=True,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_split_export_includes_sr_comspec_blocks(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    speed_consumer = out_dir / "SpeedConsumer.arxml"
+    xml = speed_consumer.read_text(encoding="utf-8")
+
+    assert "<REQUIRED-COM-SPECS>" in xml
+    assert "<QUEUED-RECEIVER-COM-SPEC>" in xml
+    assert "<QUEUE-LENGTH>8</QUEUE-LENGTH>" in xml
 
 
 def test_legacy_datatypes_input_emits_deprecation_warning() -> None:

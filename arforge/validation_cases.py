@@ -808,6 +808,68 @@ class RunnableTriggerPolicyCase(ValidationCase):
         return findings
 
 
+class ComSpecSemanticCase(ValidationCase):
+    case_id = "CORE-025"
+    description = "Validate sender-receiver ComSpec on SWC ports."
+    tags = ("core", "swc", "ports", "comspec")
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.swcs:
+            return False, "no SWCs defined"
+        has_comspec = any(
+            port.comSpec is not None
+            for swc in ctx.project.swcs
+            for port in swc.ports
+        )
+        if not has_comspec:
+            return False, "no port comSpec defined"
+        return True, None
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        findings: List[Finding] = []
+        for swc in sorted(ctx.project.swcs, key=lambda s: s.name):
+            for port in sorted(swc.ports, key=lambda p: p.name):
+                com_spec = port.comSpec
+                if com_spec is None:
+                    continue
+
+                itf = ctx.iface_by_name.get(port.interfaceRef)
+                if itf is not None and itf.type != "senderReceiver":
+                    findings.append(
+                        self.finding(
+                            f"SWC '{swc.name}' port '{port.name}' comSpec requires senderReceiver interface, found '{itf.type}'.",
+                            code="CORE-025-COMSPEC-INTERFACE-TYPE",
+                        )
+                    )
+
+                if com_spec.mode == "queued":
+                    if com_spec.queueLength is None:
+                        findings.append(
+                            self.finding(
+                                f"SWC '{swc.name}' port '{port.name}' queued comSpec must define queueLength.",
+                                code="CORE-025-COMSPEC-QUEUED-MISSING-QUEUE-LENGTH",
+                            )
+                        )
+                    elif com_spec.queueLength < 1:
+                        findings.append(
+                            self.finding(
+                                f"SWC '{swc.name}' port '{port.name}' queued comSpec queueLength must be >= 1, found '{com_spec.queueLength}'.",
+                                code="CORE-025-COMSPEC-QUEUED-QUEUE-LENGTH-RANGE",
+                            )
+                        )
+                    continue
+
+                if com_spec.queueLength is not None:
+                    findings.append(
+                        self.finding(
+                            f"SWC '{swc.name}' port '{port.name}' comSpec mode '{com_spec.mode}' must not define queueLength.",
+                            code="CORE-025-COMSPEC-NONQUEUED-QUEUE-LENGTH",
+                        )
+                    )
+
+        return findings
+
+
 class SystemInstanceTypeCase(ValidationCase):
     case_id = "CORE-030"
     description = "Validate composition component prototypes reference known SWC types."
@@ -1001,6 +1063,7 @@ def core_validation_cases() -> List[ValidationCase]:
         RunnableAccessSemanticCase(),
         OperationInvokedEventCase(),
         RunnableTriggerPolicyCase(),
+        ComSpecSemanticCase(),
         SystemInstanceTypeCase(),
         ConnectionSemanticCase(),
     ]
