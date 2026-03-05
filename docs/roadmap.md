@@ -15,10 +15,11 @@ Already implemented:
 - split base/implementation/application types
 - implementation structs
 - units + linear compu methods
+- textTable compu methods (enumeration-style value-label mapping)
 
 Likely next increments (not yet implemented in current code):
 
-- richer compu method categories (beyond linear)
+- richer compu method categories beyond `linear` and `textTable`
 - additional unit metadata/dimensions
 - deeper ARXML details for data type internals
 

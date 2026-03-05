@@ -24,6 +24,34 @@ inputs:
   system: "system.yaml"
 ```
 
+## Compu methods
+
+Linear:
+
+```yaml
+compuMethods:
+  - name: "CM_Speed_Kmh_Linear"
+    category: "linear"
+    unitRef: "km_h"
+    factor: 0.1
+    offset: 0.0
+    physMin: 0
+    physMax: 300
+```
+
+Text table:
+
+```yaml
+compuMethods:
+  - name: "CM_DtcStatus"
+    category: "textTable"
+    entries:
+      - value: 0
+        label: "OK"
+      - value: 1
+        label: "Failed"
+```
+
 ## Interface files
 
 Sender-receiver:
@@ -49,7 +77,7 @@ interface:
         - name: "DtcId"
           direction: "in"
           typeRef: "UInt16"
-      returnType: "UInt16"
+      returnType: "App_DtcStatus"
 ```
 
 ## SWC files
