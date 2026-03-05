@@ -1,4 +1,6 @@
 implementationDataTypes:
+  - name: "UInt8"
+    baseTypeRef: "uint8"
   - name: "UInt16"
     baseTypeRef: "uint16"
   - name: "SpeedPair_T"

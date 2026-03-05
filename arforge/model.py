@@ -41,14 +41,21 @@ class Unit:
 
 
 @dataclass(frozen=True)
+class TextTableEntry:
+    value: int
+    label: str
+
+
+@dataclass(frozen=True)
 class CompuMethod:
     name: str
     category: str
-    unitRef: str
-    factor: float
-    offset: float
+    unitRef: str | None = None
+    factor: float | None = None
+    offset: float | None = None
     physMin: float | None = None
     physMax: float | None = None
+    entries: List[TextTableEntry] = field(default_factory=list)
 
 @dataclass(frozen=True)
 class DataElement:
@@ -191,7 +198,20 @@ def from_dict(d: Dict[str, Any]) -> Project:
         )
     app_types = [ApplicationDataType(**adt) for adt in d.get("applicationDataTypes", [])]
     units = [Unit(**u) for u in d.get("units", [])]
-    compu_methods = [CompuMethod(**cm) for cm in d.get("compuMethods", [])]
+    compu_methods = []
+    for cm in d.get("compuMethods", []):
+        compu_methods.append(
+            CompuMethod(
+                name=cm["name"],
+                category=cm["category"],
+                unitRef=cm.get("unitRef"),
+                factor=cm.get("factor"),
+                offset=cm.get("offset"),
+                physMin=cm.get("physMin"),
+                physMax=cm.get("physMax"),
+                entries=[TextTableEntry(**entry) for entry in cm.get("entries", [])],
+            )
+        )
 
     ifaces: List[Interface] = []
     for itf in d.get("interfaces", []):

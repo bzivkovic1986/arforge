@@ -6,3 +6,12 @@ compuMethods:
     offset: 0.0
     physMin: 0
     physMax: 300
+  - name: "CM_DtcStatus"
+    category: "textTable"
+    entries:
+      - value: 0
+        label: "OK"
+      - value: 1
+        label: "Failed"
+      - value: 2
+        label: "Pending"

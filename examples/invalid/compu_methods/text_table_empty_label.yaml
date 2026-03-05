@@ -1,0 +1,6 @@
+compuMethods:
+  - name: "CM_DtcStatus"
+    category: "textTable"
+    entries:
+      - value: 0
+        label: ""

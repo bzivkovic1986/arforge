@@ -81,6 +81,7 @@
             <COMPU-METHOD>
               <SHORT-NAME>{{ c.name }}</SHORT-NAME>
               <CATEGORY>{{ c.category }}</CATEGORY>
+              {% if c.category == "linear" %}
               <UNIT-REF DEST="UNIT">/{{ root_pkg }}/Units/{{ c.unitRef }}</UNIT-REF>
               <FACTOR>{{ c.factor }}</FACTOR>
               <OFFSET>{{ c.offset }}</OFFSET>
@@ -89,6 +90,21 @@
               {% endif %}
               {% if c.physMax is not none %}
               <PHYS-MAX>{{ c.physMax }}</PHYS-MAX>
+              {% endif %}
+              {% elif c.category == "textTable" %}
+              <COMPU-INTERNAL-TO-PHYS>
+                <COMPU-SCALES>
+                  {% for entry in c.entries %}
+                  <COMPU-SCALE>
+                    <LOWER-LIMIT>{{ entry.value }}</LOWER-LIMIT>
+                    <UPPER-LIMIT>{{ entry.value }}</UPPER-LIMIT>
+                    <COMPU-CONST>
+                      <VT>{{ entry.label }}</VT>
+                    </COMPU-CONST>
+                  </COMPU-SCALE>
+                  {% endfor %}
+                </COMPU-SCALES>
+              </COMPU-INTERNAL-TO-PHYS>
               {% endif %}
             </COMPU-METHOD>
             {% endfor %}

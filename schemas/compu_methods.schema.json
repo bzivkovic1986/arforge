@@ -9,40 +9,81 @@
     "compuMethods": {
       "type": "array",
       "items": {
-        "type": "object",
-        "required": [
-          "name",
-          "category",
-          "unitRef",
-          "factor",
-          "offset"
-        ],
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "name",
+              "category",
+              "unitRef",
+              "factor",
+              "offset"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "category": {
+                "const": "linear"
+              },
+              "unitRef": {
+                "type": "string",
+                "minLength": 1
+              },
+              "factor": {
+                "type": "number"
+              },
+              "offset": {
+                "type": "number"
+              },
+              "physMin": {
+                "type": "number"
+              },
+              "physMax": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
           },
-          "category": {
-            "type": "string"
-          },
-          "unitRef": {
-            "type": "string",
-            "minLength": 1
-          },
-          "factor": {
-            "type": "number"
-          },
-          "offset": {
-            "type": "number"
-          },
-          "physMin": {
-            "type": "number"
-          },
-          "physMax": {
-            "type": "number"
+          {
+            "type": "object",
+            "required": [
+              "name",
+              "category",
+              "entries"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "category": {
+                "const": "textTable"
+              },
+              "entries": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "value",
+                    "label"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "integer"
+                    },
+                    "label": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
           }
-        },
-        "additionalProperties": false
+        ]
       }
     }
   },

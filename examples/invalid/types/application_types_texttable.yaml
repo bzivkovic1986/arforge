@@ -1,8 +1,6 @@
 applicationDataTypes:
   - name: "App_VehicleSpeed"
     implementationTypeRef: "UInt16"
-    unitRef: "km_h"
-    compuMethodRef: "CM_Speed_Kmh_Linear"
   - name: "App_DtcStatus"
     implementationTypeRef: "UInt8"
     compuMethodRef: "CM_DtcStatus"

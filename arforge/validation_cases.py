@@ -162,14 +162,14 @@ class InterfaceSemanticCase(ValidationCase):
                             code="CORE-010-APPLICATION-UNKNOWN-COMPU-METHOD",
                         )
                     )
-                if not app.unitRef:
+                elif compu.category == "linear" and not app.unitRef:
                     findings.append(
                         self.finding(
                             f"ApplicationDataType '{app.name}' must define unitRef when compuMethodRef is set.",
                             code="CORE-010-APPLICATION-COMPU-REQUIRES-UNIT",
                         )
                     )
-            if app.unitRef and compu and app.unitRef != compu.unitRef:
+            if app.unitRef and compu and compu.category == "linear" and app.unitRef != compu.unitRef:
                 findings.append(
                     self.finding(
                         f"ApplicationDataType '{app.name}' unitRef '{app.unitRef}' must match compuMethod '{compu.name}' unitRef '{compu.unitRef}'.",
@@ -178,34 +178,65 @@ class InterfaceSemanticCase(ValidationCase):
                 )
 
         for compu in sorted(ctx.project.compuMethods, key=lambda c: c.name):
-            if compu.category != "linear":
+            if compu.category not in {"linear", "textTable"}:
                 findings.append(
                     self.finding(
                         f"CompuMethod '{compu.name}' has unsupported category '{compu.category}'.",
                         code="CORE-010-COMPU-CATEGORY",
                     )
                 )
-            if compu.unitRef not in ctx.unit_by_name:
+                continue
+
+            if compu.category == "linear":
+                if compu.unitRef not in ctx.unit_by_name:
+                    findings.append(
+                        self.finding(
+                            f"CompuMethod '{compu.name}' references unknown unitRef '{compu.unitRef}'.",
+                            code="CORE-010-COMPU-UNKNOWN-UNIT",
+                        )
+                    )
+                if compu.factor == 0:
+                    findings.append(
+                        self.finding(
+                            f"CompuMethod '{compu.name}' must have non-zero factor.",
+                            code="CORE-010-COMPU-FACTOR-ZERO",
+                        )
+                    )
+                if compu.physMin is not None and compu.physMax is not None and compu.physMin > compu.physMax:
+                    findings.append(
+                        self.finding(
+                            f"CompuMethod '{compu.name}' has invalid physical range: physMin '{compu.physMin}' > physMax '{compu.physMax}'.",
+                            code="CORE-010-COMPU-RANGE",
+                        )
+                    )
+                continue
+
+            if not compu.entries:
                 findings.append(
                     self.finding(
-                        f"CompuMethod '{compu.name}' references unknown unitRef '{compu.unitRef}'.",
-                        code="CORE-010-COMPU-UNKNOWN-UNIT",
+                        f"CompuMethod '{compu.name}' must define at least one textTable entry.",
+                        code="CORE-010-COMPU-TEXTTABLE-EMPTY",
                     )
                 )
-            if compu.factor == 0:
-                findings.append(
-                    self.finding(
-                        f"CompuMethod '{compu.name}' must have non-zero factor.",
-                        code="CORE-010-COMPU-FACTOR-ZERO",
+                continue
+
+            seen_values: set[int] = set()
+            for entry in sorted(compu.entries, key=lambda e: (e.value, e.label)):
+                if entry.value in seen_values:
+                    findings.append(
+                        self.finding(
+                            f"CompuMethod '{compu.name}' contains duplicate textTable value '{entry.value}'.",
+                            code="CORE-010-COMPU-TEXTTABLE-DUPLICATE-VALUE",
+                        )
                     )
-                )
-            if compu.physMin is not None and compu.physMax is not None and compu.physMin > compu.physMax:
-                findings.append(
-                    self.finding(
-                        f"CompuMethod '{compu.name}' has invalid physical range: physMin '{compu.physMin}' > physMax '{compu.physMax}'.",
-                        code="CORE-010-COMPU-RANGE",
+                seen_values.add(entry.value)
+                if not entry.label.strip():
+                    findings.append(
+                        self.finding(
+                            f"CompuMethod '{compu.name}' has empty textTable label for value '{entry.value}'.",
+                            code="CORE-010-COMPU-TEXTTABLE-EMPTY-LABEL",
+                        )
                     )
-                )
 
         for itf in sorted(ctx.project.interfaces, key=lambda i: i.name):
             if itf.type == "senderReceiver":
