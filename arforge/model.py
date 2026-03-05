@@ -86,20 +86,20 @@ class Interface:
 class Runnable:
     name: str
     timingEventMs: int | None = None
-    reads: List["SrAccess"] = field(default_factory=list)
-    writes: List["SrAccess"] = field(default_factory=list)
-    calls: List["CsCall"] = field(default_factory=list)
+    reads: List["DataAccess"] = field(default_factory=list)
+    writes: List["DataAccess"] = field(default_factory=list)
+    calls: List["OperationCall"] = field(default_factory=list)
     operationInvokedEvents: List["OperationInvokedEvent"] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
-class SrAccess:
+class DataAccess:
     port: str
     dataElement: str
 
 
 @dataclass(frozen=True)
-class CsCall:
+class OperationCall:
     port: str
     operation: str
 
@@ -108,6 +108,11 @@ class CsCall:
 class OperationInvokedEvent:
     port: str
     operation: str
+
+
+# Backward-compatible aliases for earlier internal names.
+SrAccess = DataAccess
+CsCall = OperationCall
 
 @dataclass(frozen=True)
 class Port:
@@ -239,10 +244,22 @@ def from_dict(d: Dict[str, Any]) -> Project:
             Runnable(
                 name=r["name"],
                 timingEventMs=r.get("timingEventMs"),
-                reads=[SrAccess(**acc) for acc in r.get("reads", [])],
-                writes=[SrAccess(**acc) for acc in r.get("writes", [])],
-                calls=[CsCall(**acc) for acc in r.get("calls", [])],
-                operationInvokedEvents=[OperationInvokedEvent(**e) for e in r.get("operationInvokedEvents", [])],
+                reads=sorted(
+                    [DataAccess(**acc) for acc in r.get("reads", [])],
+                    key=lambda acc: (acc.port, acc.dataElement),
+                ),
+                writes=sorted(
+                    [DataAccess(**acc) for acc in r.get("writes", [])],
+                    key=lambda acc: (acc.port, acc.dataElement),
+                ),
+                calls=sorted(
+                    [OperationCall(**acc) for acc in r.get("calls", [])],
+                    key=lambda acc: (acc.port, acc.operation),
+                ),
+                operationInvokedEvents=sorted(
+                    [OperationInvokedEvent(**e) for e in r.get("operationInvokedEvents", [])],
+                    key=lambda e: (e.port, e.operation),
+                ),
             )
             for r in s.get("runnables", [])
         ]

@@ -43,6 +43,7 @@ Each SWC file includes:
 
 - provides/requires ports
 - runnables
+- runnable access points from `reads`/`writes`/`calls`
 - timing events (when `timingEventMs` is set)
 - operation-invoked events (for `operationInvokedEvents`)
 

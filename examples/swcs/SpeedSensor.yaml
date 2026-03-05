@@ -3,6 +3,9 @@ swc:
   runnables:
     - name: "Runnable_ReadSpeed"
       timingEventMs: 10
+      writes:
+        - port: "Pp_VehicleSpeed"
+          dataElement: "VehicleSpeed"
     - name: "Runnable_DiagServer"
       operationInvokedEvents:
         - port: "Pp_Diag"
