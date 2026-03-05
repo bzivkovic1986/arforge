@@ -83,20 +83,30 @@ interface:
 ## SWC files
 
 Runnables can be cyclic (`timingEventMs`) or operation-triggered (`operationInvokedEvents`) but not both.
+Runnables can also declare optional access definitions:
+
+- `reads`: list of `{ port, dataElement }` for sender-receiver requires ports
+- `writes`: list of `{ port, dataElement }` for sender-receiver provides ports
+- `calls`: list of `{ port, operation }` for client-server requires ports
 
 ```yaml
 swc:
-  name: "SpeedSensor"
+  name: "SpeedConsumer"
   runnables:
-    - name: "Runnable_ReadSpeed"
+    - name: "Runnable_UseSpeed"
       timingEventMs: 10
-    - name: "Runnable_DiagServer"
-      operationInvokedEvents:
-        - port: "Pp_Diag"
+      reads:
+        - port: "Rp_VehicleSpeed"
+          dataElement: "VehicleSpeed"
+      calls:
+        - port: "Rp_Diag"
           operation: "ReadDTC"
   ports:
-    - name: "Pp_Diag"
-      direction: "provides"
+    - name: "Rp_VehicleSpeed"
+      direction: "requires"
+      interfaceRef: "If_VehicleSpeed"
+    - name: "Rp_Diag"
+      direction: "requires"
       interfaceRef: "If_Diagnostics"
 ```
 

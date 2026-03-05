@@ -46,6 +46,52 @@
                     <RUNNABLE-ENTITY>
                       <SHORT-NAME>{{ r.name }}</SHORT-NAME>
                       <CAN-BE-INVOKED-CONCURRENTLY>false</CAN-BE-INVOKED-CONCURRENTLY>
+                      {% if r.reads %}
+                      <DATA-RECEIVE-POINT-BY-ARGUMENTS>
+                        {% for read in r.reads %}
+                        <VARIABLE-ACCESS>
+                          <SHORT-NAME>DRP_{{ read.port }}_{{ read.dataElement }}</SHORT-NAME>
+                          <ACCESSED-VARIABLE>
+                            <AUTOSAR-VARIABLE-IREF>
+                              <PORT-PROTOTYPE-REF DEST="R-PORT-PROTOTYPE">/{{ root_pkg }}/Components/{{ swc.name }}/{{ read.port }}</PORT-PROTOTYPE-REF>
+                              {% set read_port = (swc.ports | selectattr("name", "equalto", read.port) | list | first) %}
+                              <TARGET-DATA-PROTOTYPE-REF DEST="VARIABLE-DATA-PROTOTYPE">/{{ root_pkg }}/Interfaces/{{ read_port.interfaceRef if read_port else '' }}/{{ read.dataElement }}</TARGET-DATA-PROTOTYPE-REF>
+                            </AUTOSAR-VARIABLE-IREF>
+                          </ACCESSED-VARIABLE>
+                        </VARIABLE-ACCESS>
+                        {% endfor %}
+                      </DATA-RECEIVE-POINT-BY-ARGUMENTS>
+                      {% endif %}
+                      {% if r.writes %}
+                      <DATA-SEND-POINTS>
+                        {% for write in r.writes %}
+                        <VARIABLE-ACCESS>
+                          <SHORT-NAME>DSP_{{ write.port }}_{{ write.dataElement }}</SHORT-NAME>
+                          <ACCESSED-VARIABLE>
+                            <AUTOSAR-VARIABLE-IREF>
+                              <PORT-PROTOTYPE-REF DEST="P-PORT-PROTOTYPE">/{{ root_pkg }}/Components/{{ swc.name }}/{{ write.port }}</PORT-PROTOTYPE-REF>
+                              {% set write_port = (swc.ports | selectattr("name", "equalto", write.port) | list | first) %}
+                              <TARGET-DATA-PROTOTYPE-REF DEST="VARIABLE-DATA-PROTOTYPE">/{{ root_pkg }}/Interfaces/{{ write_port.interfaceRef if write_port else '' }}/{{ write.dataElement }}</TARGET-DATA-PROTOTYPE-REF>
+                            </AUTOSAR-VARIABLE-IREF>
+                          </ACCESSED-VARIABLE>
+                        </VARIABLE-ACCESS>
+                        {% endfor %}
+                      </DATA-SEND-POINTS>
+                      {% endif %}
+                      {% if r.calls %}
+                      <SERVER-CALL-POINTS>
+                        {% for call in r.calls %}
+                        <SYNCHRONOUS-SERVER-CALL-POINT>
+                          <SHORT-NAME>SCP_{{ call.port }}_{{ call.operation }}</SHORT-NAME>
+                          {% set call_port = (swc.ports | selectattr("name", "equalto", call.port) | list | first) %}
+                          <OPERATION-IREF>
+                            <CONTEXT-R-PORT-REF DEST="R-PORT-PROTOTYPE">/{{ root_pkg }}/Components/{{ swc.name }}/{{ call.port }}</CONTEXT-R-PORT-REF>
+                            <TARGET-REQUIRED-OPERATION-REF DEST="CLIENT-SERVER-OPERATION">/{{ root_pkg }}/Interfaces/{{ call_port.interfaceRef if call_port else '' }}/{{ call.operation }}</TARGET-REQUIRED-OPERATION-REF>
+                          </OPERATION-IREF>
+                        </SYNCHRONOUS-SERVER-CALL-POINT>
+                        {% endfor %}
+                      </SERVER-CALL-POINTS>
+                      {% endif %}
                     </RUNNABLE-ENTITY>
                     {% endfor %}
                   </RUNNABLES>

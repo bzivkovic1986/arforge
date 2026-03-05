@@ -1,0 +1,18 @@
+swc:
+  name: "SpeedConsumer"
+  runnables:
+    - name: "Runnable_UseSpeed"
+      timingEventMs: 10
+      reads:
+        - port: "Rp_Unknown"
+          dataElement: "VehicleSpeed"
+      calls:
+        - port: "Rp_Diag"
+          operation: "ReadDTC"
+  ports:
+    - name: "Rp_VehicleSpeed"
+      direction: "requires"
+      interfaceRef: "If_VehicleSpeed"
+    - name: "Rp_Diag"
+      direction: "requires"
+      interfaceRef: "If_Diagnostics"
