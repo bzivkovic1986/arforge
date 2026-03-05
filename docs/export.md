@@ -58,10 +58,27 @@ Compu method rendering:
 Each SWC file includes:
 
 - provides/requires ports
+- optional sender-receiver ComSpec blocks inside port prototypes
 - runnables
 - runnable access points from `reads`/`writes`/`calls`
 - timing events (when `timingEventMs` is set)
 - operation-invoked events (for `operationInvokedEvents`)
+
+When a port defines `comSpec`, export emits the block directly after the interface TREF:
+
+- requires port (`R-PORT-PROTOTYPE`):
+  - `REQUIRED-COM-SPECS`
+  - queued mode: `QUEUED-RECEIVER-COM-SPEC` + `QUEUE-LENGTH`
+  - nonqueued modes: `NONQUEUED-RECEIVER-COM-SPEC`
+- provides port (`P-PORT-PROTOTYPE`):
+  - `PROVIDED-COM-SPECS`
+  - queued mode: `QUEUED-SENDER-COM-SPEC` + `QUEUE-LENGTH`
+  - nonqueued modes: `NONQUEUED-SENDER-COM-SPEC`
+
+Notes:
+
+- Current export keeps ComSpec minimal by design (no data-element refs yet).
+- ComSpec is emitted only for sender-receiver ports.
 
 ## System ARXML content
 

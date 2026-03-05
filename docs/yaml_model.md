@@ -129,6 +129,7 @@ Runnables can also declare optional access definitions:
 - `reads`: list of `{ port, dataElement }` for sender-receiver requires ports
 - `writes`: list of `{ port, dataElement }` for sender-receiver provides ports
 - `calls`: list of `{ port, operation }` for client-server requires ports
+- `ports[*].comSpec`: optional sender-receiver communication specification
 
 ```yaml
 swc:
@@ -153,6 +154,12 @@ swc:
       direction: "requires"
       interfaceRef: "If_Diagnostics"
 ```
+
+ComSpec rules:
+
+- ComSpec is allowed only on sender-receiver ports.
+- `mode: queued` requires `queueLength` with integer value `>= 1`.
+- `mode: implicit` and `mode: explicit` must not define `queueLength`.
 
 ## System files
 

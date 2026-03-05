@@ -22,3 +22,4 @@ Primary focus of the current implementation:
 - version-specific templates (AUTOSAR Classic 4.2)
 - examples-driven development under `examples/`
 - fixture-based pytest coverage under `tests/test_examples.py`
+- sender-receiver port ComSpec support (`implicit`, `explicit`, `queued`)

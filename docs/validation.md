@@ -54,6 +54,8 @@ Findings are deterministic:
 - case execution sorted by case id
 - findings sorted by severity, code, message, location
 
+ComSpec validation is implemented in dedicated case `CORE-025` to keep the rule isolated and maintainable.
+
 ## Fixture-driven testing
 
 `tests/test_examples.py`:
