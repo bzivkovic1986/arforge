@@ -66,6 +66,21 @@ def test_split_export_includes_sr_comspec_blocks(tmp_path: Path) -> None:
     assert "<QUEUE-LENGTH>8</QUEUE-LENGTH>" in xml
 
 
+def test_split_export_system_contains_multiple_component_prototypes(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    system_xml = (out_dir / "system.arxml").read_text(encoding="utf-8")
+
+    assert "<SHORT-NAME>SpeedSensor_1</SHORT-NAME>" in system_xml
+    assert "<SHORT-NAME>SpeedSensor_2</SHORT-NAME>" in system_xml
+    assert "<SHORT-NAME>SpeedConsumer_1</SHORT-NAME>" in system_xml
+    assert system_xml.count("<SW-COMPONENT-PROTOTYPE>") == 3
+    assert system_xml.count("<ASSEMBLY-SW-CONNECTOR>") == 3
+
+
 def test_legacy_datatypes_input_emits_deprecation_warning() -> None:
     legacy_project = INVALID_DIR / "project_bad_operation.yaml"
     with pytest.warns(DeprecationWarning, match="Legacy 'inputs.datatypes' format is deprecated"):

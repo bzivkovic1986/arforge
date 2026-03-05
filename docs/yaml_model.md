@@ -173,8 +173,18 @@ system:
     components:
       - name: "SpeedSensor_1"
         typeRef: "SpeedSensor"
+      - name: "SpeedSensor_2"
+        typeRef: "SpeedSensor"
+      - name: "SpeedConsumer_1"
+        typeRef: "SpeedConsumer"
     connectors:
       - from: "SpeedSensor_1.Pp_VehicleSpeed"
         to: "SpeedConsumer_1.Rp_VehicleSpeed"
         dataElement: "VehicleSpeed"
+      - from: "SpeedSensor_2.Pp_VehicleSpeed"
+        to: "SpeedConsumer_1.Rp_VehicleSpeed"
+        dataElement: "VehicleSpeed"
+      - from: "SpeedSensor_1.Pp_Diag"
+        to: "SpeedConsumer_1.Rp_Diag"
+        operation: "ReadDTC"
 ```
