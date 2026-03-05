@@ -2,8 +2,9 @@ baseTypes:
   - name: "uint8"
     bitLength: 8
     signedness: "unsigned"
-    nativeDeclaration: "uint8"
+  - name: "uint8"
+    bitLength: 8
+    signedness: "unsigned"
   - name: "uint16"
     bitLength: 16
     signedness: "unsigned"
-    nativeDeclaration: "uint16"

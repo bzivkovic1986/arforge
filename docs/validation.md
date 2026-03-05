@@ -22,6 +22,9 @@ Implemented via `ValidationCase` classes in `arforge/validation_cases.py`.
 Current core rules include:
 
 - uniqueness checks (types, interfaces, SWCs, units, compu methods, instances)
+- base type checks:
+  - per-base-type name uniqueness
+  - metadata completeness and validity (`bitLength`, `signedness`)
 - type graph checks (base/impl/app refs)
 - struct checks (field rules, no app fields, cycle detection)
 - compu method checks:
@@ -32,6 +35,10 @@ Current core rules include:
   - unknown `compuMethodRef` is rejected
   - `linear` compu method requires `unitRef` on application type and exact unit match
   - `textTable` compu method allows optional `unitRef` with no unit-match enforcement
+- application constraint checks:
+  - integer constrained ranges are computed from base type metadata
+  - if metadata is missing, explicit fallback is currently supported only for `uint8` and `uint16`
+  - otherwise constrained integer range validation fails deterministically
 - interface checks (SR data elements, CS operations/args/returns)
 - runnable checks (reads/writes/calls)
 - operation-invoked event checks

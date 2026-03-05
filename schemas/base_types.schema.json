@@ -9,17 +9,50 @@
     "baseTypes": {
       "type": "array",
       "items": {
-        "type": "object",
-        "required": [
-          "name"
-        ],
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "name",
+              "bitLength",
+              "signedness"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "bitLength": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "signedness": {
+                "type": "string",
+                "enum": [
+                  "unsigned",
+                  "signed"
+                ]
+              },
+              "nativeDeclaration": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
           }
-        },
-        "additionalProperties": false
+        ]
       }
     }
   },

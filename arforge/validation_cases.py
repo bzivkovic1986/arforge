@@ -35,6 +35,59 @@ class DuplicateNameCase(ValidationCase):
         return findings
 
 
+class BaseTypeMetadataCase(ValidationCase):
+    case_id = "CORE-002"
+    description = "Validate base type metadata and per-base-type uniqueness."
+    tags = ("core", "types", "base-types")
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.baseTypes:
+            return False, "no base types defined"
+        return True, None
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        findings: List[Finding] = []
+        seen_names: set[str] = set()
+
+        for base_type in sorted(ctx.project.baseTypes, key=lambda d: d.name):
+            if base_type.name in seen_names:
+                findings.append(
+                    self.finding(
+                        f"Duplicate BaseType name '{base_type.name}' found.",
+                        code="CORE-002-BASETYPE-DUPLICATE",
+                    )
+                )
+            seen_names.add(base_type.name)
+
+            has_bit_length = base_type.bitLength is not None
+            has_signedness = base_type.signedness is not None
+            if has_bit_length != has_signedness:
+                findings.append(
+                    self.finding(
+                        f"BaseType '{base_type.name}' must define both bitLength and signedness together.",
+                        code="CORE-002-BASETYPE-INCOMPLETE-METADATA",
+                    )
+                )
+
+            if base_type.bitLength is not None and base_type.bitLength < 1:
+                findings.append(
+                    self.finding(
+                        f"BaseType '{base_type.name}' has invalid bitLength '{base_type.bitLength}'; expected integer >= 1.",
+                        code="CORE-002-BASETYPE-BITLENGTH",
+                    )
+                )
+
+            if base_type.signedness is not None and base_type.signedness not in {"unsigned", "signed"}:
+                findings.append(
+                    self.finding(
+                        f"BaseType '{base_type.name}' has invalid signedness '{base_type.signedness}'; expected 'unsigned' or 'signed'.",
+                        code="CORE-002-BASETYPE-SIGNEDNESS",
+                    )
+                )
+
+        return findings
+
+
 class InterfaceSemanticCase(ValidationCase):
     case_id = "CORE-010"
     description = "Validate interface structure and datatype references."
@@ -323,15 +376,28 @@ class ApplicationConstraintCase(ValidationCase):
     description = "Validate ApplicationDataType constraint ranges and compatibility with implementation types."
     tags = ("core", "types", "constraints")
 
-    _INTEGER_BASE_RANGES = {
-        "uint8": (0, 255),
-        "uint16": (0, 65535),
-        "uint32": (0, 4294967295),
-        "sint8": (-128, 127),
-        "sint16": (-32768, 32767),
-        "sint32": (-2147483648, 2147483647),
+    _LEGACY_INTEGER_BASE_METADATA = {
+        "uint8": {"bitLength": 8, "signedness": "unsigned"},
+        "uint16": {"bitLength": 16, "signedness": "unsigned"},
     }
     _FLOAT_BASE_TYPES = {"float32", "float64"}
+
+    @staticmethod
+    def _representable_range(bit_length: int, signedness: str) -> tuple[int, int]:
+        if signedness == "unsigned":
+            return 0, (2 ** bit_length) - 1
+        return -(2 ** (bit_length - 1)), (2 ** (bit_length - 1)) - 1
+
+    def _resolve_integer_base_metadata(self, base_type_name: str, base_type) -> tuple[int, str] | None:
+        if base_type.bitLength is not None and base_type.signedness is not None:
+            if base_type.bitLength >= 1 and base_type.signedness in {"unsigned", "signed"}:
+                return base_type.bitLength, base_type.signedness
+            return None
+
+        legacy = self._LEGACY_INTEGER_BASE_METADATA.get(base_type_name.lower())
+        if legacy is None:
+            return None
+        return legacy["bitLength"], legacy["signedness"]
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
         has_constraints = any(app.constraint is not None for app in ctx.project.applicationDataTypes)
@@ -381,7 +447,8 @@ class ApplicationConstraintCase(ValidationCase):
                 continue
 
             base_name = base_type.name.lower()
-            if base_name in self._INTEGER_BASE_RANGES:
+            metadata = self._resolve_integer_base_metadata(base_name, base_type)
+            if metadata is not None:
                 if not isinstance(min_val, int) or not isinstance(max_val, int):
                     findings.append(
                         self.finding(
@@ -391,16 +458,8 @@ class ApplicationConstraintCase(ValidationCase):
                     )
                     continue
 
-                range_min, range_max = self._INTEGER_BASE_RANGES[base_name]
-                if base_name.startswith("uint") and min_val < 0:
-                    findings.append(
-                        self.finding(
-                            f"ApplicationDataType '{app.name}' constraints for unsigned base type '{base_type.name}' must have min >= 0.",
-                            code="CORE-011-CONSTRAINT-UNSIGNED-MIN",
-                        )
-                    )
-                    continue
-
+                bit_length, signedness = metadata
+                range_min, range_max = self._representable_range(bit_length, signedness)
                 if min_val < range_min or min_val > range_max or max_val < range_min or max_val > range_max:
                     findings.append(
                         self.finding(
@@ -413,6 +472,15 @@ class ApplicationConstraintCase(ValidationCase):
 
             if base_name in self._FLOAT_BASE_TYPES:
                 # For v0 float32/float64, int and float bounds are both allowed without strict magnitude checks.
+                continue
+
+            if base_type.bitLength is None or base_type.signedness is None:
+                findings.append(
+                    self.finding(
+                        f"ApplicationDataType '{app.name}' cannot validate constraints for base type '{base_type.name}' because bitLength/signedness metadata is missing.",
+                        code="CORE-011-CONSTRAINT-MISSING-BASETYPE-METADATA",
+                    )
+                )
                 continue
 
             findings.append(
@@ -925,6 +993,7 @@ class ConnectionSemanticCase(ValidationCase):
 def core_validation_cases() -> List[ValidationCase]:
     return [
         DuplicateNameCase(),
+        BaseTypeMetadataCase(),
         InterfaceSemanticCase(),
         ApplicationConstraintCase(),
         SwcStructureCase(),

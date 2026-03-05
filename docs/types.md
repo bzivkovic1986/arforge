@@ -13,7 +13,22 @@ ARForge currently models 5 type groups:
 ```yaml
 baseTypes:
   - name: "uint16"
+  - name: "uint8"
+    bitLength: 8
+    signedness: "unsigned"
+    nativeDeclaration: "uint8"
 ```
+
+Base type entry formats:
+
+- legacy (backward-compatible): `{ name }`
+- raw type metadata: `{ name, bitLength, signedness, nativeDeclaration? }`
+
+Metadata rules:
+
+- `bitLength` must be an integer `>= 1`
+- `signedness` must be `unsigned` or `signed`
+- use metadata to define representable ranges for constrained integer application types
 
 ## Implementation data types
 
@@ -64,15 +79,14 @@ Constraint policy (v0):
 - `constraint` is optional and requires both `min` and `max`
 - `min` must be less than or equal to `max`
 - scalar integer implementation types require integer `min`/`max`
-- integer constraints must fit base type ranges:
-  - `uint8`: `0..255`
-  - `uint16`: `0..65535`
-  - `uint32`: `0..4294967295`
-  - `sint8`: `-128..127`
-  - `sint16`: `-32768..32767`
-  - `sint32`: `-2147483648..2147483647`
+- integer constraints must fit the base type representable range derived from metadata:
+  - unsigned: `0 .. (2^bitLength - 1)`
+  - signed: `-(2^(bitLength-1)) .. (2^(bitLength-1) - 1)`
 - scalar float implementation types (`float32`, `float64`) accept integer or float bounds
 - non-scalar implementation types (for example `struct`) do not support constraints in v0
+- backward compatibility fallback for constrained integer checks exists only for legacy base types:
+  - `uint8` -> unsigned 8-bit
+  - `uint16` -> unsigned 16-bit
 
 Compu method linkage policy:
 
