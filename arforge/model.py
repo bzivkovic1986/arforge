@@ -125,11 +125,17 @@ SrAccess = DataAccess
 CsCall = OperationCall
 
 @dataclass(frozen=True)
+class ComSpec:
+    mode: str
+    queueLength: int | None = None
+
+@dataclass(frozen=True)
 class Port:
     name: str
     direction: str  # provides | requires
     interfaceRef: str
     interfaceType: str  # senderReceiver | clientServer
+    comSpec: ComSpec | None = None
 
 @dataclass(frozen=True)
 class Swc:
@@ -291,7 +297,17 @@ def from_dict(d: Dict[str, Any]) -> Project:
             it = iface_by_name.get(it_name)
             # interfaceType is used by templates; unknown handled by validation layer
             interfaceType = it.type if it else "senderReceiver"
-            ports.append(Port(name=p["name"], direction=p["direction"], interfaceRef=it_name, interfaceType=interfaceType))
+            com_spec_data = p.get("comSpec")
+            com_spec = ComSpec(**com_spec_data) if com_spec_data is not None else None
+            ports.append(
+                Port(
+                    name=p["name"],
+                    direction=p["direction"],
+                    interfaceRef=it_name,
+                    interfaceType=interfaceType,
+                    comSpec=com_spec,
+                )
+            )
         swcs.append(Swc(name=s["name"], runnables=runs, ports=ports))
 
     system_data = d.get("system")

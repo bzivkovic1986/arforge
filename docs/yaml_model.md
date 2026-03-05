@@ -146,6 +146,9 @@ swc:
     - name: "Rp_VehicleSpeed"
       direction: "requires"
       interfaceRef: "If_VehicleSpeed"
+      comSpec:
+        mode: "queued"      # implicit | explicit | queued
+        queueLength: 8      # required only for queued
     - name: "Rp_Diag"
       direction: "requires"
       interfaceRef: "If_Diagnostics"

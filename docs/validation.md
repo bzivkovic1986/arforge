@@ -43,6 +43,10 @@ Current core rules include:
 - runnable checks (reads/writes/calls)
 - operation-invoked event checks
 - runnable trigger policy checks
+- SR port ComSpec checks:
+  - ComSpec allowed only on senderReceiver ports
+  - `queued` mode requires `queueLength >= 1`
+  - non-queued modes must not define `queueLength`
 - system connector compatibility checks
 
 Findings are deterministic:

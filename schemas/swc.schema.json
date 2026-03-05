@@ -148,6 +148,26 @@
               "interfaceRef": {
                 "type": "string",
                 "minLength": 1
+              },
+              "comSpec": {
+                "type": "object",
+                "required": [
+                  "mode"
+                ],
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "implicit",
+                      "explicit",
+                      "queued"
+                    ]
+                  },
+                  "queueLength": {
+                    "type": "integer"
+                  }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
