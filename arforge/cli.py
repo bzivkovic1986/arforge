@@ -8,6 +8,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from .exporter import ExportInputSummary, InputPatternExpansion, write_outputs, write_outputs_with_report
+from .scaffold import scaffold_project
 from .validate import (
     ValidationError,
     build_semantic_report,
@@ -260,6 +261,30 @@ def export(
             console.print(f" - {artifact.path} ({_fmt_size(artifact.size_bytes)})")
         else:
             console.print(f" - {artifact.path}")
+
+
+@app.command()
+def init(
+    path: Path,
+    name: str = typer.Option("DemoSystem", "--name", help="System name used in scaffold files."),
+    force: bool = typer.Option(False, "--force", help="Allow scaffolding into an existing non-empty directory."),
+    no_example: bool = typer.Option(
+        False,
+        "--no-example",
+        help="Create a minimal valid placeholder model instead of the default SpeedSensor/SpeedConsumer example.",
+    ),
+):
+    """Scaffold a new ARForge project directory."""
+    try:
+        written = scaffold_project(path, name=name, force=force, no_example=no_example)
+    except FileExistsError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(code=2)
+
+    mode = "placeholder" if no_example else "example"
+    console.print(Panel.fit(f"[green]Scaffold created[/green] ({mode})", title="init"))
+    for p in written:
+        console.print(f" - {p}")
 
 
 if __name__ == "__main__":
