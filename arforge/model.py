@@ -30,8 +30,15 @@ class ImplementationDataType:
 class ApplicationDataType:
     name: str
     implementationTypeRef: str
+    constraint: "ConstraintRange | None" = None
     unitRef: str | None = None
     compuMethodRef: str | None = None
+
+
+@dataclass(frozen=True)
+class ConstraintRange:
+    min: float | int
+    max: float | int
 
 
 @dataclass(frozen=True)
@@ -201,7 +208,19 @@ def from_dict(d: Dict[str, Any]) -> Project:
                 fields=[ImplementationField(**f) for f in idt.get("fields", [])],
             )
         )
-    app_types = [ApplicationDataType(**adt) for adt in d.get("applicationDataTypes", [])]
+    app_types = []
+    for adt in d.get("applicationDataTypes", []):
+        constraint_data = adt.get("constraint")
+        constraint = ConstraintRange(**constraint_data) if constraint_data is not None else None
+        app_types.append(
+            ApplicationDataType(
+                name=adt["name"],
+                implementationTypeRef=adt["implementationTypeRef"],
+                constraint=constraint,
+                unitRef=adt.get("unitRef"),
+                compuMethodRef=adt.get("compuMethodRef"),
+            )
+        )
     units = [Unit(**u) for u in d.get("units", [])]
     compu_methods = []
     for cm in d.get("compuMethods", []):

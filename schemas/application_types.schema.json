@@ -23,6 +23,22 @@
             "type": "string",
             "minLength": 1
           },
+          "constraint": {
+            "type": "object",
+            "required": [
+              "min",
+              "max"
+            ],
+            "properties": {
+              "min": {
+                "type": "number"
+              },
+              "max": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          },
           "unitRef": {
             "type": "string",
             "minLength": 1

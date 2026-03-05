@@ -49,6 +49,9 @@
             {% for dt in application_types %}
             <APPLICATION-PRIMITIVE-DATA-TYPE>
               <SHORT-NAME>{{ dt.name }}</SHORT-NAME>
+              {% if dt.constraint %}
+              <DATA-CONSTR-REF DEST="DATA-CONSTR">/{{ root_pkg }}/DataConstrs/DC_{{ dt.name }}</DATA-CONSTR-REF>
+              {% endif %}
               {% if dt.unitRef %}
               <UNIT-REF DEST="UNIT">/{{ root_pkg }}/Units/{{ dt.unitRef }}</UNIT-REF>
               {% endif %}
@@ -56,6 +59,25 @@
               <COMPU-METHOD-REF DEST="COMPU-METHOD">/{{ root_pkg }}/CompuMethods/{{ dt.compuMethodRef }}</COMPU-METHOD-REF>
               {% endif %}
             </APPLICATION-PRIMITIVE-DATA-TYPE>
+            {% endfor %}
+          </ELEMENTS>
+        </AR-PACKAGE>
+
+        <AR-PACKAGE>
+          <SHORT-NAME>DataConstrs</SHORT-NAME>
+          <ELEMENTS>
+            {% for dt in application_types if dt.constraint %}
+            <DATA-CONSTR>
+              <SHORT-NAME>DC_{{ dt.name }}</SHORT-NAME>
+              <DATA-CONSTR-RULES>
+                <DATA-CONSTR-RULE>
+                  <INTERNAL-CONSTRS>
+                    <LOWER-LIMIT INTERVAL-TYPE="CLOSED">{{ dt.constraint.min }}</LOWER-LIMIT>
+                    <UPPER-LIMIT INTERVAL-TYPE="CLOSED">{{ dt.constraint.max }}</UPPER-LIMIT>
+                  </INTERNAL-CONSTRS>
+                </DATA-CONSTR-RULE>
+              </DATA-CONSTR-RULES>
+            </DATA-CONSTR>
             {% endfor %}
           </ELEMENTS>
         </AR-PACKAGE>

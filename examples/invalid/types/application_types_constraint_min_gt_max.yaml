@@ -1,0 +1,8 @@
+applicationDataTypes:
+  - name: "App_VehicleSpeed"
+    implementationTypeRef: "UInt16"
+    constraint:
+      min: 300
+      max: 0
+  - name: "App_DtcStatus"
+    implementationTypeRef: "UInt16"

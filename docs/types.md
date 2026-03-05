@@ -49,12 +49,30 @@ Struct field policy:
 applicationDataTypes:
   - name: "App_VehicleSpeed"
     implementationTypeRef: "UInt16"
+    constraint:
+      min: 0
+      max: 300
     unitRef: "km_h"
     compuMethodRef: "CM_Speed_Kmh_Linear"
   - name: "App_DtcStatus"
     implementationTypeRef: "UInt8"
     compuMethodRef: "CM_DtcStatus"
 ```
+
+Constraint policy (v0):
+
+- `constraint` is optional and requires both `min` and `max`
+- `min` must be less than or equal to `max`
+- scalar integer implementation types require integer `min`/`max`
+- integer constraints must fit base type ranges:
+  - `uint8`: `0..255`
+  - `uint16`: `0..65535`
+  - `uint32`: `0..4294967295`
+  - `sint8`: `-128..127`
+  - `sint16`: `-32768..32767`
+  - `sint32`: `-2147483648..2147483647`
+- scalar float implementation types (`float32`, `float64`) accept integer or float bounds
+- non-scalar implementation types (for example `struct`) do not support constraints in v0
 
 Compu method linkage policy:
 

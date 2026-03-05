@@ -1,6 +1,9 @@
 applicationDataTypes:
   - name: "App_VehicleSpeed"
     implementationTypeRef: "UInt16"
+    constraint:
+      min: 0
+      max: 300
     unitRef: "km_h"
     compuMethodRef: "CM_Speed_Kmh_Linear"
   - name: "App_DtcStatus"
