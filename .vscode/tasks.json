@@ -5,63 +5,63 @@
       "label": "autosar: validate project",
       "type": "shell",
       "command": ".venv\\Scripts\\python.exe",
-      "args": ["-m", "arforge.cli", "validate", "examples/autosar.project.yaml"],
+      "args": ["-m", "arforge.cli", "validate", "${config:arforge.projectFile}"],
       "problemMatcher": []
     },
     {
       "label": "autosar: validate project (-v)",
       "type": "shell",
       "command": ".venv\\Scripts\\python.exe",
-      "args": ["-m", "arforge.cli", "validate", "-v", "examples/autosar.project.yaml"],
+      "args": ["-m", "arforge.cli", "validate", "-v", "${config:arforge.projectFile}"],
       "problemMatcher": []
     },
     {
       "label": "autosar: validate project (-vv)",
       "type": "shell",
       "command": ".venv\\Scripts\\python.exe",
-      "args": ["-m", "arforge.cli", "validate", "-vv", "examples/autosar.project.yaml"],
+      "args": ["-m", "arforge.cli", "validate", "-vv", "${config:arforge.projectFile}"],
       "problemMatcher": []
     },
     {
       "label": "autosar: export split-by-swc",
       "type": "shell",
       "command": ".venv\\Scripts\\python.exe",
-      "args": ["-m", "arforge.cli", "export", "examples/autosar.project.yaml", "--out", "build/out", "--split-by-swc"],
+      "args": ["-m", "arforge.cli", "export", "${config:arforge.projectFile}", "--out", "build/out", "--split-by-swc"],
       "problemMatcher": []
     },
     {
       "label": "autosar: export split-by-swc (-v)",
       "type": "shell",
       "command": ".venv\\Scripts\\python.exe",
-      "args": ["-m", "arforge.cli", "export", "-v", "examples/autosar.project.yaml", "--out", "build/out", "--split-by-swc"],
+      "args": ["-m", "arforge.cli", "export", "-v", "${config:arforge.projectFile}", "--out", "build/out", "--split-by-swc"],
       "problemMatcher": []
     },
     {
       "label": "autosar: export split-by-swc (-vv)",
       "type": "shell",
       "command": ".venv\\Scripts\\python.exe",
-      "args": ["-m", "arforge.cli", "export", "-vv", "examples/autosar.project.yaml", "--out", "build/out", "--split-by-swc"],
+      "args": ["-m", "arforge.cli", "export", "-vv", "${config:arforge.projectFile}", "--out", "build/out", "--split-by-swc"],
       "problemMatcher": []
     },
     {
       "label": "autosar: export monolithic",
       "type": "shell",
       "command": ".venv\\Scripts\\python.exe",
-      "args": ["-m", "arforge.cli", "export", "examples/autosar.project.yaml", "--out", "build/all.arxml"],
+      "args": ["-m", "arforge.cli", "export", "${config:arforge.projectFile}", "--out", "build/all.arxml"],
       "problemMatcher": []
     },
     {
       "label": "autosar: export monolithic (-v)",
       "type": "shell",
       "command": ".venv\\Scripts\\python.exe",
-      "args": ["-m", "arforge.cli", "export", "-v", "examples/autosar.project.yaml", "--out", "build/all.arxml"],
+      "args": ["-m", "arforge.cli", "export", "-v", "${config:arforge.projectFile}", "--out", "build/all.arxml"],
       "problemMatcher": []
     },
     {
       "label": "autosar: export monolithic (-vv)",
       "type": "shell",
       "command": ".venv\\Scripts\\python.exe",
-      "args": ["-m", "arforge.cli", "export", "-vv", "examples/autosar.project.yaml", "--out", "build/all.arxml"],
+      "args": ["-m", "arforge.cli", "export", "-vv", "${config:arforge.projectFile}", "--out", "build/all.arxml"],
       "problemMatcher": []
     },
     {
