@@ -137,6 +137,19 @@ def test_split_export_includes_server_raised_error_refs(tmp_path: Path) -> None:
     assert "<ERROR-CODE>1</ERROR-CODE>" in shared_xml
 
 
+def test_split_export_includes_init_event(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    speed_sensor_xml = (out_dir / "SpeedSensor.arxml").read_text(encoding="utf-8")
+
+    assert "<INIT-EVENT>" in speed_sensor_xml
+    assert "<SHORT-NAME>IE_Runnable_Init</SHORT-NAME>" in speed_sensor_xml
+    assert "<START-ON-EVENT-REF DEST=\"RUNNABLE-ENTITY\">/DEMO/Components/SpeedSensor/IB_SpeedSensor/Runnable_Init</START-ON-EVENT-REF>" in speed_sensor_xml
+
+
 def test_split_export_includes_void_return_cs_operation_without_return_typeref(tmp_path: Path) -> None:
     project = load_and_validate_aggregator(VALID_PROJECT)
     template_dir = REPO_ROOT / "templates"

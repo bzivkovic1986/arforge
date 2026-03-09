@@ -103,6 +103,7 @@ class Interface:
 class Runnable:
     name: str
     timingEventMs: int | None = None
+    initEvent: bool = False
     reads: List["DataAccess"] = field(default_factory=list)
     writes: List["DataAccess"] = field(default_factory=list)
     calls: List["OperationCall"] = field(default_factory=list)
@@ -310,6 +311,7 @@ def from_dict(d: Dict[str, Any]) -> Project:
             Runnable(
                 name=r["name"],
                 timingEventMs=r.get("timingEventMs"),
+                initEvent=bool(r.get("initEvent", False)),
                 reads=sorted(
                     [DataAccess(**acc) for acc in r.get("reads", [])],
                     key=lambda acc: (acc.port, acc.dataElement),

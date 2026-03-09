@@ -35,6 +35,9 @@
                 "type": "integer",
                 "minimum": 1
               },
+              "initEvent": {
+                "type": "boolean"
+              },
               "reads": {
                 "type": "array",
                 "items": {
