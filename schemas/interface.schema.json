@@ -90,8 +90,15 @@
                 }
               },
               "returnType": {
-                "type": "string",
-                "minLength": 1
+                "anyOf": [
+                  {
+                    "const": "void"
+                  },
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                ]
               },
               "possibleErrors": {
                 "type": "array",

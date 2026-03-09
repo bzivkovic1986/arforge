@@ -15,3 +15,9 @@ interface:
           code: 2
     - name: "ClearDTC"
       returnType: "void"
+    - name: "LogEvent"
+      arguments:
+        - name: "EventId"
+          direction: "in"
+          typeRef: "UInt16"
+      returnType: "void"
