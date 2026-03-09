@@ -12,6 +12,8 @@ swc:
           operation: "ReadDTC"
         - port: "Pp_Diag"
           operation: "ClearDTC"
+        - port: "Pp_Diag"
+          operation: "LogEvent"
       raisesErrors:
         - operation: "ReadDTC"
           error: "DTC_NOT_FOUND"

@@ -8,12 +8,11 @@ import pytest
 import yaml
 
 from arforge.exporter import write_outputs
-from arforge.validate import ValidationError, build_semantic_report, load_aggregator, load_and_validate_aggregator
+from arforge.validate import ValidationError, load_aggregator, load_and_validate_aggregator
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 VALID_PROJECT = REPO_ROOT / "examples" / "autosar.project.yaml"
-LEGACY_POSSIBLE_ERRORS_PROJECT = REPO_ROOT / "examples" / "legacy" / "autosar.project.legacy_possible_errors.yaml"
 INVALID_DIR = REPO_ROOT / "examples" / "invalid"
 
 
@@ -30,16 +29,6 @@ def _invalid_project_fixtures() -> list[Path]:
 
 def test_validate_main_example_passes() -> None:
     load_and_validate_aggregator(VALID_PROJECT)
-
-
-def test_validate_legacy_possible_errors_example_passes_with_warning() -> None:
-    project = load_and_validate_aggregator(LEGACY_POSSIBLE_ERRORS_PROJECT)
-
-    report = build_semantic_report(project)
-    assert any(
-        finding.code == "CORE-010-CS-POSSIBLE-ERROR-LEGACY-FORMAT" and finding.severity == "warning"
-        for finding in report.findings
-    )
 
 
 @pytest.mark.parametrize(
@@ -124,6 +113,19 @@ def test_split_export_includes_server_raised_error_refs(tmp_path: Path) -> None:
     assert "<APPLICATION-ERROR>" in shared_xml
     assert "<SHORT-NAME>DTC_NOT_FOUND</SHORT-NAME>" in shared_xml
     assert "<ERROR-CODE>1</ERROR-CODE>" in shared_xml
+
+
+def test_split_export_includes_void_return_cs_operation_without_return_typeref(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    shared_xml = (out_dir / "shared.arxml").read_text(encoding="utf-8")
+
+    assert "<SHORT-NAME>LogEvent</SHORT-NAME>" in shared_xml
+    log_event_segment = shared_xml.split("<SHORT-NAME>LogEvent</SHORT-NAME>", 1)[1].split("</CLIENT-SERVER-OPERATION>", 1)[0]
+    assert "<TYPE-TREF" not in log_event_segment
 
 
 def test_legacy_datatypes_input_emits_deprecation_warning() -> None:

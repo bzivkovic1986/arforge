@@ -11,6 +11,8 @@ swc:
           operation: "ReadDTC"
         - port: "Rp_DiagAsync"
           operation: "ClearDTC"
+        - port: "Rp_DiagAsync"
+          operation: "LogEvent"
   ports:
     - name: "Rp_VehicleSpeed"
       direction: "requires"
