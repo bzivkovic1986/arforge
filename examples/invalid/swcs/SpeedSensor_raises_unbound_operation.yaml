@@ -9,8 +9,6 @@ swc:
     - name: "Runnable_DiagServer"
       operationInvokedEvents:
         - port: "Pp_Diag"
-          operation: "ReadDTC"
-        - port: "Pp_Diag"
           operation: "ClearDTC"
       raisesErrors:
         - operation: "ReadDTC"

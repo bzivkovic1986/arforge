@@ -84,6 +84,22 @@ def test_split_export_system_contains_multiple_component_prototypes(tmp_path: Pa
     assert system_xml.count("<ASSEMBLY-SW-CONNECTOR>") == 3
 
 
+def test_split_export_includes_server_raised_error_refs(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    speed_sensor_xml = (out_dir / "SpeedSensor.arxml").read_text(encoding="utf-8")
+    shared_xml = (out_dir / "shared.arxml").read_text(encoding="utf-8")
+
+    assert "<RAISED-APPLICATION-ERROR-REFS>" in speed_sensor_xml
+    assert "<TARGET-PROVIDED-OPERATION-REF DEST=\"CLIENT-SERVER-OPERATION\">/DEMO/Interfaces/If_Diagnostics/ReadDTC</TARGET-PROVIDED-OPERATION-REF>" in speed_sensor_xml
+    assert "<TARGET-APPLICATION-ERROR-REF DEST=\"APPLICATION-ERROR\">/DEMO/Interfaces/If_Diagnostics/DTC_NOT_FOUND</TARGET-APPLICATION-ERROR-REF>" in speed_sensor_xml
+    assert "<APPLICATION-ERROR>" in shared_xml
+    assert "<SHORT-NAME>DTC_NOT_FOUND</SHORT-NAME>" in shared_xml
+
+
 def test_legacy_datatypes_input_emits_deprecation_warning() -> None:
     legacy_project = INVALID_DIR / "project_bad_operation.yaml"
     with pytest.warns(DeprecationWarning, match="Legacy 'inputs.datatypes' format is deprecated"):

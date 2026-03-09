@@ -136,6 +136,21 @@
                         {% endfor %}
                       </SERVER-CALL-POINTS>
                       {% endif %}
+                      {% if r.raisesErrors %}
+                      <RAISED-APPLICATION-ERROR-REFS>
+                        {% for raised in r.raisesErrors %}
+                        {% set bound_event = (r.operationInvokedEvents | selectattr("operation", "equalto", raised.operation) | list | first) %}
+                        {% set bound_port = (swc.ports | selectattr("name", "equalto", bound_event.port) | list | first) if bound_event else none %}
+                        {% if bound_event and bound_port %}
+                        <RAISED-APPLICATION-ERROR-REF>
+                          <CONTEXT-P-PORT-REF DEST="P-PORT-PROTOTYPE">/{{ root_pkg }}/Components/{{ swc.name }}/{{ bound_event.port }}</CONTEXT-P-PORT-REF>
+                          <TARGET-PROVIDED-OPERATION-REF DEST="CLIENT-SERVER-OPERATION">/{{ root_pkg }}/Interfaces/{{ bound_port.interfaceRef }}/{{ raised.operation }}</TARGET-PROVIDED-OPERATION-REF>
+                          <TARGET-APPLICATION-ERROR-REF DEST="APPLICATION-ERROR">/{{ root_pkg }}/Interfaces/{{ bound_port.interfaceRef }}/{{ raised.error }}</TARGET-APPLICATION-ERROR-REF>
+                        </RAISED-APPLICATION-ERROR-REF>
+                        {% endif %}
+                        {% endfor %}
+                      </RAISED-APPLICATION-ERROR-REFS>
+                      {% endif %}
                     </RUNNABLE-ENTITY>
                     {% endfor %}
                   </RUNNABLES>
