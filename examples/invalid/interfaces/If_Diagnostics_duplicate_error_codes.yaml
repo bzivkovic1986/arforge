@@ -12,6 +12,6 @@ interface:
         - name: "DTC_NOT_FOUND"
           code: 1
         - name: "MEMORY_ERROR"
-          code: 2
+          code: 1
     - name: "ClearDTC"
       returnType: "void"
