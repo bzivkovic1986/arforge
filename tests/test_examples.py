@@ -80,6 +80,20 @@ def test_split_export_includes_sr_comspec_blocks(tmp_path: Path) -> None:
     assert "<TIMEOUT-MS>50</TIMEOUT-MS>" in xml
 
 
+def test_split_export_includes_async_cs_client_comspec(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    speed_consumer = out_dir / "SpeedConsumer.arxml"
+    xml = speed_consumer.read_text(encoding="utf-8")
+
+    assert "<CLIENT-COM-SPEC>" in xml
+    assert "<CALL-MODE>asynchronous</CALL-MODE>" in xml
+    assert xml.count("<TIMEOUT-MS>") == 1
+
+
 def test_split_export_system_contains_multiple_component_prototypes(tmp_path: Path) -> None:
     project = load_and_validate_aggregator(VALID_PROJECT)
     template_dir = REPO_ROOT / "templates"
@@ -92,7 +106,7 @@ def test_split_export_system_contains_multiple_component_prototypes(tmp_path: Pa
     assert "<SHORT-NAME>SpeedSensor_2</SHORT-NAME>" in system_xml
     assert "<SHORT-NAME>SpeedConsumer_1</SHORT-NAME>" in system_xml
     assert system_xml.count("<SW-COMPONENT-PROTOTYPE>") == 3
-    assert system_xml.count("<ASSEMBLY-SW-CONNECTOR>") == 3
+    assert system_xml.count("<ASSEMBLY-SW-CONNECTOR>") == 4
 
 
 def test_split_export_includes_server_raised_error_refs(tmp_path: Path) -> None:

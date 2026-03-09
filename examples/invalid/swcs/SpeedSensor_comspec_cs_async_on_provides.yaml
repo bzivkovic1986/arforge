@@ -1,0 +1,26 @@
+swc:
+  name: "SpeedSensor"
+  runnables:
+    - name: "Runnable_ReadSpeed"
+      timingEventMs: 10
+      writes:
+        - port: "Pp_VehicleSpeed"
+          dataElement: "VehicleSpeed"
+    - name: "Runnable_DiagServer"
+      operationInvokedEvents:
+        - port: "Pp_Diag"
+          operation: "ReadDTC"
+        - port: "Pp_Diag"
+          operation: "ClearDTC"
+      raisesErrors:
+        - operation: "ReadDTC"
+          error: "DTC_NOT_FOUND"
+  ports:
+    - name: "Pp_VehicleSpeed"
+      direction: "provides"
+      interfaceRef: "If_VehicleSpeed"
+    - name: "Pp_Diag"
+      direction: "provides"
+      interfaceRef: "If_Diagnostics"
+      comSpec:
+        callMode: "asynchronous"

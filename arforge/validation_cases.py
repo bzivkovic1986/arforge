@@ -976,14 +976,6 @@ class ComSpecSemanticCase(ValidationCase):
                             code="CORE-025-CS-COMSPEC-MODE",
                         )
                     )
-                if com_spec.queueLength is not None:
-                    findings.append(
-                        self.finding(
-                            f"SWC '{swc.name}' port '{port.name}' clientServer comSpec must not define queueLength.",
-                            code="CORE-025-CS-COMSPEC-QUEUE-LENGTH",
-                        )
-                    )
-
                 if com_spec.callMode is None:
                     findings.append(
                         self.finding(
@@ -1001,6 +993,30 @@ class ComSpecSemanticCase(ValidationCase):
                         )
                     )
                     continue
+
+                if com_spec.callMode == "asynchronous" and port.direction != "requires":
+                    findings.append(
+                        self.finding(
+                            f"SWC '{swc.name}' port '{port.name}' clientServer asynchronous comSpec requires direction 'requires', found '{port.direction}'.",
+                            code="CORE-025-CS-COMSPEC-ASYNC-DIRECTION",
+                        )
+                    )
+
+                # queueLength for asynchronous client-server is intentionally not supported yet.
+                if com_spec.callMode == "asynchronous" and com_spec.queueLength is not None:
+                    findings.append(
+                        self.finding(
+                            f"SWC '{swc.name}' port '{port.name}' clientServer asynchronous comSpec queueLength is not yet supported.",
+                            code="CORE-025-CS-COMSPEC-ASYNC-QUEUE-LENGTH-UNSUPPORTED",
+                        )
+                    )
+                elif com_spec.queueLength is not None:
+                    findings.append(
+                        self.finding(
+                            f"SWC '{swc.name}' port '{port.name}' clientServer comSpec must not define queueLength.",
+                            code="CORE-025-CS-COMSPEC-QUEUE-LENGTH",
+                        )
+                    )
 
                 if com_spec.timeoutMs is not None and com_spec.timeoutMs < 0:
                     findings.append(
