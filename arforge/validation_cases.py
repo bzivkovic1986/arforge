@@ -874,6 +874,7 @@ class RunnableTriggerPolicyCase(ValidationCase):
             for runnable in sorted(swc.runnables, key=lambda r: r.name):
                 has_timing = runnable.timingEventMs is not None
                 has_oie = bool(runnable.operationInvokedEvents)
+                has_init = runnable.initEvent
                 if has_timing and has_oie:
                     findings.append(
                         self.finding(
@@ -881,10 +882,10 @@ class RunnableTriggerPolicyCase(ValidationCase):
                             code="CORE-024-MULTIPLE-TRIGGERS",
                         )
                     )
-                if not has_timing and not has_oie:
+                if not has_timing and not has_oie and not has_init:
                     findings.append(
                         self.finding(
-                            f"SWC '{swc.name}' runnable '{runnable.name}' must define at least one trigger: timingEventMs or operationInvokedEvents.",
+                            f"SWC '{swc.name}' runnable '{runnable.name}' must define at least one trigger: timingEventMs, operationInvokedEvents, or initEvent.",
                             code="CORE-024-MISSING-TRIGGER",
                         )
                     )
