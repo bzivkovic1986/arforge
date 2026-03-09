@@ -9,23 +9,16 @@ swc:
       calls:
         - port: "Rp_Diag"
           operation: "ReadDTC"
-        - port: "Rp_DiagAsync"
-          operation: "ClearDTC"
   ports:
     - name: "Rp_VehicleSpeed"
       direction: "requires"
       interfaceRef: "If_VehicleSpeed"
-      comSpec:
-        mode: "queued"
-        queueLength: 8
     - name: "Rp_Diag"
       direction: "requires"
       interfaceRef: "If_Diagnostics"
       comSpec:
-        callMode: "synchronous"
-        timeoutMs: 50
+        callMode: "asynchronous"
+        queueLength: 1
     - name: "Rp_DiagAsync"
       direction: "requires"
       interfaceRef: "If_Diagnostics"
-      comSpec:
-        callMode: "asynchronous"

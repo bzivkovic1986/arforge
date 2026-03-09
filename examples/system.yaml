@@ -19,3 +19,6 @@ system:
       - from: "SpeedSensor_1.Pp_Diag"
         to: "SpeedConsumer_1.Rp_Diag"
         operation: "ReadDTC"
+      - from: "SpeedSensor_1.Pp_Diag"
+        to: "SpeedConsumer_1.Rp_DiagAsync"
+        operation: "ClearDTC"

@@ -19,3 +19,6 @@ swc:
       comSpec:
         callMode: "asynchronous"
         timeoutMs: 50
+    - name: "Rp_DiagAsync"
+      direction: "requires"
+      interfaceRef: "If_Diagnostics"
