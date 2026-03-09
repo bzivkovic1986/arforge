@@ -166,10 +166,11 @@
             {% for itf in cs_interfaces %}
             <CLIENT-SERVER-INTERFACE>
               <SHORT-NAME>{{ itf.name }}</SHORT-NAME>
-              {% set ns = namespace(errors=[]) %}
+              {% set ns = namespace(error_names=[], errors=[]) %}
               {% for op in itf.operations %}
                 {% for possible_error in op.possibleErrors %}
-                  {% if possible_error not in ns.errors %}
+                  {% if possible_error.name not in ns.error_names %}
+                    {% set _ = ns.error_names.append(possible_error.name) %}
                     {% set _ = ns.errors.append(possible_error) %}
                   {% endif %}
                 {% endfor %}
@@ -178,7 +179,10 @@
               <POSSIBLE-ERRORS>
                 {% for possible_error in ns.errors %}
                 <APPLICATION-ERROR>
-                  <SHORT-NAME>{{ possible_error }}</SHORT-NAME>
+                  <SHORT-NAME>{{ possible_error.name }}</SHORT-NAME>
+                  {% if possible_error.code is not none %}
+                  <ERROR-CODE>{{ possible_error.code }}</ERROR-CODE>
+                  {% endif %}
                 </APPLICATION-ERROR>
                 {% endfor %}
               </POSSIBLE-ERRORS>
@@ -190,7 +194,7 @@
                   {% if op.possibleErrors %}
                   <POSSIBLE-ERROR-REFS>
                     {% for possible_error in op.possibleErrors %}
-                    <POSSIBLE-ERROR-REF DEST="APPLICATION-ERROR">/{{ root_pkg }}/Interfaces/{{ itf.name }}/{{ possible_error }}</POSSIBLE-ERROR-REF>
+                    <POSSIBLE-ERROR-REF DEST="APPLICATION-ERROR">/{{ root_pkg }}/Interfaces/{{ itf.name }}/{{ possible_error.name }}</POSSIBLE-ERROR-REF>
                     {% endfor %}
                   </POSSIBLE-ERROR-REFS>
                   {% endif %}

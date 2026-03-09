@@ -77,7 +77,13 @@ class Operation:
     name: str
     arguments: List["OperationArgument"] = field(default_factory=list)
     returnType: str = "void"
-    possibleErrors: List[str] = field(default_factory=list)
+    possibleErrors: List["ApplicationError"] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class ApplicationError:
+    name: str
+    code: int | None = None
 
 
 @dataclass(frozen=True)
@@ -214,6 +220,26 @@ def _split_endpoint(ep: str) -> Tuple[str, str]:
     swc, port = ep.split(".", 1)
     return swc, port
 
+
+def _parse_application_errors(errors: List[Any]) -> List[ApplicationError]:
+    parsed: List[ApplicationError] = []
+    for error in errors:
+        if isinstance(error, str):
+            parsed.append(ApplicationError(name=error, code=None))
+            continue
+        if isinstance(error, dict):
+            parsed.append(ApplicationError(name=str(error.get("name", "")), code=error.get("code")))
+            continue
+        parsed.append(ApplicationError(name=str(error), code=None))
+
+    return sorted(
+        parsed,
+        key=lambda e: (
+            e.name,
+            -1 if e.code is None else e.code,
+        ),
+    )
+
 def from_dict(d: Dict[str, Any]) -> Project:
     autosar = d["autosar"]
     base_types = [BaseType(**bt) for bt in d.get("baseTypes", [])]
@@ -270,7 +296,7 @@ def from_dict(d: Dict[str, Any]) -> Project:
                         name=op["name"],
                         arguments=op_args,
                         returnType=op.get("returnType", "void"),
-                        possibleErrors=sorted(op.get("possibleErrors", [])),
+                        possibleErrors=_parse_application_errors(op.get("possibleErrors", [])),
                     )
                 )
             ifaces.append(Interface(name=itf["name"], type=itf["type"], dataElements=None, operations=ops))

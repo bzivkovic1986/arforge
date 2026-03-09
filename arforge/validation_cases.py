@@ -360,6 +360,67 @@ class InterfaceSemanticCase(ValidationCase):
                                     code="CORE-010-CS-RETURN-UNKNOWN-DATATYPE",
                                 )
                             )
+
+                        if any(possible_error.code is None for possible_error in op.possibleErrors):
+                            findings.append(
+                                Finding(
+                                    code="CORE-010-CS-POSSIBLE-ERROR-LEGACY-FORMAT",
+                                    severity="warning",
+                                    message=(
+                                        f"Interface '{itf.name}' operation '{op.name}' uses legacy possibleErrors string entries; "
+                                        "prefer structured entries with {name, code}."
+                                    ),
+                                )
+                            )
+
+                        seen_error_names: set[str] = set()
+                        seen_error_codes: set[int] = set()
+                        for possible_error in sorted(
+                            op.possibleErrors,
+                            key=lambda e: (e.name, e.code is None, -1 if e.code is None else e.code),
+                        ):
+                            error_name = possible_error.name.strip()
+                            if not error_name:
+                                findings.append(
+                                    self.finding(
+                                        f"Interface '{itf.name}' operation '{op.name}' has possibleErrors entry with empty name.",
+                                        code="CORE-010-CS-POSSIBLE-ERROR-NAME",
+                                    )
+                                )
+                            if error_name in seen_error_names:
+                                findings.append(
+                                    self.finding(
+                                        f"Interface '{itf.name}' operation '{op.name}' has duplicate possibleErrors name '{possible_error.name}'.",
+                                        code="CORE-010-CS-POSSIBLE-ERROR-DUPLICATE-NAME",
+                                    )
+                                )
+                            seen_error_names.add(error_name)
+
+                            if possible_error.code is None:
+                                continue
+                            if not isinstance(possible_error.code, int) or isinstance(possible_error.code, bool):
+                                findings.append(
+                                    self.finding(
+                                        f"Interface '{itf.name}' operation '{op.name}' has possibleErrors code '{possible_error.code}' that must be an integer.",
+                                        code="CORE-010-CS-POSSIBLE-ERROR-CODE-TYPE",
+                                    )
+                                )
+                                continue
+                            if possible_error.code < 0:
+                                findings.append(
+                                    self.finding(
+                                        f"Interface '{itf.name}' operation '{op.name}' has possibleErrors code '{possible_error.code}' that must be >= 0.",
+                                        code="CORE-010-CS-POSSIBLE-ERROR-CODE-RANGE",
+                                    )
+                                )
+                            if possible_error.code in seen_error_codes:
+                                findings.append(
+                                    self.finding(
+                                        f"Interface '{itf.name}' operation '{op.name}' has duplicate possibleErrors code '{possible_error.code}'.",
+                                        code="CORE-010-CS-POSSIBLE-ERROR-DUPLICATE-CODE",
+                                    )
+                                )
+                            seen_error_codes.add(possible_error.code)
             else:
                 findings.append(
                     self.finding(
@@ -1059,7 +1120,8 @@ class RunnableRaisedErrorCase(ValidationCase):
                             )
                         )
                         continue
-                    if raised_error.error not in set(operation_obj.possibleErrors):
+                    possible_error_names = {possible_error.name for possible_error in operation_obj.possibleErrors}
+                    if raised_error.error not in possible_error_names:
                         findings.append(
                             self.finding(
                                 f"{location_base} raisesErrors references unknown error '{raised_error.error}' for operation '{raised_error.operation}' on interface '{interface_obj.name}'.",
