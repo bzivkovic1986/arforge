@@ -93,6 +93,10 @@
                     "operation": {
                       "type": "string",
                       "minLength": 1
+                    },
+                    "timeoutMs": {
+                      "type": "integer",
+                      "minimum": 0
                     }
                   },
                   "additionalProperties": false

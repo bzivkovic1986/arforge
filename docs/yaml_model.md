@@ -128,7 +128,7 @@ Runnables can also declare optional access definitions:
 
 - `reads`: list of `{ port, dataElement }` for sender-receiver requires ports
 - `writes`: list of `{ port, dataElement }` for sender-receiver provides ports
-- `calls`: list of `{ port, operation }` for client-server requires ports
+- `calls`: list of `{ port, operation, timeoutMs? }` for client-server requires ports
 - `ports[*].comSpec`: optional communication specification (sender-receiver or client-server)
 
 ```yaml
@@ -143,6 +143,7 @@ swc:
       calls:
         - port: "Rp_Diag"
           operation: "ReadDTC"
+          timeoutMs: 100         # optional, call-level timeout override metadata
   ports:
     - name: "Rp_VehicleSpeed"
       direction: "requires"
@@ -170,6 +171,10 @@ ComSpec rules:
   - `timeoutMs` must be integer `>= 0` when present
   - `timeoutMs` is allowed only when `callMode: synchronous`
   - `mode` and `queueLength` are not allowed
+- Runnable calls:
+  - `timeoutMs` is optional integer `>= 0`
+  - `timeoutMs` is valid only when the referenced client port call mode is synchronous
+  - when client-server `comSpec.callMode` is absent, ARForge uses existing default synchronous behavior
 
 ## System files
 

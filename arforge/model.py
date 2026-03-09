@@ -120,6 +120,7 @@ class DataAccess:
 class OperationCall:
     port: str
     operation: str
+    timeoutMs: int | None = None
 
 
 @dataclass(frozen=True)
@@ -319,7 +320,11 @@ def from_dict(d: Dict[str, Any]) -> Project:
                 ),
                 calls=sorted(
                     [OperationCall(**acc) for acc in r.get("calls", [])],
-                    key=lambda acc: (acc.port, acc.operation),
+                    key=lambda acc: (
+                        acc.port,
+                        acc.operation,
+                        -1 if acc.timeoutMs is None else acc.timeoutMs,
+                    ),
                 ),
                 operationInvokedEvents=sorted(
                     [OperationInvokedEvent(**e) for e in r.get("operationInvokedEvents", [])],
