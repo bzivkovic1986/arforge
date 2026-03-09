@@ -707,7 +707,10 @@ class RunnableAccessSemanticCase(ValidationCase):
                             )
                         )
 
-                for call in sorted(runnable.calls, key=lambda a: (a.port, a.operation)):
+                for call in sorted(
+                    runnable.calls,
+                    key=lambda a: (a.port, a.operation, -1 if a.timeoutMs is None else a.timeoutMs),
+                ):
                     port = ctx.find_swc_port(swc.name, call.port)
                     if port is None:
                         findings.append(
@@ -741,6 +744,25 @@ class RunnableAccessSemanticCase(ValidationCase):
                             self.finding(
                                 f"{location_base} calls unknown operation '{call.operation}' on interface '{itf.name}'.",
                                 code="CORE-022-CALL-UNKNOWN-OPERATION",
+                            )
+                        )
+
+                    if call.timeoutMs is not None and call.timeoutMs < 0:
+                        findings.append(
+                            self.finding(
+                                f"{location_base} call '{call.port}.{call.operation}' timeoutMs must be >= 0, found '{call.timeoutMs}'.",
+                                code="CORE-022-CALL-TIMEOUT-RANGE",
+                            )
+                        )
+
+                    call_mode = "synchronous"
+                    if port.comSpec is not None and port.comSpec.callMode is not None:
+                        call_mode = port.comSpec.callMode
+                    if call_mode == "asynchronous" and call.timeoutMs is not None:
+                        findings.append(
+                            self.finding(
+                                f"{location_base} call '{call.port}.{call.operation}' timeoutMs is not allowed when port callMode is asynchronous.",
+                                code="CORE-022-CALL-ASYNC-TIMEOUT",
                             )
                         )
 
