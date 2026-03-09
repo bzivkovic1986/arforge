@@ -129,7 +129,7 @@ Runnables can also declare optional access definitions:
 - `reads`: list of `{ port, dataElement }` for sender-receiver requires ports
 - `writes`: list of `{ port, dataElement }` for sender-receiver provides ports
 - `calls`: list of `{ port, operation }` for client-server requires ports
-- `ports[*].comSpec`: optional sender-receiver communication specification
+- `ports[*].comSpec`: optional communication specification (sender-receiver or client-server)
 
 ```yaml
 swc:
@@ -153,13 +153,23 @@ swc:
     - name: "Rp_Diag"
       direction: "requires"
       interfaceRef: "If_Diagnostics"
+      comSpec:
+        callMode: "synchronous"  # synchronous | asynchronous
+        timeoutMs: 50            # optional, only with synchronous
 ```
 
 ComSpec rules:
 
-- ComSpec is allowed only on sender-receiver ports.
-- `mode: queued` requires `queueLength` with integer value `>= 1`.
-- `mode: implicit` and `mode: explicit` must not define `queueLength`.
+- SenderReceiver:
+  - `mode` is required (`implicit | explicit | queued`)
+  - `mode: queued` requires `queueLength` with integer value `>= 1`
+  - `mode: implicit` and `mode: explicit` must not define `queueLength`
+  - `callMode` and `timeoutMs` are not allowed
+- ClientServer:
+  - `callMode` is required (`synchronous | asynchronous`)
+  - `timeoutMs` must be integer `>= 0` when present
+  - `timeoutMs` is allowed only when `callMode: synchronous`
+  - `mode` and `queueLength` are not allowed
 
 ## System files
 

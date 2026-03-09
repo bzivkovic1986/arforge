@@ -207,6 +207,16 @@
                   {% endif %}
                   {% else %}
                   <PROVIDED-INTERFACE-TREF DEST="CLIENT-SERVER-INTERFACE">/{{ root_pkg }}/Interfaces/{{ p.interfaceRef }}</PROVIDED-INTERFACE-TREF>
+                  {% if p.comSpec and p.comSpec.callMode %}
+                  <PROVIDED-COM-SPECS>
+                    <SERVER-COM-SPEC>
+                      <CALL-MODE>{{ p.comSpec.callMode }}</CALL-MODE>
+                      {% if p.comSpec.callMode == "synchronous" and p.comSpec.timeoutMs is not none %}
+                      <TIMEOUT-MS>{{ p.comSpec.timeoutMs }}</TIMEOUT-MS>
+                      {% endif %}
+                    </SERVER-COM-SPEC>
+                  </PROVIDED-COM-SPECS>
+                  {% endif %}
                   {% endif %}
                 </P-PORT-PROTOTYPE>
                   {% else %}
@@ -228,6 +238,16 @@
                   {% endif %}
                   {% else %}
                   <REQUIRED-INTERFACE-TREF DEST="CLIENT-SERVER-INTERFACE">/{{ root_pkg }}/Interfaces/{{ p.interfaceRef }}</REQUIRED-INTERFACE-TREF>
+                  {% if p.comSpec and p.comSpec.callMode %}
+                  <REQUIRED-COM-SPECS>
+                    <CLIENT-COM-SPEC>
+                      <CALL-MODE>{{ p.comSpec.callMode }}</CALL-MODE>
+                      {% if p.comSpec.callMode == "synchronous" and p.comSpec.timeoutMs is not none %}
+                      <TIMEOUT-MS>{{ p.comSpec.timeoutMs }}</TIMEOUT-MS>
+                      {% endif %}
+                    </CLIENT-COM-SPEC>
+                  </REQUIRED-COM-SPECS>
+                  {% endif %}
                   {% endif %}
                 </R-PORT-PROTOTYPE>
                   {% endif %}

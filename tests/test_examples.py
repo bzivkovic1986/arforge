@@ -64,6 +64,9 @@ def test_split_export_includes_sr_comspec_blocks(tmp_path: Path) -> None:
     assert "<REQUIRED-COM-SPECS>" in xml
     assert "<QUEUED-RECEIVER-COM-SPEC>" in xml
     assert "<QUEUE-LENGTH>8</QUEUE-LENGTH>" in xml
+    assert "<CLIENT-COM-SPEC>" in xml
+    assert "<CALL-MODE>synchronous</CALL-MODE>" in xml
+    assert "<TIMEOUT-MS>50</TIMEOUT-MS>" in xml
 
 
 def test_split_export_system_contains_multiple_component_prototypes(tmp_path: Path) -> None:
