@@ -167,7 +167,7 @@
             <CLIENT-SERVER-INTERFACE>
               <SHORT-NAME>{{ itf.name }}</SHORT-NAME>
               {% set ns = namespace(error_names=[], errors=[]) %}
-              {% for op in itf.operations %}
+              {% for op in itf.operations | sort(attribute="name") %}
                 {% for possible_error in op.possibleErrors %}
                   {% if possible_error.name not in ns.error_names %}
                     {% set _ = ns.error_names.append(possible_error.name) %}
@@ -188,7 +188,7 @@
               </POSSIBLE-ERRORS>
               {% endif %}
               <OPERATIONS>
-                {% for op in itf.operations %}
+                {% for op in itf.operations | sort(attribute="name") %}
                 <CLIENT-SERVER-OPERATION>
                   <SHORT-NAME>{{ op.name }}</SHORT-NAME>
                   {% if op.possibleErrors %}
@@ -215,7 +215,7 @@
               <SHORT-NAME>{{ swc.name }}</SHORT-NAME>
 
               <PORTS>
-                {% for p in swc.ports %}
+                {% for p in swc.ports | sort(attribute="name") %}
                   {% if p.direction == "provides" %}
                 <P-PORT-PROTOTYPE>
                   <SHORT-NAME>{{ p.name }}</SHORT-NAME>
@@ -326,14 +326,25 @@
                       {% if r.calls %}
                       <SERVER-CALL-POINTS>
                         {% for call in r.calls %}
+                        {% set call_port = (swc.ports | selectattr("name", "equalto", call.port) | list | first) %}
+                        {% set call_mode = call_port.comSpec.callMode if call_port and call_port.comSpec and call_port.comSpec.callMode else "synchronous" %}
+                        {% if call_mode == "asynchronous" %}
+                        <ASYNCHRONOUS-SERVER-CALL-POINT>
+                          <SHORT-NAME>SCP_{{ call.port }}_{{ call.operation }}</SHORT-NAME>
+                          <OPERATION-IREF>
+                            <CONTEXT-R-PORT-REF DEST="R-PORT-PROTOTYPE">/{{ root_pkg }}/Components/{{ swc.name }}/{{ call.port }}</CONTEXT-R-PORT-REF>
+                            <TARGET-REQUIRED-OPERATION-REF DEST="CLIENT-SERVER-OPERATION">/{{ root_pkg }}/Interfaces/{{ call_port.interfaceRef if call_port else '' }}/{{ call.operation }}</TARGET-REQUIRED-OPERATION-REF>
+                          </OPERATION-IREF>
+                        </ASYNCHRONOUS-SERVER-CALL-POINT>
+                        {% else %}
                         <SYNCHRONOUS-SERVER-CALL-POINT>
                           <SHORT-NAME>SCP_{{ call.port }}_{{ call.operation }}</SHORT-NAME>
-                          {% set call_port = (swc.ports | selectattr("name", "equalto", call.port) | list | first) %}
                           <OPERATION-IREF>
                             <CONTEXT-R-PORT-REF DEST="R-PORT-PROTOTYPE">/{{ root_pkg }}/Components/{{ swc.name }}/{{ call.port }}</CONTEXT-R-PORT-REF>
                             <TARGET-REQUIRED-OPERATION-REF DEST="CLIENT-SERVER-OPERATION">/{{ root_pkg }}/Interfaces/{{ call_port.interfaceRef if call_port else '' }}/{{ call.operation }}</TARGET-REQUIRED-OPERATION-REF>
                           </OPERATION-IREF>
                         </SYNCHRONOUS-SERVER-CALL-POINT>
+                        {% endif %}
                         {% endfor %}
                       </SERVER-CALL-POINTS>
                       {% endif %}
