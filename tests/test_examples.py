@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 import subprocess
 import sys
@@ -64,9 +65,10 @@ def test_split_export_includes_sr_comspec_blocks(tmp_path: Path) -> None:
     assert "<REQUIRED-COM-SPECS>" in xml
     assert "<QUEUED-RECEIVER-COM-SPEC>" in xml
     assert "<QUEUE-LENGTH>8</QUEUE-LENGTH>" in xml
-    assert "<CLIENT-COM-SPEC>" in xml
-    assert "<CALL-MODE>synchronous</CALL-MODE>" in xml
-    assert "<TIMEOUT-MS>50</TIMEOUT-MS>" in xml
+    sync_segment = xml.split("<SHORT-NAME>Rp_Diag</SHORT-NAME>", 1)[1].split("</R-PORT-PROTOTYPE>", 1)[0]
+    assert "<CLIENT-COM-SPEC>" in sync_segment
+    assert "<CALL-MODE>synchronous</CALL-MODE>" in sync_segment
+    assert "<TIMEOUT-MS>50</TIMEOUT-MS>" in sync_segment
 
 
 def test_split_export_includes_async_cs_client_comspec(tmp_path: Path) -> None:
@@ -78,9 +80,27 @@ def test_split_export_includes_async_cs_client_comspec(tmp_path: Path) -> None:
     speed_consumer = out_dir / "SpeedConsumer.arxml"
     xml = speed_consumer.read_text(encoding="utf-8")
 
-    assert "<CLIENT-COM-SPEC>" in xml
-    assert "<CALL-MODE>asynchronous</CALL-MODE>" in xml
-    assert xml.count("<TIMEOUT-MS>") == 1
+    async_segment = xml.split("<SHORT-NAME>Rp_DiagAsync</SHORT-NAME>", 1)[1].split("</R-PORT-PROTOTYPE>", 1)[0]
+    assert "<CLIENT-COM-SPEC>" in async_segment
+    assert "<CALL-MODE>asynchronous</CALL-MODE>" in async_segment
+    assert "<TIMEOUT-MS>" not in async_segment
+
+
+def test_split_export_cs_call_points_follow_call_mode(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    xml = (out_dir / "SpeedConsumer.arxml").read_text(encoding="utf-8")
+
+    assert "<SYNCHRONOUS-SERVER-CALL-POINT>" in xml
+    assert "<ASYNCHRONOUS-SERVER-CALL-POINT>" in xml
+    assert "<SHORT-NAME>SCP_Rp_Diag_ReadDTC</SHORT-NAME>" in xml
+    assert "<SHORT-NAME>SCP_Rp_DiagAsync_ClearDTC</SHORT-NAME>" in xml
+    assert "<SHORT-NAME>SCP_Rp_DiagAsync_LogEvent</SHORT-NAME>" in xml
+    assert "<TARGET-REQUIRED-OPERATION-REF DEST=\"CLIENT-SERVER-OPERATION\">/DEMO/Interfaces/If_Diagnostics/ReadDTC</TARGET-REQUIRED-OPERATION-REF>" in xml
+    assert "<TARGET-REQUIRED-OPERATION-REF DEST=\"CLIENT-SERVER-OPERATION\">/DEMO/Interfaces/If_Diagnostics/ClearDTC</TARGET-REQUIRED-OPERATION-REF>" in xml
 
 
 def test_split_export_system_contains_multiple_component_prototypes(tmp_path: Path) -> None:
@@ -96,6 +116,8 @@ def test_split_export_system_contains_multiple_component_prototypes(tmp_path: Pa
     assert "<SHORT-NAME>SpeedConsumer_1</SHORT-NAME>" in system_xml
     assert system_xml.count("<SW-COMPONENT-PROTOTYPE>") == 3
     assert system_xml.count("<ASSEMBLY-SW-CONNECTOR>") == 4
+    assert "<TYPE-TREF DEST=\"APPLICATION-SW-COMPONENT-TYPE\">/DEMO/Components/SpeedSensor</TYPE-TREF>" in system_xml
+    assert "<CONTEXT-COMPONENT-REF DEST=\"SW-COMPONENT-PROTOTYPE\">/DEMO/System/Composition_DemoSystem/SpeedSensor_1</CONTEXT-COMPONENT-REF>" in system_xml
 
 
 def test_split_export_includes_server_raised_error_refs(tmp_path: Path) -> None:
@@ -132,3 +154,22 @@ def test_legacy_datatypes_input_emits_deprecation_warning() -> None:
     legacy_project = INVALID_DIR / "project_bad_operation.yaml"
     with pytest.warns(DeprecationWarning, match="Legacy 'inputs.datatypes' format is deprecated"):
         _ = load_aggregator(legacy_project)
+
+
+def test_split_export_is_deterministic(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out1 = tmp_path / "out1"
+    out2 = tmp_path / "out2"
+
+    _ = write_outputs(project, template_dir=template_dir, out=out1, split_by_swc=True)
+    _ = write_outputs(project, template_dir=template_dir, out=out2, split_by_swc=True)
+
+    files1 = sorted(p.relative_to(out1) for p in out1.rglob("*.arxml"))
+    files2 = sorted(p.relative_to(out2) for p in out2.rglob("*.arxml"))
+    assert files1 == files2
+
+    for rel in files1:
+        data1 = (out1 / rel).read_bytes()
+        data2 = (out2 / rel).read_bytes()
+        assert hashlib.sha256(data1).hexdigest() == hashlib.sha256(data2).hexdigest()

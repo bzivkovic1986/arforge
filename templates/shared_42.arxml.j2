@@ -167,7 +167,7 @@
             <CLIENT-SERVER-INTERFACE>
               <SHORT-NAME>{{ itf.name }}</SHORT-NAME>
               {% set ns = namespace(error_names=[], errors=[]) %}
-              {% for op in itf.operations %}
+              {% for op in itf.operations | sort(attribute="name") %}
                 {% for possible_error in op.possibleErrors %}
                   {% if possible_error.name not in ns.error_names %}
                     {% set _ = ns.error_names.append(possible_error.name) %}
@@ -188,7 +188,7 @@
               </POSSIBLE-ERRORS>
               {% endif %}
               <OPERATIONS>
-                {% for op in itf.operations %}
+                {% for op in itf.operations | sort(attribute="name") %}
                 <CLIENT-SERVER-OPERATION>
                   <SHORT-NAME>{{ op.name }}</SHORT-NAME>
                   {% if op.possibleErrors %}
