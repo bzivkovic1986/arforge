@@ -14,11 +14,8 @@ swc:
       direction: "requires"
       interfaceRef: "If_VehicleSpeed"
       comSpec:
-        mode: "queued"
-        queueLength: 8
+        callMode: "synchronous"
+        timeoutMs: 50
     - name: "Rp_Diag"
       direction: "requires"
       interfaceRef: "If_Diagnostics"
-      comSpec:
-        callMode: "synchronous"
-        timeoutMs: 50

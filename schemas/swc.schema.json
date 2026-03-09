@@ -151,9 +151,6 @@
               },
               "comSpec": {
                 "type": "object",
-                "required": [
-                  "mode"
-                ],
                 "properties": {
                   "mode": {
                     "type": "string",
@@ -165,6 +162,17 @@
                   },
                   "queueLength": {
                     "type": "integer"
+                  },
+                  "callMode": {
+                    "type": "string",
+                    "enum": [
+                      "synchronous",
+                      "asynchronous"
+                    ]
+                  },
+                  "timeoutMs": {
+                    "type": "integer",
+                    "minimum": 0
                   }
                 },
                 "additionalProperties": false

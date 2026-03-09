@@ -58,7 +58,7 @@ Compu method rendering:
 Each SWC file includes:
 
 - provides/requires ports
-- optional sender-receiver ComSpec blocks inside port prototypes
+- optional sender-receiver/client-server ComSpec blocks inside port prototypes
 - runnables
 - runnable access points from `reads`/`writes`/`calls`
 - timing events (when `timingEventMs` is set)
@@ -66,19 +66,25 @@ Each SWC file includes:
 
 When a port defines `comSpec`, export emits the block directly after the interface TREF:
 
-- requires port (`R-PORT-PROTOTYPE`):
+- senderReceiver requires port (`R-PORT-PROTOTYPE`):
   - `REQUIRED-COM-SPECS`
   - queued mode: `QUEUED-RECEIVER-COM-SPEC` + `QUEUE-LENGTH`
   - nonqueued modes: `NONQUEUED-RECEIVER-COM-SPEC`
-- provides port (`P-PORT-PROTOTYPE`):
+- senderReceiver provides port (`P-PORT-PROTOTYPE`):
   - `PROVIDED-COM-SPECS`
   - queued mode: `QUEUED-SENDER-COM-SPEC` + `QUEUE-LENGTH`
   - nonqueued modes: `NONQUEUED-SENDER-COM-SPEC`
+- clientServer requires port:
+  - `REQUIRED-COM-SPECS` + `CLIENT-COM-SPEC`
+  - `CALL-MODE` (`synchronous` / `asynchronous`)
+  - optional `TIMEOUT-MS` when synchronous
+- clientServer provides port:
+  - `PROVIDED-COM-SPECS` + `SERVER-COM-SPEC`
+  - `CALL-MODE` and optional `TIMEOUT-MS` (same policy)
 
 Notes:
 
-- Current export keeps ComSpec minimal by design (no data-element refs yet).
-- ComSpec is emitted only for sender-receiver ports.
+- Current export keeps ComSpec minimal by design (no operation/data-element refs in ComSpec blocks).
 
 ## System ARXML content
 

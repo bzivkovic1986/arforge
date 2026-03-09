@@ -810,7 +810,7 @@ class RunnableTriggerPolicyCase(ValidationCase):
 
 class ComSpecSemanticCase(ValidationCase):
     case_id = "CORE-025"
-    description = "Validate sender-receiver ComSpec on SWC ports."
+    description = "Validate sender-receiver and client-server ComSpec on SWC ports."
     tags = ("core", "swc", "ports", "comspec")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -827,6 +827,8 @@ class ComSpecSemanticCase(ValidationCase):
 
     def run(self, ctx: ValidationContext) -> List[Finding]:
         findings: List[Finding] = []
+        sr_modes = {"implicit", "explicit", "queued"}
+        cs_call_modes = {"synchronous", "asynchronous"}
         for swc in sorted(ctx.project.swcs, key=lambda s: s.name):
             for port in sorted(swc.ports, key=lambda p: p.name):
                 com_spec = port.comSpec
@@ -834,36 +836,124 @@ class ComSpecSemanticCase(ValidationCase):
                     continue
 
                 itf = ctx.iface_by_name.get(port.interfaceRef)
-                if itf is not None and itf.type != "senderReceiver":
-                    findings.append(
-                        self.finding(
-                            f"SWC '{swc.name}' port '{port.name}' comSpec requires senderReceiver interface, found '{itf.type}'.",
-                            code="CORE-025-COMSPEC-INTERFACE-TYPE",
-                        )
-                    )
+                if itf is None:
+                    # Unknown interface reference is reported by CORE-021.
+                    continue
 
-                if com_spec.mode == "queued":
-                    if com_spec.queueLength is None:
+                if itf.type == "senderReceiver":
+                    if com_spec.callMode is not None:
                         findings.append(
                             self.finding(
-                                f"SWC '{swc.name}' port '{port.name}' queued comSpec must define queueLength.",
-                                code="CORE-025-COMSPEC-QUEUED-MISSING-QUEUE-LENGTH",
+                                f"SWC '{swc.name}' port '{port.name}' senderReceiver comSpec must not define callMode.",
+                                code="CORE-025-SR-COMSPEC-CALLMODE",
                             )
                         )
-                    elif com_spec.queueLength < 1:
+                    if com_spec.timeoutMs is not None:
                         findings.append(
                             self.finding(
-                                f"SWC '{swc.name}' port '{port.name}' queued comSpec queueLength must be >= 1, found '{com_spec.queueLength}'.",
-                                code="CORE-025-COMSPEC-QUEUED-QUEUE-LENGTH-RANGE",
+                                f"SWC '{swc.name}' port '{port.name}' senderReceiver comSpec must not define timeoutMs.",
+                                code="CORE-025-SR-COMSPEC-TIMEOUT",
+                            )
+                        )
+
+                    if com_spec.mode is None:
+                        findings.append(
+                            self.finding(
+                                f"SWC '{swc.name}' port '{port.name}' senderReceiver comSpec must define mode.",
+                                code="CORE-025-SR-COMSPEC-MISSING-MODE",
+                            )
+                        )
+                        continue
+                    if com_spec.mode not in sr_modes:
+                        findings.append(
+                            self.finding(
+                                f"SWC '{swc.name}' port '{port.name}' senderReceiver comSpec has invalid mode '{com_spec.mode}'.",
+                                code="CORE-025-SR-COMSPEC-MODE",
+                            )
+                        )
+                        continue
+
+                    if com_spec.mode == "queued":
+                        if com_spec.queueLength is None:
+                            findings.append(
+                                self.finding(
+                                    f"SWC '{swc.name}' port '{port.name}' queued comSpec must define queueLength.",
+                                    code="CORE-025-COMSPEC-QUEUED-MISSING-QUEUE-LENGTH",
+                                )
+                            )
+                        elif com_spec.queueLength < 1:
+                            findings.append(
+                                self.finding(
+                                    f"SWC '{swc.name}' port '{port.name}' queued comSpec queueLength must be >= 1, found '{com_spec.queueLength}'.",
+                                    code="CORE-025-COMSPEC-QUEUED-QUEUE-LENGTH-RANGE",
+                                )
+                            )
+                        continue
+
+                    if com_spec.queueLength is not None:
+                        findings.append(
+                            self.finding(
+                                f"SWC '{swc.name}' port '{port.name}' comSpec mode '{com_spec.mode}' must not define queueLength.",
+                                code="CORE-025-COMSPEC-NONQUEUED-QUEUE-LENGTH",
                             )
                         )
                     continue
 
+                if itf.type != "clientServer":
+                    findings.append(
+                        self.finding(
+                            f"SWC '{swc.name}' port '{port.name}' comSpec uses unsupported interface type '{itf.type}'.",
+                            code="CORE-025-COMSPEC-INTERFACE-TYPE",
+                        )
+                    )
+                    continue
+
+                if com_spec.mode is not None:
+                    findings.append(
+                        self.finding(
+                            f"SWC '{swc.name}' port '{port.name}' clientServer comSpec must not define mode.",
+                            code="CORE-025-CS-COMSPEC-MODE",
+                        )
+                    )
                 if com_spec.queueLength is not None:
                     findings.append(
                         self.finding(
-                            f"SWC '{swc.name}' port '{port.name}' comSpec mode '{com_spec.mode}' must not define queueLength.",
-                            code="CORE-025-COMSPEC-NONQUEUED-QUEUE-LENGTH",
+                            f"SWC '{swc.name}' port '{port.name}' clientServer comSpec must not define queueLength.",
+                            code="CORE-025-CS-COMSPEC-QUEUE-LENGTH",
+                        )
+                    )
+
+                if com_spec.callMode is None:
+                    findings.append(
+                        self.finding(
+                            f"SWC '{swc.name}' port '{port.name}' clientServer comSpec must define callMode.",
+                            code="CORE-025-CS-COMSPEC-MISSING-CALLMODE",
+                        )
+                    )
+                    continue
+
+                if com_spec.callMode not in cs_call_modes:
+                    findings.append(
+                        self.finding(
+                            f"SWC '{swc.name}' port '{port.name}' clientServer comSpec has invalid callMode '{com_spec.callMode}'.",
+                            code="CORE-025-CS-COMSPEC-CALLMODE",
+                        )
+                    )
+                    continue
+
+                if com_spec.timeoutMs is not None and com_spec.timeoutMs < 0:
+                    findings.append(
+                        self.finding(
+                            f"SWC '{swc.name}' port '{port.name}' clientServer comSpec timeoutMs must be >= 0, found '{com_spec.timeoutMs}'.",
+                            code="CORE-025-CS-COMSPEC-TIMEOUT-RANGE",
+                        )
+                    )
+
+                if com_spec.callMode == "asynchronous" and com_spec.timeoutMs is not None:
+                    findings.append(
+                        self.finding(
+                            f"SWC '{swc.name}' port '{port.name}' clientServer asynchronous comSpec must not define timeoutMs.",
+                            code="CORE-025-CS-COMSPEC-ASYNC-TIMEOUT",
                         )
                     )
 

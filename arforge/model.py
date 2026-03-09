@@ -126,8 +126,10 @@ CsCall = OperationCall
 
 @dataclass(frozen=True)
 class ComSpec:
-    mode: str
+    mode: str | None = None
     queueLength: int | None = None
+    callMode: str | None = None
+    timeoutMs: int | None = None
 
 @dataclass(frozen=True)
 class Port:
