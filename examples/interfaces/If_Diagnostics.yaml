@@ -8,5 +8,7 @@ interface:
           direction: "in"
           typeRef: "UInt16"
       returnType: "App_DtcStatus"
+      possibleErrors:
+        - "DTC_NOT_FOUND"
     - name: "ClearDTC"
       returnType: "void"

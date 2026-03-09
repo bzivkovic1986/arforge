@@ -118,6 +118,27 @@
                   },
                   "additionalProperties": false
                 }
+              },
+              "raisesErrors": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "operation",
+                    "error"
+                  ],
+                  "properties": {
+                    "operation": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "error": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "additionalProperties": false
+                }
               }
             },
             "additionalProperties": false

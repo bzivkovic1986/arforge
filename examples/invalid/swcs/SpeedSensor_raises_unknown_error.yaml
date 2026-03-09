@@ -14,7 +14,7 @@ swc:
           operation: "ClearDTC"
       raisesErrors:
         - operation: "ReadDTC"
-          error: "DTC_NOT_FOUND"
+          error: "DTC_UNKNOWN"
   ports:
     - name: "Pp_VehicleSpeed"
       direction: "provides"

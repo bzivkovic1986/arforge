@@ -77,6 +77,7 @@ class Operation:
     name: str
     arguments: List["OperationArgument"] = field(default_factory=list)
     returnType: str = "void"
+    possibleErrors: List[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -100,6 +101,7 @@ class Runnable:
     writes: List["DataAccess"] = field(default_factory=list)
     calls: List["OperationCall"] = field(default_factory=list)
     operationInvokedEvents: List["OperationInvokedEvent"] = field(default_factory=list)
+    raisesErrors: List["OperationErrorRaise"] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -118,6 +120,12 @@ class OperationCall:
 class OperationInvokedEvent:
     port: str
     operation: str
+
+
+@dataclass(frozen=True)
+class OperationErrorRaise:
+    operation: str
+    error: str
 
 
 # Backward-compatible aliases for earlier internal names.
@@ -262,6 +270,7 @@ def from_dict(d: Dict[str, Any]) -> Project:
                         name=op["name"],
                         arguments=op_args,
                         returnType=op.get("returnType", "void"),
+                        possibleErrors=sorted(op.get("possibleErrors", [])),
                     )
                 )
             ifaces.append(Interface(name=itf["name"], type=itf["type"], dataElements=None, operations=ops))
@@ -289,6 +298,10 @@ def from_dict(d: Dict[str, Any]) -> Project:
                 operationInvokedEvents=sorted(
                     [OperationInvokedEvent(**e) for e in r.get("operationInvokedEvents", [])],
                     key=lambda e: (e.port, e.operation),
+                ),
+                raisesErrors=sorted(
+                    [OperationErrorRaise(**e) for e in r.get("raisesErrors", [])],
+                    key=lambda e: (e.operation, e.error),
                 ),
             )
             for r in s.get("runnables", [])

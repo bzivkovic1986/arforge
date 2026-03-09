@@ -960,6 +960,116 @@ class ComSpecSemanticCase(ValidationCase):
         return findings
 
 
+class RunnableRaisedErrorCase(ValidationCase):
+    case_id = "CORE-026"
+    description = "Validate runnable raisesErrors declarations for provided clientServer operations."
+    tags = ("core", "swc", "runnables", "interfaces", "errors")
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        has_raises_errors = any(
+            runnable.raisesErrors
+            for swc in ctx.project.swcs
+            for runnable in swc.runnables
+        )
+        if not has_raises_errors:
+            return False, "no runnable raisesErrors declarations"
+        return True, None
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        findings: List[Finding] = []
+
+        for swc in sorted(ctx.project.swcs, key=lambda s: s.name):
+            provided_cs_ports: dict[str, object] = {}
+            for port in sorted(swc.ports, key=lambda p: p.name):
+                if port.direction != "provides":
+                    continue
+                itf = ctx.iface_by_name.get(port.interfaceRef)
+                if itf is None or itf.type != "clientServer":
+                    continue
+                provided_cs_ports[port.name] = itf
+
+            for runnable in sorted(swc.runnables, key=lambda r: r.name):
+                if not runnable.raisesErrors:
+                    continue
+
+                location_base = f"SWC '{swc.name}' runnable '{runnable.name}'"
+                valid_oie_bindings = {
+                    (event.port, event.operation)
+                    for event in runnable.operationInvokedEvents
+                }
+
+                for raised_error in sorted(runnable.raisesErrors, key=lambda e: (e.operation, e.error)):
+                    candidate_ports = sorted(
+                        [
+                            (port_name, itf)
+                            for port_name, itf in provided_cs_ports.items()
+                            if raised_error.operation in ctx.cs_operations_by_iface.get(itf.name, set())
+                        ],
+                        key=lambda item: item[0],
+                    )
+                    if not candidate_ports:
+                        findings.append(
+                            self.finding(
+                                f"{location_base} raisesErrors references unknown operation '{raised_error.operation}' on provided clientServer interfaces.",
+                                code="CORE-026-RAISE-UNKNOWN-OPERATION",
+                            )
+                        )
+                        continue
+
+                    bound_ports = sorted(
+                        [
+                            (port_name, itf)
+                            for port_name, itf in candidate_ports
+                            if (port_name, raised_error.operation) in valid_oie_bindings
+                        ],
+                        key=lambda item: item[0],
+                    )
+                    if not bound_ports:
+                        findings.append(
+                            self.finding(
+                                f"{location_base} raisesErrors operation '{raised_error.operation}' is not bound via operationInvokedEvents.",
+                                code="CORE-026-RAISE-UNBOUND-OPERATION",
+                            )
+                        )
+                        continue
+                    if len(bound_ports) > 1:
+                        bound_port_names = ", ".join(port_name for port_name, _ in bound_ports)
+                        findings.append(
+                            self.finding(
+                                f"{location_base} raisesErrors operation '{raised_error.operation}' is ambiguous; bound on multiple provides ports: {bound_port_names}.",
+                                code="CORE-026-RAISE-AMBIGUOUS-BINDING",
+                            )
+                        )
+                        continue
+
+                    _, interface_obj = bound_ports[0]
+                    operation_obj = next(
+                        (
+                            op
+                            for op in sorted(interface_obj.operations or [], key=lambda op: op.name)
+                            if op.name == raised_error.operation
+                        ),
+                        None,
+                    )
+                    if operation_obj is None:
+                        findings.append(
+                            self.finding(
+                                f"{location_base} raisesErrors references unknown operation '{raised_error.operation}' on interface '{interface_obj.name}'.",
+                                code="CORE-026-RAISE-UNKNOWN-OPERATION",
+                            )
+                        )
+                        continue
+                    if raised_error.error not in set(operation_obj.possibleErrors):
+                        findings.append(
+                            self.finding(
+                                f"{location_base} raisesErrors references unknown error '{raised_error.error}' for operation '{raised_error.operation}' on interface '{interface_obj.name}'.",
+                                code="CORE-026-RAISE-UNKNOWN-ERROR",
+                            )
+                        )
+
+        return findings
+
+
 class SystemInstanceTypeCase(ValidationCase):
     case_id = "CORE-030"
     description = "Validate composition component prototypes reference known SWC types."
@@ -1154,6 +1264,7 @@ def core_validation_cases() -> List[ValidationCase]:
         OperationInvokedEventCase(),
         RunnableTriggerPolicyCase(),
         ComSpecSemanticCase(),
+        RunnableRaisedErrorCase(),
         SystemInstanceTypeCase(),
         ConnectionSemanticCase(),
     ]
