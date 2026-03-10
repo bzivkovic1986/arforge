@@ -9,7 +9,7 @@ import pytest
 import yaml
 
 from arforge.exporter import write_outputs
-from arforge.validate import ValidationError, load_aggregator, load_and_validate_aggregator
+from arforge.validate import ValidationError, build_semantic_report, load_aggregator, load_and_validate_aggregator
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -150,6 +150,20 @@ def test_split_export_includes_init_event(tmp_path: Path) -> None:
     assert "<START-ON-EVENT-REF DEST=\"RUNNABLE-ENTITY\">/DEMO/Components/SpeedSensor/IB_SpeedSensor/Runnable_Init</START-ON-EVENT-REF>" in speed_sensor_xml
 
 
+def test_split_export_includes_data_receive_event(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    xml = (out_dir / "SpeedConsumer.arxml").read_text(encoding="utf-8")
+
+    assert "<DATA-RECEIVE-EVENT>" in xml
+    assert "<SHORT-NAME>DRE_Runnable_OnVehicleSpeed_Rp_VehicleSpeed_VehicleSpeed</SHORT-NAME>" in xml
+    assert "<CONTEXT-R-PORT-REF DEST=\"R-PORT-PROTOTYPE\">/DEMO/Components/SpeedConsumer/Rp_VehicleSpeed</CONTEXT-R-PORT-REF>" in xml
+    assert "<TARGET-DATA-ELEMENT-REF DEST=\"VARIABLE-DATA-PROTOTYPE\">/DEMO/Interfaces/If_VehicleSpeed/VehicleSpeed</TARGET-DATA-ELEMENT-REF>" in xml
+
+
 def test_split_export_includes_void_return_cs_operation_without_return_typeref(tmp_path: Path) -> None:
     project = load_and_validate_aggregator(VALID_PROJECT)
     template_dir = REPO_ROOT / "templates"
@@ -161,6 +175,22 @@ def test_split_export_includes_void_return_cs_operation_without_return_typeref(t
     assert "<SHORT-NAME>LogEvent</SHORT-NAME>" in shared_xml
     log_event_segment = shared_xml.split("<SHORT-NAME>LogEvent</SHORT-NAME>", 1)[1].split("</CLIENT-SERVER-OPERATION>", 1)[0]
     assert "<TYPE-TREF" not in log_event_segment
+
+
+@pytest.mark.parametrize(
+    ("fixture_name", "expected_code"),
+    [
+        ("project_data_receive_event_unknown_port.yaml", "CORE-027-DRE-UNKNOWN-PORT"),
+        ("project_data_receive_event_unknown_dataelement.yaml", "CORE-027-DRE-UNKNOWN-DATAELEMENT"),
+        ("project_data_receive_event_on_provides_port.yaml", "CORE-027-DRE-DIRECTION"),
+        ("project_data_receive_event_on_client_server_port.yaml", "CORE-027-DRE-INTERFACE-TYPE"),
+    ],
+)
+def test_data_receive_event_invalid_fixtures_emit_expected_codes(fixture_name: str, expected_code: str) -> None:
+    project = load_aggregator(INVALID_DIR / fixture_name)
+    report = build_semantic_report(project, ruleset="core")
+    error_codes = {finding.code for finding in report.error_findings()}
+    assert expected_code in error_codes
 
 
 def test_legacy_datatypes_input_emits_deprecation_warning() -> None:
