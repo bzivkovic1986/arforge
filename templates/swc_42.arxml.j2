@@ -187,6 +187,17 @@
                       <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/{{ root_pkg }}/Components/{{ swc.name }}/IB_{{ swc.name }}/{{ r.name }}</START-ON-EVENT-REF>
                     </OPERATION-INVOKED-EVENT>
                     {% endfor %}
+                    {% for dre in r.dataReceiveEvents %}
+                    {% set dre_port = (swc.ports | selectattr("name", "equalto", dre.port) | list | first) %}
+                    <DATA-RECEIVE-EVENT>
+                      <SHORT-NAME>DRE_{{ r.name }}_{{ dre.port }}_{{ dre.dataElement }}</SHORT-NAME>
+                      <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/{{ root_pkg }}/Components/{{ swc.name }}/IB_{{ swc.name }}/{{ r.name }}</START-ON-EVENT-REF>
+                      <DATA-IREF>
+                        <CONTEXT-R-PORT-REF DEST="R-PORT-PROTOTYPE">/{{ root_pkg }}/Components/{{ swc.name }}/{{ dre.port }}</CONTEXT-R-PORT-REF>
+                        <TARGET-DATA-ELEMENT-REF DEST="VARIABLE-DATA-PROTOTYPE">/{{ root_pkg }}/Interfaces/{{ dre_port.interfaceRef if dre_port else '' }}/{{ dre.dataElement }}</TARGET-DATA-ELEMENT-REF>
+                      </DATA-IREF>
+                    </DATA-RECEIVE-EVENT>
+                    {% endfor %}
                     {% endfor %}
                   </EVENTS>
 

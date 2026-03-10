@@ -874,18 +874,20 @@ class RunnableTriggerPolicyCase(ValidationCase):
             for runnable in sorted(swc.runnables, key=lambda r: r.name):
                 has_timing = runnable.timingEventMs is not None
                 has_oie = bool(runnable.operationInvokedEvents)
+                has_dre = bool(runnable.dataReceiveEvents)
                 has_init = runnable.initEvent
-                if has_timing and has_oie:
+                trigger_count = sum([has_timing, has_oie, has_dre, has_init])
+                if trigger_count > 1:
                     findings.append(
                         self.finding(
-                            f"Runnable '{runnable.name}' must not define timingEventMs when operationInvokedEvents is used.",
+                            f"Runnable '{runnable.name}' must define exactly one trigger style among timingEventMs, operationInvokedEvents, dataReceiveEvents, and initEvent.",
                             code="CORE-024-MULTIPLE-TRIGGERS",
                         )
                     )
-                if not has_timing and not has_oie and not has_init:
+                if trigger_count == 0:
                     findings.append(
                         self.finding(
-                            f"SWC '{swc.name}' runnable '{runnable.name}' must define at least one trigger: timingEventMs, operationInvokedEvents, or initEvent.",
+                            f"SWC '{swc.name}' runnable '{runnable.name}' must define at least one trigger: timingEventMs, operationInvokedEvents, dataReceiveEvents, or initEvent.",
                             code="CORE-024-MISSING-TRIGGER",
                         )
                     )
@@ -1171,6 +1173,72 @@ class RunnableRaisedErrorCase(ValidationCase):
         return findings
 
 
+class DataReceiveEventCase(ValidationCase):
+    case_id = "CORE-027"
+    description = "Validate dataReceiveEvents bindings for required senderReceiver ports."
+    tags = ("core", "swc", "runnables", "interfaces")
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.swcs:
+            return False, "no SWCs defined"
+        has_events = any(
+            runnable.dataReceiveEvents
+            for swc in ctx.project.swcs
+            for runnable in swc.runnables
+        )
+        if not has_events:
+            return False, "no dataReceiveEvents declarations"
+        return True, None
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        findings: List[Finding] = []
+
+        for swc in sorted(ctx.project.swcs, key=lambda s: s.name):
+            for runnable in sorted(swc.runnables, key=lambda r: r.name):
+                if not runnable.dataReceiveEvents:
+                    continue
+
+                location_base = f"SWC '{swc.name}' runnable '{runnable.name}'"
+                for event in sorted(runnable.dataReceiveEvents, key=lambda e: (e.port, e.dataElement)):
+                    port = ctx.find_swc_port(swc.name, event.port)
+                    if port is None:
+                        findings.append(
+                            self.finding(
+                                f"{location_base} dataReceiveEvents references unknown port '{event.port}'.",
+                                code="CORE-027-DRE-UNKNOWN-PORT",
+                            )
+                        )
+                        continue
+                    if port.direction != "requires":
+                        findings.append(
+                            self.finding(
+                                f"{location_base} dataReceiveEvents on port '{event.port}' requires direction 'requires', found '{port.direction}'.",
+                                code="CORE-027-DRE-DIRECTION",
+                            )
+                        )
+                    itf = ctx.iface_by_name.get(port.interfaceRef)
+                    if itf is None:
+                        # Unknown interface reference is reported by CORE-021.
+                        continue
+                    if itf.type != "senderReceiver":
+                        findings.append(
+                            self.finding(
+                                f"{location_base} dataReceiveEvents on port '{event.port}' requires senderReceiver interface, found '{itf.type}'.",
+                                code="CORE-027-DRE-INTERFACE-TYPE",
+                            )
+                        )
+                        continue
+                    if event.dataElement not in ctx.sr_data_elements_by_iface.get(itf.name, set()):
+                        findings.append(
+                            self.finding(
+                                f"{location_base} dataReceiveEvents references unknown dataElement '{event.dataElement}' on interface '{itf.name}'.",
+                                code="CORE-027-DRE-UNKNOWN-DATAELEMENT",
+                            )
+                        )
+
+        return findings
+
+
 class SystemInstanceTypeCase(ValidationCase):
     case_id = "CORE-030"
     description = "Validate composition component prototypes reference known SWC types."
@@ -1366,6 +1434,7 @@ def core_validation_cases() -> List[ValidationCase]:
         RunnableTriggerPolicyCase(),
         ComSpecSemanticCase(),
         RunnableRaisedErrorCase(),
+        DataReceiveEventCase(),
         SystemInstanceTypeCase(),
         ConnectionSemanticCase(),
     ]

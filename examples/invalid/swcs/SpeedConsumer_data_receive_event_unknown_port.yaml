@@ -9,30 +9,17 @@ swc:
       calls:
         - port: "Rp_Diag"
           operation: "ReadDTC"
-          timeoutMs: 100
-        - port: "Rp_DiagAsync"
-          operation: "ClearDTC"
-        - port: "Rp_DiagAsync"
-          operation: "LogEvent"
     - name: "Runnable_OnVehicleSpeed"
       dataReceiveEvents:
-        - port: "Rp_VehicleSpeed"
+        - port: "Rp_Unknown"
           dataElement: "VehicleSpeed"
   ports:
     - name: "Rp_VehicleSpeed"
       direction: "requires"
       interfaceRef: "If_VehicleSpeed"
-      comSpec:
-        mode: "queued"
-        queueLength: 8
     - name: "Rp_Diag"
       direction: "requires"
       interfaceRef: "If_Diagnostics"
-      comSpec:
-        callMode: "synchronous"
-        timeoutMs: 50
     - name: "Rp_DiagAsync"
       direction: "requires"
       interfaceRef: "If_Diagnostics"
-      comSpec:
-        callMode: "asynchronous"

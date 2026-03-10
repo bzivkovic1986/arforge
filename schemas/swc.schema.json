@@ -126,6 +126,27 @@
                   "additionalProperties": false
                 }
               },
+              "dataReceiveEvents": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "port",
+                    "dataElement"
+                  ],
+                  "properties": {
+                    "port": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "dataElement": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
               "raisesErrors": {
                 "type": "array",
                 "items": {

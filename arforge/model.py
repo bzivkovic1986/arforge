@@ -108,6 +108,7 @@ class Runnable:
     writes: List["DataAccess"] = field(default_factory=list)
     calls: List["OperationCall"] = field(default_factory=list)
     operationInvokedEvents: List["OperationInvokedEvent"] = field(default_factory=list)
+    dataReceiveEvents: List["DataReceiveEvent"] = field(default_factory=list)
     raisesErrors: List["OperationErrorRaise"] = field(default_factory=list)
 
 
@@ -128,6 +129,12 @@ class OperationCall:
 class OperationInvokedEvent:
     port: str
     operation: str
+
+
+@dataclass(frozen=True)
+class DataReceiveEvent:
+    port: str
+    dataElement: str
 
 
 @dataclass(frozen=True)
@@ -331,6 +338,10 @@ def from_dict(d: Dict[str, Any]) -> Project:
                 operationInvokedEvents=sorted(
                     [OperationInvokedEvent(**e) for e in r.get("operationInvokedEvents", [])],
                     key=lambda e: (e.port, e.operation),
+                ),
+                dataReceiveEvents=sorted(
+                    [DataReceiveEvent(**e) for e in r.get("dataReceiveEvents", [])],
+                    key=lambda e: (e.port, e.dataElement),
                 ),
                 raisesErrors=sorted(
                     [OperationErrorRaise(**e) for e in r.get("raisesErrors", [])],
