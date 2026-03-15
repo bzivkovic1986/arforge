@@ -7,7 +7,13 @@ interface:
         - name: "DtcId"
           direction: "in"
           typeRef: "UInt16"
-      returnType: "App_DtcStatus"
+        - name: "DtcState"
+          direction: "out"
+          typeRef: "UInt8"
+        - name: "OccurrenceCounter"
+          direction: "inout"
+          typeRef: "UInt16"
+      returnType: "UInt8"
       possibleErrors:
         - name: "DTC_NOT_FOUND"
           code: 1
