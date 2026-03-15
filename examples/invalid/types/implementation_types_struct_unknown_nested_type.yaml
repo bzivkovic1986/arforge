@@ -26,3 +26,13 @@ implementationDataTypes:
         typeRef: "UInt16"
       - name: "wheel"
         typeRef: "UInt16"
+  - name: "InnerStruct_T"
+    kind: "struct"
+    fields:
+      - name: "value"
+        typeRef: "MissingImplType_T"
+  - name: "OuterStruct_T"
+    kind: "struct"
+    fields:
+      - name: "inner"
+        typeRef: "InnerStruct_T"

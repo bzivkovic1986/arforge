@@ -26,3 +26,10 @@ implementationDataTypes:
         typeRef: "UInt16"
       - name: "wheel"
         typeRef: "UInt16"
+  - name: "DuplicateFieldStruct_T"
+    kind: "struct"
+    fields:
+      - name: "value"
+        typeRef: "UInt16"
+      - name: "value"
+        typeRef: "UInt16"

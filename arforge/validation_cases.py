@@ -101,6 +101,41 @@ class InterfaceSemanticCase(ValidationCase):
     def run(self, ctx: ValidationContext) -> List[Finding]:
         findings: List[Finding] = []
         dt_names = set(ctx.datatype_by_name.keys())
+        impl_by_name = {i.name: i for i in ctx.project.implementationDataTypes}
+
+        def _duplicate_field_names(impl_name: str, field_names: List[str]) -> List[Finding]:
+            duplicate_names = sorted({name for name in field_names if field_names.count(name) > 1})
+            return [
+                self.finding(
+                    f"Struct ImplementationDataType '{impl_name}' has duplicate field name '{field_name}'.",
+                    code="CORE-010-STRUCT-DUPLICATE-FIELD",
+                )
+                for field_name in duplicate_names
+            ]
+
+        def _resolve_nested_struct_ref(type_ref: str, visited_impls: set[str] | None = None) -> str | None:
+            visited = set() if visited_impls is None else set(visited_impls)
+            if type_ref in visited:
+                return None
+
+            impl = impl_by_name.get(type_ref)
+            if impl is None:
+                return None
+            if impl.is_struct:
+                return impl.name
+            if impl.is_array and impl.elementTypeRef:
+                visited.add(type_ref)
+                return _resolve_nested_struct_ref(impl.elementTypeRef, visited)
+            return None
+
+        def _normalize_cycle(cycle: list[str]) -> list[str]:
+            cycle_nodes = cycle[:-1]
+            if not cycle_nodes:
+                return cycle
+
+            rotations = [cycle_nodes[idx:] + cycle_nodes[:idx] for idx in range(len(cycle_nodes))]
+            normalized = min(rotations)
+            return normalized + [normalized[0]]
 
         for impl in sorted(ctx.project.implementationDataTypes, key=lambda d: d.name):
             if impl.is_struct:
@@ -113,13 +148,7 @@ class InterfaceSemanticCase(ValidationCase):
                     )
                     continue
                 field_names = [f.name for f in impl.fields]
-                if len(set(field_names)) != len(field_names):
-                    findings.append(
-                        self.finding(
-                            f"Struct ImplementationDataType '{impl.name}' has duplicate field names.",
-                            code="CORE-010-STRUCT-DUPLICATE-FIELD",
-                        )
-                    )
+                findings.extend(_duplicate_field_names(impl.name, field_names))
                 for field in sorted(impl.fields, key=lambda f: f.name):
                     if field.typeRef not in ctx.datatype_by_name:
                         findings.append(
@@ -197,43 +226,48 @@ class InterfaceSemanticCase(ValidationCase):
                         )
                     )
 
-        impl_by_name = {i.name: i for i in ctx.project.implementationDataTypes}
-
-        def _detect_impl_cycle(start: str, node: str, visiting: set[str], path: list[str]) -> list[str] | None:
-            if node in visiting:
-                cycle_start = path.index(node) if node in path else 0
-                return path[cycle_start:] + [node]
-            it = impl_by_name.get(node)
-            if it is None or not it.is_struct:
-                return None
-            visiting.add(node)
-            path.append(node)
-            for f in sorted(it.fields, key=lambda x: x.name):
-                if f.typeRef in impl_by_name:
-                    cycle = _detect_impl_cycle(start, f.typeRef, visiting, path)
-                    if cycle:
-                        return cycle
-            path.pop()
-            visiting.remove(node)
-            return None
-
-        reported_cycles: set[str] = set()
+        struct_ref_graph: dict[str, list[str]] = {}
         for impl in sorted(ctx.project.implementationDataTypes, key=lambda d: d.name):
             if not impl.is_struct:
                 continue
-            cycle = _detect_impl_cycle(impl.name, impl.name, set(), [])
-            if cycle:
-                cycle_txt = " -> ".join(cycle)
-                cycle_key = "->".join(sorted(set(cycle[:-1])))
-                if cycle_key in reported_cycles:
+            nested_struct_refs = {
+                nested_ref
+                for field in impl.fields
+                for nested_ref in [_resolve_nested_struct_ref(field.typeRef)]
+                if nested_ref is not None
+            }
+            struct_ref_graph[impl.name] = sorted(nested_struct_refs)
+
+        visit_state: dict[str, str] = {}
+        reported_cycles: set[tuple[str, ...]] = set()
+
+        def _visit_struct(node: str, path: list[str]) -> None:
+            visit_state[node] = "visiting"
+            path.append(node)
+            for target in struct_ref_graph.get(node, []):
+                if visit_state.get(target) == "visiting":
+                    cycle_start = path.index(target)
+                    cycle = _normalize_cycle(path[cycle_start:] + [target])
+                    cycle_key = tuple(cycle)
+                    if cycle_key not in reported_cycles:
+                        reported_cycles.add(cycle_key)
+                        findings.append(
+                            self.finding(
+                                f"Struct implementation type cycle detected: {' -> '.join(cycle)}.",
+                                code="CORE-010-STRUCT-CYCLE",
+                            )
+                        )
                     continue
-                reported_cycles.add(cycle_key)
-                findings.append(
-                    self.finding(
-                        f"Struct type cycle detected: {cycle_txt}.",
-                        code="CORE-010-STRUCT-CYCLE",
-                    )
-                )
+                if visit_state.get(target) == "done":
+                    continue
+                _visit_struct(target, path)
+            path.pop()
+            visit_state[node] = "done"
+
+        for struct_name in sorted(struct_ref_graph):
+            if visit_state.get(struct_name) == "done":
+                continue
+            _visit_struct(struct_name, [])
 
         for app in sorted(ctx.project.applicationDataTypes, key=lambda d: d.name):
             if app.implementationTypeRef not in ctx.implementation_type_by_name:
