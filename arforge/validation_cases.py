@@ -136,6 +136,51 @@ class InterfaceSemanticCase(ValidationCase):
                                 code="CORE-010-STRUCT-APPLICATION-TYPE",
                             )
                         )
+            elif impl.is_array:
+                if not impl.elementTypeRef:
+                    findings.append(
+                        self.finding(
+                            f"Array ImplementationDataType '{impl.name}' must define elementTypeRef.",
+                            code="CORE-010-ARRAY-MISSING-ELEMENT-TYPE",
+                        )
+                    )
+                elif impl.elementTypeRef not in ctx.datatype_by_name:
+                    findings.append(
+                        self.finding(
+                            f"Array ImplementationDataType '{impl.name}' references unknown elementTypeRef '{impl.elementTypeRef}'.",
+                            code="CORE-010-ARRAY-UNKNOWN-ELEMENT-TYPE",
+                        )
+                    )
+                elif impl.elementTypeRef in ctx.application_type_by_name:
+                    findings.append(
+                        self.finding(
+                            f"Array ImplementationDataType '{impl.name}' must not reference application data type '{impl.elementTypeRef}'.",
+                            code="CORE-010-ARRAY-APPLICATION-TYPE",
+                        )
+                    )
+
+                if impl.length is None:
+                    findings.append(
+                        self.finding(
+                            f"Array ImplementationDataType '{impl.name}' must define length.",
+                            code="CORE-010-ARRAY-MISSING-LENGTH",
+                        )
+                    )
+                elif impl.length < 1:
+                    findings.append(
+                        self.finding(
+                            f"Array ImplementationDataType '{impl.name}' has invalid length '{impl.length}'; expected integer >= 1.",
+                            code="CORE-010-ARRAY-LENGTH",
+                        )
+                    )
+
+                if impl.elementTypeRef == impl.name:
+                    findings.append(
+                        self.finding(
+                            f"Array ImplementationDataType '{impl.name}' must not reference itself as elementTypeRef.",
+                            code="CORE-010-ARRAY-SELF-REFERENCE",
+                        )
+                    )
             else:
                 if not impl.baseTypeRef:
                     findings.append(
@@ -489,10 +534,10 @@ class ApplicationConstraintCase(ValidationCase):
                 # Unknown implementation ref is reported by CORE-010.
                 continue
 
-            if impl.is_struct or (impl.kind is not None and impl.kind != "struct"):
+            if impl.is_struct or impl.is_array:
                 findings.append(
                     self.finding(
-                        f"ApplicationDataType '{app.name}' uses implementation type '{impl.name}' of kind '{impl.kind or 'struct'}'; constraints are only allowed for scalar numeric implementation types in v0.",
+                        f"ApplicationDataType '{app.name}' uses implementation type '{impl.name}' of kind '{impl.kind or 'scalar'}'; constraints are only allowed for scalar numeric implementation types in v0.",
                         code="CORE-011-CONSTRAINT-NON-SCALAR",
                     )
                 )

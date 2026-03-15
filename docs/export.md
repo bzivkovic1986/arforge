@@ -20,6 +20,7 @@ Monolithic mode:
 
 - `BaseTypes` package
 - `ImplementationDataTypes` package (including struct members)
+- array implementation data types with element type references and fixed `ARRAY-SIZE`
 - `ApplicationDataTypes` package
 - `Units` package
 - `CompuMethods` package (`linear` and `textTable`)

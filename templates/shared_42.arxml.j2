@@ -46,6 +46,16 @@
                 </IMPLEMENTATION-DATA-TYPE-ELEMENT>
                 {% endfor %}
               </SUB-ELEMENTS>
+              {% elif dt.is_array %}
+              <CATEGORY>ARRAY</CATEGORY>
+              <SUB-ELEMENTS>
+                <IMPLEMENTATION-DATA-TYPE-ELEMENT>
+                  <SHORT-NAME>{{ dt.name }}_Element</SHORT-NAME>
+                  {% set tref = type_trefs.get(dt.elementTypeRef) %}
+                  <TYPE-TREF DEST="{{ tref.dest if tref else 'IMPLEMENTATION-DATA-TYPE' }}">/{{ root_pkg }}/{{ tref.package if tref else 'ImplementationDataTypes' }}/{{ dt.elementTypeRef }}</TYPE-TREF>
+                  <ARRAY-SIZE>{{ dt.length }}</ARRAY-SIZE>
+                </IMPLEMENTATION-DATA-TYPE-ELEMENT>
+              </SUB-ELEMENTS>
               {% else %}
               <CATEGORY>TYPE_REFERENCE</CATEGORY>
               {% endif %}
