@@ -1,8 +1,0 @@
-connections:
-  - from: "SpeedSensor.Pp_VehicleSpeed"
-    to: "SpeedConsumer.Rp_VehicleSpeed"
-    dataElement: "VehicleSpeed"
-
-  - from: "SpeedSensor.Pp_Diag"
-    to: "SpeedConsumer.Rp_Diag"
-    operation: "ReadDTC"

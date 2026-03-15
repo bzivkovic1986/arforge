@@ -44,6 +44,11 @@ def test_init_default_creates_valid_project(tmp_path: Path) -> None:
         assert (project_dir / rel).is_file(), f"Missing scaffold file: {rel}"
 
     project = load_and_validate_aggregator(project_dir / "autosar.project.yaml")
+    system_yaml = (project_dir / "system.yaml").read_text(encoding="utf-8")
+    speed_consumer_yaml = (project_dir / "swcs" / "SpeedConsumer.yaml").read_text(encoding="utf-8")
+    assert 'dataElement: "VehicleSpeed"' not in system_yaml
+    assert 'dataReceiveEvents:' in speed_consumer_yaml
+
     out_file = tmp_path / "all.arxml"
     written = write_outputs(project, template_dir=TEMPLATE_DIR, out=out_file, split_by_swc=False)
     assert written == [out_file]
@@ -71,6 +76,11 @@ def test_init_no_example_creates_placeholder_model(tmp_path: Path) -> None:
         assert (project_dir / rel).is_file(), f"Missing scaffold file: {rel}"
 
     project = load_and_validate_aggregator(project_dir / "autosar.project.yaml")
+    system_yaml = (project_dir / "system.yaml").read_text(encoding="utf-8")
+    consumer_yaml = (project_dir / "swcs" / "consumer.yaml").read_text(encoding="utf-8")
+    assert 'dataElement: "Value"' not in system_yaml
+    assert 'dataReceiveEvents:' in consumer_yaml
+
     out_dir = tmp_path / "out"
     written = write_outputs(project, template_dir=TEMPLATE_DIR, out=out_dir, split_by_swc=True)
     assert len(written) == 4

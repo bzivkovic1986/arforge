@@ -120,6 +120,71 @@ def test_split_export_system_contains_multiple_component_prototypes(tmp_path: Pa
     assert "<CONTEXT-COMPONENT-REF DEST=\"SW-COMPONENT-PROTOTYPE\">/DEMO/System/Composition_DemoSystem/SpeedSensor_1</CONTEXT-COMPONENT-REF>" in system_xml
 
 
+def test_legacy_sr_connector_dataelement_emits_warning_and_exports_single_connector(tmp_path: Path) -> None:
+    project_file = tmp_path / "legacy_sr.project.yaml"
+    system_file = tmp_path / "system_legacy_sr.yaml"
+    out_dir = tmp_path / "out"
+    as_yaml_path = lambda path: path.resolve().as_posix()
+
+    project_file.write_text(
+        f"""autosar:
+  version: "4.2"
+  rootPackage: "DEMO"
+
+inputs:
+  baseTypes: "{as_yaml_path(REPO_ROOT / 'examples' / 'platform' / 'base_types.yaml')}"
+  implementationDataTypes: "{as_yaml_path(REPO_ROOT / 'examples' / 'types' / 'implementation_types.yaml')}"
+  applicationDataTypes: "{as_yaml_path(REPO_ROOT / 'examples' / 'types' / 'application_types.yaml')}"
+  units:
+    - "{as_yaml_path(REPO_ROOT / 'examples' / 'units' / 'speed_units.yaml')}"
+  compuMethods:
+    - "{as_yaml_path(REPO_ROOT / 'examples' / 'compu_methods' / 'speed_linear.yaml')}"
+  interfaces:
+    - "{as_yaml_path(REPO_ROOT / 'examples' / 'interfaces' / 'If_VehicleSpeed.yaml')}"
+    - "{as_yaml_path(REPO_ROOT / 'examples' / 'interfaces' / 'If_Diagnostics.yaml')}"
+  swcs:
+    - "{as_yaml_path(REPO_ROOT / 'examples' / 'swcs' / 'SpeedSensor.yaml')}"
+    - "{as_yaml_path(REPO_ROOT / 'examples' / 'swcs' / 'SpeedConsumer.yaml')}"
+  system: "{as_yaml_path(system_file)}"
+""",
+        encoding="utf-8",
+    )
+    system_file.write_text(
+        """system:
+  name: "LegacySrSystem"
+  composition:
+    name: "Composition_LegacySrSystem"
+    components:
+      - name: "SpeedSensor_1"
+        typeRef: "SpeedSensor"
+      - name: "SpeedConsumer_1"
+        typeRef: "SpeedConsumer"
+    connectors:
+      - from: "SpeedSensor_1.Pp_VehicleSpeed"
+        to: "SpeedConsumer_1.Rp_VehicleSpeed"
+        dataElement: "VehicleSpeed"
+      - from: "SpeedSensor_1.Pp_VehicleSpeed"
+        to: "SpeedConsumer_1.Rp_VehicleSpeed"
+        dataElement: "LegacyAlias"
+      - from: "SpeedSensor_1.Pp_Diag"
+        to: "SpeedConsumer_1.Rp_Diag"
+        operation: "ReadDTC"
+""",
+        encoding="utf-8",
+    )
+
+    project = load_aggregator(project_file)
+    report = build_semantic_report(project, ruleset="core")
+    warning_codes = {finding.code for finding in report.findings if finding.severity == "warning"}
+    assert "CORE-040-SR-DATAELEMENT-DEPRECATED" in warning_codes
+    error_codes = {finding.code for finding in report.error_findings()}
+    assert "CORE-040-SR-DUPLICATE-PORT-PAIR" in error_codes
+
+    _ = write_outputs(project, template_dir=REPO_ROOT / "templates", out=out_dir, split_by_swc=True)
+    system_xml = (out_dir / "system.arxml").read_text(encoding="utf-8")
+    assert system_xml.count("<ASSEMBLY-SW-CONNECTOR>") == 2
+
+
 def test_split_export_includes_server_raised_error_refs(tmp_path: Path) -> None:
     project = load_and_validate_aggregator(VALID_PROJECT)
     template_dir = REPO_ROOT / "templates"
@@ -230,6 +295,9 @@ def test_split_export_operation_invoked_events_reference_operations(tmp_path: Pa
         ("project_data_receive_event_unknown_dataelement.yaml", "CORE-027-DRE-UNKNOWN-DATAELEMENT"),
         ("project_data_receive_event_on_provides_port.yaml", "CORE-027-DRE-DIRECTION"),
         ("project_data_receive_event_on_client_server_port.yaml", "CORE-027-DRE-INTERFACE-TYPE"),
+        ("project_sr_duplicate_port_pair.yaml", "CORE-040-SR-DUPLICATE-PORT-PAIR"),
+        ("project_sr_read_unconnected.yaml", "CORE-041-SR-READ-UNCONNECTED"),
+        ("project_sr_write_unconnected.yaml", "CORE-041-SR-WRITE-UNCONNECTED"),
     ],
 )
 def test_data_receive_event_invalid_fixtures_emit_expected_codes(fixture_name: str, expected_code: str) -> None:

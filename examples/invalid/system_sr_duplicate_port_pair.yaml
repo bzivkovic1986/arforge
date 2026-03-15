@@ -1,12 +1,14 @@
 system:
-  name: "BadSystem_SrMissingDataElement"
+  name: "BadSystem_SrDuplicatePortPair"
   composition:
-    name: "Composition_BadSystem_SrMissingDataElement"
+    name: "Composition_BadSystem_SrDuplicatePortPair"
     components:
       - name: "SpeedSensor_1"
         typeRef: "SpeedSensor"
       - name: "SpeedConsumer_1"
         typeRef: "SpeedConsumer"
     connectors:
+      - from: "SpeedSensor_1.Pp_VehicleSpeed"
+        to: "SpeedConsumer_1.Rp_VehicleSpeed"
       - from: "SpeedSensor_1.Pp_VehicleSpeed"
         to: "SpeedConsumer_1.Rp_VehicleSpeed"

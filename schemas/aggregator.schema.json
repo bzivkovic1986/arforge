@@ -51,17 +51,8 @@
           ]
         },
         {
-          "anyOf": [
-            {
-              "required": [
-                "system"
-              ]
-            },
-            {
-              "required": [
-                "connections"
-              ]
-            }
+          "required": [
+            "system"
           ]
         }
       ],
@@ -113,10 +104,6 @@
           }
         },
         "system": {
-          "type": "string",
-          "minLength": 1
-        },
-        "connections": {
           "type": "string",
           "minLength": 1
         }

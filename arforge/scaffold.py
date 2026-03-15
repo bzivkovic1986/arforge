@@ -137,6 +137,10 @@ def swc_speed_consumer_yaml() -> str:
       calls:
         - port: "Rp_Diag"
           operation: "ReadDTC"
+    - name: "Runnable_OnVehicleSpeed"
+      dataReceiveEvents:
+        - port: "Rp_VehicleSpeed"
+          dataElement: "VehicleSpeed"
   ports:
     - name: "Rp_VehicleSpeed"
       direction: "requires"
@@ -163,7 +167,6 @@ def system_yaml(system_name: str) -> str:
     connectors:
       - from: "SpeedSensor_1.Pp_VehicleSpeed"
         to: "SpeedConsumer_1.Rp_VehicleSpeed"
-        dataElement: "VehicleSpeed"
       - from: "SpeedSensor_1.Pp_Diag"
         to: "SpeedConsumer_1.Rp_Diag"
         operation: "ReadDTC"
@@ -205,6 +208,10 @@ def placeholder_consumer_yaml() -> str:
       reads:
         - port: "Rp_Data"
           dataElement: "Value"
+    - name: "Runnable_OnData"
+      dataReceiveEvents:
+        - port: "Rp_Data"
+          dataElement: "Value"
   ports:
     - name: "Rp_Data"
       direction: "requires"
@@ -228,7 +235,6 @@ def placeholder_system_yaml(system_name: str) -> str:
     connectors:
       - from: "Producer_1.Pp_Data"
         to: "Consumer_1.Rp_Data"
-        dataElement: "Value"
 """
 
 

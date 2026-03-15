@@ -1,0 +1,12 @@
+swc:
+  name: "DiagClientOnly"
+  runnables:
+    - name: "Runnable_DiagClient"
+      timingEventMs: 10
+      calls:
+        - port: "Rp_Diag"
+          operation: "ReadDTC"
+  ports:
+    - name: "Rp_Diag"
+      direction: "requires"
+      interfaceRef: "If_Diagnostics"

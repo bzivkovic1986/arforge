@@ -181,7 +181,6 @@ def export(
                 for p in load_report.swc_patterns
             ],
             system_file=load_report.system_file,
-            connections_file=load_report.connections_file,
         )
         export_report = write_outputs_with_report(
             parsed,
@@ -216,8 +215,6 @@ def export(
             _print_pattern_summary("swcs", export_report.input_summary.swc_patterns)
             if export_report.input_summary.system_file:
                 console.print(f"system: {export_report.input_summary.system_file}")
-            if export_report.input_summary.connections_file:
-                console.print(f"connections: {export_report.input_summary.connections_file}")
 
         if export_report.layout == "split-by-swc":
             console.print("layout=split-by-swc (shared + per-SWC + system)")

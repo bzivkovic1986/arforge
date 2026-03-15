@@ -1,0 +1,13 @@
+system:
+  name: "BadSystem_SrWriteUnconnected"
+  composition:
+    name: "Composition_BadSystem_SrWriteUnconnected"
+    components:
+      - name: "SpeedSensor_1"
+        typeRef: "SpeedSensor"
+      - name: "DiagClient_1"
+        typeRef: "DiagClientOnly"
+    connectors:
+      - from: "SpeedSensor_1.Pp_Diag"
+        to: "DiagClient_1.Rp_Diag"
+        operation: "ReadDTC"

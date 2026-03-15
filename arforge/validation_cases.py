@@ -1262,9 +1262,20 @@ class SystemInstanceTypeCase(ValidationCase):
         return findings
 
 
+def _connection_sort_key(conn) -> tuple[str, str, str, str, str, str]:
+    return (
+        conn.from_instance,
+        conn.from_port,
+        conn.to_instance,
+        conn.to_port,
+        conn.dataElement or "",
+        conn.operation or "",
+    )
+
+
 class ConnectionSemanticCase(ValidationCase):
     case_id = "CORE-040"
-    description = "Validate system connections and selector compatibility."
+    description = "Validate system connections and connector-level SR/CS semantics."
     tags = ("core", "system", "connections")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -1274,17 +1285,8 @@ class ConnectionSemanticCase(ValidationCase):
 
     def run(self, ctx: ValidationContext) -> List[Finding]:
         findings: List[Finding] = []
-        connectors = sorted(
-            ctx.project.system.composition.connectors,
-            key=lambda c: (
-                c.from_instance,
-                c.from_port,
-                c.to_instance,
-                c.to_port,
-                c.dataElement or "",
-                c.operation or "",
-            ),
-        )
+        seen_sr_port_pairs: set[tuple[str, str, str, str]] = set()
+        connectors = sorted(ctx.project.system.composition.connectors, key=_connection_sort_key)
         for conn in connectors:
             from_inst = ctx.instance_by_name.get(conn.from_instance)
             if from_inst is None:
@@ -1379,19 +1381,26 @@ class ConnectionSemanticCase(ValidationCase):
                             code="CORE-040-SR-INVALID-OPERATION",
                         )
                     )
-                data_elements = ctx.sr_data_elements_by_iface.get(itf.name, set())
-                if not conn.dataElement:
+                if conn.port_pair_key in seen_sr_port_pairs:
                     findings.append(
                         self.finding(
-                            "SR connector must specify dataElement (required by arforge policy).",
-                            code="CORE-040-SR-MISSING-DATAELEMENT",
+                            f"Duplicate senderReceiver connector '{conn.from_instance}.{conn.from_port}' -> "
+                            f"'{conn.to_instance}.{conn.to_port}' is not allowed; SR connectors are unique per port pair.",
+                            code="CORE-040-SR-DUPLICATE-PORT-PAIR",
                         )
                     )
-                if conn.dataElement and conn.dataElement not in data_elements:
+                else:
+                    seen_sr_port_pairs.add(conn.port_pair_key)
+                if conn.dataElement:
                     findings.append(
-                        self.finding(
-                            f"Connection dataElement '{conn.dataElement}' not found in interface '{itf.name}'.",
-                            code="CORE-040-SR-UNKNOWN-DATAELEMENT",
+                        Finding(
+                            code="CORE-040-SR-DATAELEMENT-DEPRECATED",
+                            severity="warning",
+                            message=(
+                                f"SenderReceiver connector {conn.from_instance}.{conn.from_port} -> "
+                                f"{conn.to_instance}.{conn.to_port} sets dataElement '{conn.dataElement}', "
+                                "but SR connectors are port-level; move data-element usage to runnable reads/writes/dataReceiveEvents."
+                            ),
                         )
                     )
             else:
@@ -1421,6 +1430,168 @@ class ConnectionSemanticCase(ValidationCase):
         return findings
 
 
+class SrPortConnectivityCase(ValidationCase):
+    case_id = "CORE-041"
+    description = "Validate senderReceiver connectivity against system instances and runnable behavior."
+    tags = ("core", "system", "connections", "runnables", "sender-receiver")
+    # Chosen as error for now so example fixtures remain deterministic; make configurable later.
+    default_severity = "error"
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.system.composition.components:
+            return False, "no system component prototypes defined"
+        has_sr_ports = any(
+            port.interfaceType == "senderReceiver"
+            for swc in ctx.project.swcs
+            for port in swc.ports
+        )
+        if not has_sr_ports:
+            return False, "no senderReceiver ports defined"
+        return True, None
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        findings: List[Finding] = []
+
+        reads_by_swc_port: dict[tuple[str, str], list[tuple[str, str]]] = {}
+        writes_by_swc_port: dict[tuple[str, str], list[tuple[str, str]]] = {}
+        dres_by_swc_port: dict[tuple[str, str], list[tuple[str, str]]] = {}
+        for swc in sorted(ctx.project.swcs, key=lambda s: s.name):
+            for runnable in sorted(swc.runnables, key=lambda r: r.name):
+                for read in sorted(runnable.reads, key=lambda a: (a.port, a.dataElement)):
+                    reads_by_swc_port.setdefault((swc.name, read.port), []).append((runnable.name, read.dataElement))
+                for write in sorted(runnable.writes, key=lambda a: (a.port, a.dataElement)):
+                    writes_by_swc_port.setdefault((swc.name, write.port), []).append((runnable.name, write.dataElement))
+                for dre in sorted(runnable.dataReceiveEvents, key=lambda e: (e.port, e.dataElement)):
+                    dres_by_swc_port.setdefault((swc.name, dre.port), []).append((runnable.name, dre.dataElement))
+
+        for instance in sorted(ctx.project.system.composition.components, key=lambda c: c.name):
+            swc = ctx.swc_by_name.get(instance.typeRef)
+            if swc is None:
+                continue
+
+            for port in sorted(swc.ports, key=lambda p: p.name):
+                if port.interfaceType != "senderReceiver":
+                    continue
+
+                port_ref = f"{instance.name}.{port.name}"
+                outgoing = ctx.outgoing_connectors_by_endpoint.get((instance.name, port.name), [])
+                incoming = ctx.incoming_connectors_by_endpoint.get((instance.name, port.name), [])
+
+                if port.direction == "provides" and not outgoing:
+                    findings.append(
+                        self.finding(
+                            f"SenderReceiver provides port '{port_ref}' has no outgoing connector.",
+                            code="CORE-041-SR-PROVIDES-NO-OUTGOING",
+                        )
+                    )
+                if port.direction == "requires" and not incoming:
+                    findings.append(
+                        self.finding(
+                            f"SenderReceiver requires port '{port_ref}' has no incoming connector.",
+                            code="CORE-041-SR-REQUIRES-NO-INCOMING",
+                        )
+                    )
+
+                for runnable_name, data_element in reads_by_swc_port.get((swc.name, port.name), []):
+                    if not incoming:
+                        findings.append(
+                            self.finding(
+                                f"SWC instance '{instance.name}' runnable '{runnable_name}' reads dataElement '{data_element}' "
+                                f"from unconnected senderReceiver requires port '{port.name}'.",
+                                code="CORE-041-SR-READ-UNCONNECTED",
+                            )
+                        )
+
+                for runnable_name, data_element in dres_by_swc_port.get((swc.name, port.name), []):
+                    if not incoming:
+                        findings.append(
+                            self.finding(
+                                f"SWC instance '{instance.name}' runnable '{runnable_name}' dataReceiveEvents waits on dataElement "
+                                f"'{data_element}' from unconnected senderReceiver requires port '{port.name}'.",
+                                code="CORE-041-SR-DRE-UNCONNECTED",
+                            )
+                        )
+
+                for runnable_name, data_element in writes_by_swc_port.get((swc.name, port.name), []):
+                    if not outgoing:
+                        findings.append(
+                            self.finding(
+                                f"SWC instance '{instance.name}' runnable '{runnable_name}' writes dataElement '{data_element}' "
+                                f"to unconnected senderReceiver provides port '{port.name}'.",
+                                code="CORE-041-SR-WRITE-UNCONNECTED",
+                            )
+                        )
+
+        return findings
+
+
+class SrPortUsageCase(ValidationCase):
+    case_id = "CORE-042"
+    description = "Validate that connected senderReceiver ports are exercised by runnable behavior."
+    tags = ("core", "system", "connections", "runnables", "sender-receiver")
+    # Chosen as error for now so example fixtures remain deterministic; make configurable later.
+    default_severity = "error"
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.system.composition.connectors:
+            return False, "no system connectors defined"
+        return True, None
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        findings: List[Finding] = []
+        read_ports = {
+            (swc.name, access.port)
+            for swc in ctx.project.swcs
+            for runnable in swc.runnables
+            for access in runnable.reads
+        }
+        write_ports = {
+            (swc.name, access.port)
+            for swc in ctx.project.swcs
+            for runnable in swc.runnables
+            for access in runnable.writes
+        }
+        dre_ports = {
+            (swc.name, event.port)
+            for swc in ctx.project.swcs
+            for runnable in swc.runnables
+            for event in runnable.dataReceiveEvents
+        }
+
+        for instance in sorted(ctx.project.system.composition.components, key=lambda c: c.name):
+            swc = ctx.swc_by_name.get(instance.typeRef)
+            if swc is None:
+                continue
+
+            for port in sorted(swc.ports, key=lambda p: p.name):
+                if port.interfaceType != "senderReceiver":
+                    continue
+
+                is_connected = bool(
+                    ctx.outgoing_connectors_by_endpoint.get((instance.name, port.name), [])
+                    or ctx.incoming_connectors_by_endpoint.get((instance.name, port.name), [])
+                )
+                if not is_connected:
+                    continue
+
+                if port.direction == "provides" and (swc.name, port.name) not in write_ports:
+                    findings.append(
+                        self.finding(
+                            f"Connected senderReceiver provides port '{instance.name}.{port.name}' is never used by any runnable write.",
+                            code="CORE-042-SR-CONNECTED-PROVIDES-UNUSED",
+                        )
+                    )
+                if port.direction == "requires" and (swc.name, port.name) not in read_ports and (swc.name, port.name) not in dre_ports:
+                    findings.append(
+                        self.finding(
+                            f"Connected senderReceiver requires port '{instance.name}.{port.name}' is never used by any runnable read or dataReceiveEvent.",
+                            code="CORE-042-SR-CONNECTED-REQUIRES-UNUSED",
+                        )
+                    )
+
+        return findings
+
+
 def core_validation_cases() -> List[ValidationCase]:
     return [
         DuplicateNameCase(),
@@ -1437,4 +1608,6 @@ def core_validation_cases() -> List[ValidationCase]:
         DataReceiveEventCase(),
         SystemInstanceTypeCase(),
         ConnectionSemanticCase(),
+        SrPortConnectivityCase(),
+        SrPortUsageCase(),
     ]

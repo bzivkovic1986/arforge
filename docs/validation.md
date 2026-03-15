@@ -11,7 +11,7 @@ Implemented in `arforge/validate.py` with `jsonschema`.
 
 Schemas are in `schemas/`:
 
-- aggregator, interfaces, swcs, system, connections
+- aggregator, interfaces, swcs, system
 - base/implementation/application types
 - units and compu methods
 

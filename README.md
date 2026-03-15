@@ -30,6 +30,8 @@ Export (split):
 python -m arforge.cli export examples/autosar.project.yaml --out build/out --split-by-swc
 ```
 
+Projects use `system.yaml` for composition instances and connectors.
+
 Run tests:
 
 ```bash
