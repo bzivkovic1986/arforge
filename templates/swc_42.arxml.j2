@@ -182,9 +182,14 @@
                     </TIMING-EVENT>
                     {% endif %}
                     {% for oie in r.operationInvokedEvents %}
+                    {% set oie_port = (swc.ports | selectattr("name", "equalto", oie.port) | list | first) %}
                     <OPERATION-INVOKED-EVENT>
                       <SHORT-NAME>OIE_{{ r.name }}_{{ oie.port }}_{{ oie.operation }}</SHORT-NAME>
                       <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/{{ root_pkg }}/Components/{{ swc.name }}/IB_{{ swc.name }}/{{ r.name }}</START-ON-EVENT-REF>
+                      <OPERATION-IREF>
+                        <CONTEXT-P-PORT-REF DEST="P-PORT-PROTOTYPE">/{{ root_pkg }}/Components/{{ swc.name }}/{{ oie.port }}</CONTEXT-P-PORT-REF>
+                        <TARGET-PROVIDED-OPERATION-REF DEST="CLIENT-SERVER-OPERATION">/{{ root_pkg }}/Interfaces/{{ oie_port.interfaceRef if oie_port else '' }}/{{ oie.operation }}</TARGET-PROVIDED-OPERATION-REF>
+                      </OPERATION-IREF>
                     </OPERATION-INVOKED-EVENT>
                     {% endfor %}
                     {% for dre in r.dataReceiveEvents %}

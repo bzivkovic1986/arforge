@@ -137,6 +137,37 @@ def test_split_export_includes_server_raised_error_refs(tmp_path: Path) -> None:
     assert "<ERROR-CODE>1</ERROR-CODE>" in shared_xml
 
 
+def test_split_export_includes_cs_operation_arguments_return_and_errors(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    shared_xml = (out_dir / "shared.arxml").read_text(encoding="utf-8")
+
+    read_dtc_segment = shared_xml.split("<SHORT-NAME>ReadDTC</SHORT-NAME>", 1)[1].split("</CLIENT-SERVER-OPERATION>", 1)[0]
+    assert "<ARGUMENTS>" in read_dtc_segment
+    assert "<SHORT-NAME>DtcId</SHORT-NAME>" in read_dtc_segment
+    assert "<TYPE-TREF DEST=\"IMPLEMENTATION-DATA-TYPE\">/DEMO/ImplementationDataTypes/UInt16</TYPE-TREF>" in read_dtc_segment
+    assert "<DIRECTION>IN</DIRECTION>" in read_dtc_segment
+    assert "<SHORT-NAME>DtcState</SHORT-NAME>" in read_dtc_segment
+    assert "<TYPE-TREF DEST=\"IMPLEMENTATION-DATA-TYPE\">/DEMO/ImplementationDataTypes/UInt8</TYPE-TREF>" in read_dtc_segment
+    assert "<DIRECTION>OUT</DIRECTION>" in read_dtc_segment
+    assert "<SHORT-NAME>OccurrenceCounter</SHORT-NAME>" in read_dtc_segment
+    assert "<DIRECTION>INOUT</DIRECTION>" in read_dtc_segment
+    assert "<SHORT-NAME>ReturnValue</SHORT-NAME>" in read_dtc_segment
+    assert read_dtc_segment.count("<TYPE-TREF DEST=\"IMPLEMENTATION-DATA-TYPE\">/DEMO/ImplementationDataTypes/UInt8</TYPE-TREF>") == 2
+    assert "<POSSIBLE-ERROR-REF DEST=\"APPLICATION-ERROR\">/DEMO/Interfaces/If_Diagnostics/DTC_NOT_FOUND</POSSIBLE-ERROR-REF>" in read_dtc_segment
+    assert "<POSSIBLE-ERROR-REF DEST=\"APPLICATION-ERROR\">/DEMO/Interfaces/If_Diagnostics/MEMORY_ERROR</POSSIBLE-ERROR-REF>" in read_dtc_segment
+
+    interface_segment = shared_xml.split("<SHORT-NAME>If_Diagnostics</SHORT-NAME>", 1)[1].split("</CLIENT-SERVER-INTERFACE>", 1)[0]
+    assert "<APPLICATION-ERROR>" in interface_segment
+    assert "<SHORT-NAME>DTC_NOT_FOUND</SHORT-NAME>" in interface_segment
+    assert "<ERROR-CODE>1</ERROR-CODE>" in interface_segment
+    assert "<SHORT-NAME>MEMORY_ERROR</SHORT-NAME>" in interface_segment
+    assert "<ERROR-CODE>2</ERROR-CODE>" in interface_segment
+
+
 def test_split_export_includes_init_event(tmp_path: Path) -> None:
     project = load_and_validate_aggregator(VALID_PROJECT)
     template_dir = REPO_ROOT / "templates"
@@ -174,7 +205,22 @@ def test_split_export_includes_void_return_cs_operation_without_return_typeref(t
 
     assert "<SHORT-NAME>LogEvent</SHORT-NAME>" in shared_xml
     log_event_segment = shared_xml.split("<SHORT-NAME>LogEvent</SHORT-NAME>", 1)[1].split("</CLIENT-SERVER-OPERATION>", 1)[0]
-    assert "<TYPE-TREF" not in log_event_segment
+    assert "<SHORT-NAME>EventId</SHORT-NAME>" in log_event_segment
+    assert "<TYPE-TREF DEST=\"IMPLEMENTATION-DATA-TYPE\">/DEMO/ImplementationDataTypes/UInt16</TYPE-TREF>" in log_event_segment
+    assert "<SHORT-NAME>ReturnValue</SHORT-NAME>" not in log_event_segment
+
+
+def test_split_export_operation_invoked_events_reference_operations(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    speed_sensor_xml = (out_dir / "SpeedSensor.arxml").read_text(encoding="utf-8")
+
+    oie_segment = speed_sensor_xml.split("<SHORT-NAME>OIE_Runnable_DiagServer_Pp_Diag_ReadDTC</SHORT-NAME>", 1)[1].split("</OPERATION-INVOKED-EVENT>", 1)[0]
+    assert "<CONTEXT-P-PORT-REF DEST=\"P-PORT-PROTOTYPE\">/DEMO/Components/SpeedSensor/Pp_Diag</CONTEXT-P-PORT-REF>" in oie_segment
+    assert "<TARGET-PROVIDED-OPERATION-REF DEST=\"CLIENT-SERVER-OPERATION\">/DEMO/Interfaces/If_Diagnostics/ReadDTC</TARGET-PROVIDED-OPERATION-REF>" in oie_segment
 
 
 @pytest.mark.parametrize(
