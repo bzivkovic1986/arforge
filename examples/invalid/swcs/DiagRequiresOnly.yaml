@@ -1,0 +1,9 @@
+swc:
+  name: "DiagRequiresOnly"
+  runnables:
+    - name: "Runnable_Idle"
+      timingEventMs: 10
+  ports:
+    - name: "Rp_Diag"
+      direction: "requires"
+      interfaceRef: "If_Diagnostics"

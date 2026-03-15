@@ -193,6 +193,10 @@ class Connection:
             self.operation or "",
         )
 
+    @property
+    def identity_key(self) -> tuple[str, str, str, str]:
+        return self.port_pair_key
+
 @dataclass(frozen=True)
 class ComponentPrototype:
     name: str

@@ -1,0 +1,12 @@
+system:
+  name: "BadSystem_CsWrongDirections"
+  composition:
+    name: "Composition_BadSystem_CsWrongDirections"
+    components:
+      - name: "DiagClient_1"
+        typeRef: "DiagRequiresOnly"
+      - name: "DiagClient_2"
+        typeRef: "DiagRequiresOnly"
+    connectors:
+      - from: "DiagClient_1.Rp_Diag"
+        to: "DiagClient_2.Rp_Diag"

@@ -1,0 +1,14 @@
+swc:
+  name: "DiagClientAlt"
+  runnables:
+    - name: "Runnable_DiagClientAlt"
+      timingEventMs: 10
+      calls:
+        - port: "Rp_Diag"
+          operation: "ReadDTC"
+  ports:
+    - name: "Rp_Diag"
+      direction: "requires"
+      interfaceRef: "If_Diagnostics_Alt"
+      comSpec:
+        callMode: "synchronous"

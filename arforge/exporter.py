@@ -127,12 +127,16 @@ def _build_connections(project: Project) -> List[Dict[str, object]]:
         return from_port.interfaceType == "senderReceiver"
 
     unique_connectors = []
-    seen_sr_port_pairs: set[tuple[str, str, str, str]] = set()
+    seen_port_pairs: set[tuple[str, str, str, str]] = set()
     for connector in sorted(project.system.composition.connectors, key=_sort_key):
         if _is_sender_receiver(connector):
-            if connector.port_pair_key in seen_sr_port_pairs:
+            if connector.port_pair_key in seen_port_pairs:
                 continue
-            seen_sr_port_pairs.add(connector.port_pair_key)
+            seen_port_pairs.add(connector.port_pair_key)
+        else:
+            if connector.identity_key in seen_port_pairs:
+                continue
+            seen_port_pairs.add(connector.identity_key)
         unique_connectors.append(connector)
 
     return [

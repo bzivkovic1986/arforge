@@ -75,6 +75,7 @@ def validate(
         parsed = load_aggregator(project)
         report = build_semantic_report(parsed, ruleset="core")
         error_messages = [format_finding(f) for f in report.error_findings()]
+        non_error_findings = [f for f in report.findings if f.severity != "error"]
 
         console.print(f"ruleset={report.ruleset} cases={len(report.case_results)}")
         for case in report.case_results:
@@ -95,6 +96,10 @@ def validate(
             for msg in error_messages:
                 console.print(f" - {msg}")
             raise typer.Exit(code=2)
+
+        if non_error_findings:
+            for finding in non_error_findings:
+                console.print(f" - [{finding.severity}] {format_finding(finding)}")
 
         console.print(Panel.fit(f"[green]OK[/green] Valid: {project}", title="validate"))
     except ValidationError as e:
