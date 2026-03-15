@@ -1,6 +1,24 @@
 implementationDataTypes:
+  - name: "UInt8"
+    baseTypeRef: "uint8"
   - name: "UInt16"
     baseTypeRef: "uint16"
+  - name: "Impl_WheelSpeeds"
+    kind: "array"
+    elementTypeRef: "UInt16"
+    length: 4
+  - name: "Impl_Inner"
+    kind: "struct"
+    fields:
+      - name: "value"
+        typeRef: "UInt16"
+  - name: "Impl_Outer"
+    kind: "struct"
+    fields:
+      - name: "inner"
+        typeRef: "Impl_Inner"
+      - name: "quality"
+        typeRef: "UInt16"
   - name: "SpeedPair_T"
     kind: "struct"
     fields:

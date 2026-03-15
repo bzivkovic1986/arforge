@@ -6,5 +6,7 @@ interface:
       typeRef: "App_VehicleSpeed"
     - name: "WheelSpeeds"
       typeRef: "Impl_WheelSpeeds"
+    - name: "VehicleSnapshot"
+      typeRef: "Impl_Outer"
     - name: "WheelSpeed"
       typeRef: "SpeedPair_T"

@@ -57,6 +57,8 @@ Struct field policy:
 
 - field `typeRef` may target base or implementation types
 - field `typeRef` must not target application types
+- field names must be unique within the struct
+- recursive struct cycles are rejected, including nested references through array element types
 
 Array (v0):
 

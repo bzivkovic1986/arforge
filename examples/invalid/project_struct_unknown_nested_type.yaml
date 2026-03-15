@@ -4,7 +4,7 @@ autosar:
 
 inputs:
   baseTypes: "../platform/base_types.yaml"
-  implementationDataTypes: "types/implementation_types_struct_cycle.yaml"
+  implementationDataTypes: "types/implementation_types_struct_unknown_nested_type.yaml"
   applicationDataTypes: "../types/application_types.yaml"
   units:
     - "../units/*.yaml"

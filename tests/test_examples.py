@@ -294,6 +294,31 @@ def test_split_export_includes_array_implementation_datatype(tmp_path: Path) -> 
     assert "<TYPE-TREF DEST=\"IMPLEMENTATION-DATA-TYPE\">/DEMO/ImplementationDataTypes/Impl_WheelSpeeds</TYPE-TREF>" in iface_segment
 
 
+def test_split_export_includes_nested_struct_implementation_datatypes(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    shared_xml = (out_dir / "shared.arxml").read_text(encoding="utf-8")
+
+    inner_segment = shared_xml.split("<SHORT-NAME>Impl_Inner</SHORT-NAME>", 1)[1].split("</IMPLEMENTATION-DATA-TYPE>", 1)[0]
+    assert "<CATEGORY>STRUCTURE</CATEGORY>" in inner_segment
+    assert "<SHORT-NAME>value</SHORT-NAME>" in inner_segment
+    assert "<IMPLEMENTATION-DATA-TYPE-REF DEST=\"IMPLEMENTATION-DATA-TYPE\">/DEMO/ImplementationDataTypes/UInt16</IMPLEMENTATION-DATA-TYPE-REF>" in inner_segment
+
+    outer_segment = shared_xml.split("<SHORT-NAME>Impl_Outer</SHORT-NAME>", 1)[1].split("</IMPLEMENTATION-DATA-TYPE>", 1)[0]
+    assert "<SHORT-NAME>inner</SHORT-NAME>" in outer_segment
+    assert "<IMPLEMENTATION-DATA-TYPE-REF DEST=\"IMPLEMENTATION-DATA-TYPE\">/DEMO/ImplementationDataTypes/Impl_Inner</IMPLEMENTATION-DATA-TYPE-REF>" in outer_segment
+    assert "<SHORT-NAME>quality</SHORT-NAME>" in outer_segment
+    assert "<IMPLEMENTATION-DATA-TYPE-REF DEST=\"IMPLEMENTATION-DATA-TYPE\">/DEMO/ImplementationDataTypes/UInt16</IMPLEMENTATION-DATA-TYPE-REF>" in outer_segment
+    assert outer_segment.index("<SHORT-NAME>inner</SHORT-NAME>") < outer_segment.index("<SHORT-NAME>quality</SHORT-NAME>")
+
+    iface_segment = shared_xml.split("<SHORT-NAME>If_VehicleSpeed</SHORT-NAME>", 1)[1].split("</SENDER-RECEIVER-INTERFACE>", 1)[0]
+    assert "<SHORT-NAME>VehicleSnapshot</SHORT-NAME>" in iface_segment
+    assert "<TYPE-TREF DEST=\"IMPLEMENTATION-DATA-TYPE\">/DEMO/ImplementationDataTypes/Impl_Outer</TYPE-TREF>" in iface_segment
+
+
 def test_split_export_operation_invoked_events_reference_operations(tmp_path: Path) -> None:
     project = load_and_validate_aggregator(VALID_PROJECT)
     template_dir = REPO_ROOT / "templates"
@@ -321,6 +346,9 @@ def test_split_export_operation_invoked_events_reference_operations(tmp_path: Pa
         ("project_impl_array_application_ref.yaml", "CORE-010-ARRAY-APPLICATION-TYPE"),
         ("project_impl_array_unknown_element_type.yaml", "CORE-010-ARRAY-UNKNOWN-ELEMENT-TYPE"),
         ("project_impl_array_zero_length.yaml", "CORE-010-ARRAY-LENGTH"),
+        ("project_struct_cycle.yaml", "CORE-010-STRUCT-CYCLE"),
+        ("project_struct_duplicate_field_names.yaml", "CORE-010-STRUCT-DUPLICATE-FIELD"),
+        ("project_struct_unknown_nested_type.yaml", "CORE-010-STRUCT-UNKNOWN-TYPE"),
         ("project_sr_duplicate_port_pair.yaml", "CORE-040-SR-DUPLICATE-PORT-PAIR"),
         ("project_sr_read_unconnected.yaml", "CORE-041-SR-READ-UNCONNECTED"),
         ("project_sr_write_unconnected.yaml", "CORE-041-SR-WRITE-UNCONNECTED"),
