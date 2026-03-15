@@ -92,3 +92,5 @@ Includes:
 
 - composition prototypes
 - assembly connectors between `Instance.Port` endpoints
+
+For senderReceiver interfaces, export emits one assembly connector per unique port pair. Data-element usage remains in SWC runnable behavior (`reads`, `writes`, `dataReceiveEvents`) rather than on system connectors.

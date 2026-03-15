@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from time import perf_counter
 from typing import Dict, List, Literal, Optional, Sequence, Tuple
 
-from .model import Port, Project
+from .model import ComponentPrototype, Connection, Port, Project, Swc
 
 Severity = Literal["error", "warning", "info"]
 CaseStatus = Literal["run", "skip"]
@@ -81,6 +81,9 @@ class ValidationContext:
         self.iface_by_name = {i.name: i for i in project.interfaces}
         self.swc_by_name = {s.name: s for s in project.swcs}
         self.instance_by_name = {i.name: i for i in project.system.composition.components}
+        self.instances_by_swc_name: Dict[str, List[ComponentPrototype]] = {}
+        for instance in sorted(project.system.composition.components, key=lambda c: (c.typeRef, c.name)):
+            self.instances_by_swc_name.setdefault(instance.typeRef, []).append(instance)
 
         self.ports_by_swc: Dict[str, Dict[str, Port]] = {
             swc.name: {p.name: p for p in swc.ports} for swc in project.swcs
@@ -95,9 +98,28 @@ class ValidationContext:
             for itf in project.interfaces
             if itf.type == "clientServer"
         }
+        self.connectors_by_port_pair: Dict[tuple[str, str, str, str], List[Connection]] = {}
+        self.outgoing_connectors_by_endpoint: Dict[tuple[str, str], List[Connection]] = {}
+        self.incoming_connectors_by_endpoint: Dict[tuple[str, str], List[Connection]] = {}
+        for connector in project.system.composition.connectors:
+            self.connectors_by_port_pair.setdefault(connector.port_pair_key, []).append(connector)
+            self.outgoing_connectors_by_endpoint.setdefault(
+                (connector.from_instance, connector.from_port),
+                [],
+            ).append(connector)
+            self.incoming_connectors_by_endpoint.setdefault(
+                (connector.to_instance, connector.to_port),
+                [],
+            ).append(connector)
 
     def find_swc_port(self, swc_name: str, port_name: str) -> Optional[Port]:
         return self.ports_by_swc.get(swc_name, {}).get(port_name)
+
+    def find_instance_swc(self, instance_name: str) -> Optional[Swc]:
+        instance = self.instance_by_name.get(instance_name)
+        if instance is None:
+            return None
+        return self.swc_by_name.get(instance.typeRef)
 
 
 class ValidationCase(ABC):

@@ -177,6 +177,22 @@ class Connection:
     dataElement: str | None = None
     operation: str | None = None
 
+    @property
+    def port_pair_key(self) -> tuple[str, str, str, str]:
+        return (
+            self.from_instance,
+            self.from_port,
+            self.to_instance,
+            self.to_port,
+        )
+
+    @property
+    def selector_key(self) -> tuple[str, str]:
+        return (
+            self.dataElement or "",
+            self.operation or "",
+        )
+
 @dataclass(frozen=True)
 class ComponentPrototype:
     name: str
@@ -384,18 +400,7 @@ def from_dict(d: Dict[str, Any]) -> Project:
         composition = Composition(name=composition_data["name"], components=instances, connectors=conns)
         system = System(name=system_data["name"], composition=composition)
     else:
-        # Backward-compatible mode: old connections.yaml where endpoint prefix is SWC type.
-        conns = []
-        for c in d.get("connections", []):
-            fs, fp = _split_endpoint(c["from"])
-            ts, tp = _split_endpoint(c["to"])
-            conns.append(Connection(
-                from_instance=fs, from_port=fp, to_instance=ts, to_port=tp,
-                dataElement=c.get("dataElement"), operation=c.get("operation")
-            ))
-        instances = [ComponentPrototype(name=s.name, typeRef=s.name) for s in swcs]
-        composition = Composition(name="Composition_System1", components=instances, connectors=conns)
-        system = System(name="System1", composition=composition)
+        raise KeyError("Missing required 'system' model.")
 
     return Project(
         autosar_version=autosar["version"],

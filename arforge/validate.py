@@ -34,7 +34,6 @@ class AggregatorLoadReport:
     interface_patterns: List[InputPatternReport]
     swc_patterns: List[InputPatternReport]
     system_file: Optional[Path]
-    connections_file: Optional[Path]
     load_schema_ms: float
     model_build_ms: float
 
@@ -115,7 +114,6 @@ def load_aggregator_with_report(agg_path: Path, schema_path: Optional[Path] = No
         "interfaces": [],
         "swcs": [],
         "system": None,
-        "connections": [],
     }
 
     datatypes_file: Optional[Path] = None
@@ -221,28 +219,14 @@ def load_aggregator_with_report(agg_path: Path, schema_path: Optional[Path] = No
         merged["swcs"].append(data["swc"])
 
     system_file: Optional[Path] = None
-    connections_file: Optional[Path] = None
-    if "system" in inputs and "connections" in inputs:
-        raise ValidationError([f"{agg_path}:inputs: define only one of 'system' or legacy 'connections'."])
-
-    if "system" in inputs:
-        s_path = (base_dir / inputs["system"]).resolve()
-        s_data = _load_yaml(s_path)
-        s_schema = _load_json(_schema_dir() / "system.schema.json")
-        errs = _validate_with_schema(s_data, s_schema, str(s_path))
-        if errs:
-            raise ValidationError(errs)
-        merged["system"] = s_data.get("system")
-        system_file = s_path
-    else:
-        c_path = (base_dir / inputs["connections"]).resolve()
-        c_data = _load_yaml(c_path)
-        c_schema = _load_json(_schema_dir() / "connections.schema.json")
-        errs = _validate_with_schema(c_data, c_schema, str(c_path))
-        if errs:
-            raise ValidationError(errs)
-        merged["connections"] = c_data.get("connections", [])
-        connections_file = c_path
+    s_path = (base_dir / inputs["system"]).resolve()
+    s_data = _load_yaml(s_path)
+    s_schema = _load_json(_schema_dir() / "system.schema.json")
+    errs = _validate_with_schema(s_data, s_schema, str(s_path))
+    if errs:
+        raise ValidationError(errs)
+    merged["system"] = s_data.get("system")
+    system_file = s_path
 
     load_schema_ms = (perf_counter() - load_started) * 1000.0
     model_started = perf_counter()
@@ -261,7 +245,6 @@ def load_aggregator_with_report(agg_path: Path, schema_path: Optional[Path] = No
         interface_patterns=interface_patterns,
         swc_patterns=swc_patterns,
         system_file=system_file,
-        connections_file=connections_file,
         load_schema_ms=load_schema_ms,
         model_build_ms=model_build_ms,
     )

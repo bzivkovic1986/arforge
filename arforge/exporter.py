@@ -32,7 +32,6 @@ class ExportInputSummary:
     interface_patterns: List[InputPatternExpansion]
     swc_patterns: List[InputPatternExpansion]
     system_file: Optional[Path]
-    connections_file: Optional[Path]
 
 
 @dataclass(frozen=True)
@@ -102,17 +101,40 @@ def _model_summary(project: Project) -> ExportModelSummary:
 
 
 def _build_connections(project: Project) -> List[Dict[str, object]]:
-    connectors = sorted(
-        project.system.composition.connectors,
-        key=lambda c: (
-            c.from_instance,
-            c.from_port,
-            c.to_instance,
-            c.to_port,
-            c.dataElement or "",
-            c.operation or "",
-        ),
-    )
+    swc_by_name = {swc.name: swc for swc in project.swcs}
+    instance_by_name = {instance.name: instance for instance in project.system.composition.components}
+
+    def _sort_key(conn):
+        return (
+            conn.from_instance,
+            conn.from_port,
+            conn.to_instance,
+            conn.to_port,
+            conn.dataElement or "",
+            conn.operation or "",
+        )
+
+    def _is_sender_receiver(conn) -> bool:
+        from_instance = instance_by_name.get(conn.from_instance)
+        if from_instance is None:
+            return False
+        from_swc = swc_by_name.get(from_instance.typeRef)
+        if from_swc is None:
+            return False
+        from_port = next((port for port in from_swc.ports if port.name == conn.from_port), None)
+        if from_port is None:
+            return False
+        return from_port.interfaceType == "senderReceiver"
+
+    unique_connectors = []
+    seen_sr_port_pairs: set[tuple[str, str, str, str]] = set()
+    for connector in sorted(project.system.composition.connectors, key=_sort_key):
+        if _is_sender_receiver(connector):
+            if connector.port_pair_key in seen_sr_port_pairs:
+                continue
+            seen_sr_port_pairs.add(connector.port_pair_key)
+        unique_connectors.append(connector)
+
     return [
         {
             "from_instance": c.from_instance,
@@ -123,7 +145,7 @@ def _build_connections(project: Project) -> List[Dict[str, object]]:
             "operation": c.operation,
             "short_name": f"Conn_{idx}",
         }
-        for idx, c in enumerate(connectors, start=1)
+        for idx, c in enumerate(unique_connectors, start=1)
     ]
 
 
