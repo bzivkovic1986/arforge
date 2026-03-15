@@ -1,0 +1,9 @@
+interface:
+  name: "If_Diagnostics_Alt"
+  type: "clientServer"
+  operations:
+    - name: "ReadDTC"
+      arguments:
+        - name: "DtcId"
+          typeRef: "UInt16"
+          direction: "in"

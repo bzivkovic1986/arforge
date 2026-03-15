@@ -1,0 +1,12 @@
+system:
+  name: "BadSystem_CsInterfaceMismatch"
+  composition:
+    name: "Composition_BadSystem_CsInterfaceMismatch"
+    components:
+      - name: "DiagServer_1"
+        typeRef: "DiagServerOnly"
+      - name: "DiagClientAlt_1"
+        typeRef: "DiagClientAlt"
+    connectors:
+      - from: "DiagServer_1.Pp_Diag"
+        to: "DiagClientAlt_1.Rp_Diag"

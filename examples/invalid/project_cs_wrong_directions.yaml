@@ -13,5 +13,5 @@ inputs:
   interfaces:
     - "../interfaces/*.yaml"
   swcs:
-    - "../swcs/*.yaml"
-  system: "system_bad_operation.yaml"
+    - "swcs/DiagRequiresOnly.yaml"
+  system: "system_cs_wrong_directions.yaml"

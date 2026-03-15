@@ -12,6 +12,8 @@ inputs:
     - "../compu_methods/*.yaml"
   interfaces:
     - "../interfaces/*.yaml"
+    - "interfaces/If_Diagnostics_Alt.yaml"
   swcs:
-    - "../swcs/*.yaml"
-  system: "system_bad_operation.yaml"
+    - "swcs/DiagServerOnly.yaml"
+    - "swcs/DiagClientAlt.yaml"
+  system: "system_cs_interface_mismatch.yaml"

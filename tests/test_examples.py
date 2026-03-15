@@ -114,8 +114,9 @@ def test_split_export_system_contains_multiple_component_prototypes(tmp_path: Pa
     assert "<SHORT-NAME>SpeedSensor_1</SHORT-NAME>" in system_xml
     assert "<SHORT-NAME>SpeedSensor_2</SHORT-NAME>" in system_xml
     assert "<SHORT-NAME>SpeedConsumer_1</SHORT-NAME>" in system_xml
-    assert system_xml.count("<SW-COMPONENT-PROTOTYPE>") == 3
-    assert system_xml.count("<ASSEMBLY-SW-CONNECTOR>") == 4
+    assert "<SHORT-NAME>SpeedConsumer_2</SHORT-NAME>" in system_xml
+    assert system_xml.count("<SW-COMPONENT-PROTOTYPE>") == 4
+    assert system_xml.count("<ASSEMBLY-SW-CONNECTOR>") == 6
     assert "<TYPE-TREF DEST=\"APPLICATION-SW-COMPONENT-TYPE\">/DEMO/Components/SpeedSensor</TYPE-TREF>" in system_xml
     assert "<CONTEXT-COMPONENT-REF DEST=\"SW-COMPONENT-PROTOTYPE\">/DEMO/System/Composition_DemoSystem/SpeedSensor_1</CONTEXT-COMPONENT-REF>" in system_xml
 
@@ -183,7 +184,6 @@ inputs:
     _ = write_outputs(project, template_dir=REPO_ROOT / "templates", out=out_dir, split_by_swc=True)
     system_xml = (out_dir / "system.arxml").read_text(encoding="utf-8")
     assert system_xml.count("<ASSEMBLY-SW-CONNECTOR>") == 2
-
 
 def test_split_export_includes_server_raised_error_refs(tmp_path: Path) -> None:
     project = load_and_validate_aggregator(VALID_PROJECT)
@@ -295,6 +295,10 @@ def test_split_export_operation_invoked_events_reference_operations(tmp_path: Pa
         ("project_data_receive_event_unknown_dataelement.yaml", "CORE-027-DRE-UNKNOWN-DATAELEMENT"),
         ("project_data_receive_event_on_provides_port.yaml", "CORE-027-DRE-DIRECTION"),
         ("project_data_receive_event_on_client_server_port.yaml", "CORE-027-DRE-INTERFACE-TYPE"),
+        ("project_bad_operation.yaml", "CORE-040-CS-INVALID-OPERATION"),
+        ("project_cs_duplicate_port_pair.yaml", "CORE-040-CS-DUPLICATE-PORT-PAIR"),
+        ("project_cs_interface_mismatch.yaml", "CORE-040-INTERFACE-MISMATCH"),
+        ("project_cs_wrong_directions.yaml", "CORE-040-FROM-DIRECTION"),
         ("project_sr_duplicate_port_pair.yaml", "CORE-040-SR-DUPLICATE-PORT-PAIR"),
         ("project_sr_read_unconnected.yaml", "CORE-041-SR-READ-UNCONNECTED"),
         ("project_sr_write_unconnected.yaml", "CORE-041-SR-WRITE-UNCONNECTED"),
@@ -308,7 +312,7 @@ def test_data_receive_event_invalid_fixtures_emit_expected_codes(fixture_name: s
 
 
 def test_legacy_datatypes_input_emits_deprecation_warning() -> None:
-    legacy_project = INVALID_DIR / "project_bad_operation.yaml"
+    legacy_project = INVALID_DIR / "project_legacy_datatypes_warning.yaml"
     with pytest.warns(DeprecationWarning, match="Legacy 'inputs.datatypes' format is deprecated"):
         _ = load_aggregator(legacy_project)
 

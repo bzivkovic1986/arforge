@@ -1286,6 +1286,7 @@ class ConnectionSemanticCase(ValidationCase):
     def run(self, ctx: ValidationContext) -> List[Finding]:
         findings: List[Finding] = []
         seen_sr_port_pairs: set[tuple[str, str, str, str]] = set()
+        seen_cs_port_pairs: set[tuple[str, str, str, str]] = set()
         connectors = sorted(ctx.project.system.composition.connectors, key=_connection_sort_key)
         for conn in connectors:
             from_inst = ctx.instance_by_name.get(conn.from_instance)
@@ -1404,6 +1405,14 @@ class ConnectionSemanticCase(ValidationCase):
                         )
                     )
             else:
+                if from_port.interfaceType != "clientServer" or to_port.interfaceType != "clientServer":
+                    findings.append(
+                        self.finding(
+                            f"ClientServer connector {conn.from_instance}.{conn.from_port} -> {conn.to_instance}.{conn.to_port} "
+                            "must connect ports typed by clientServer interfaces.",
+                            code="CORE-040-CS-INTERFACE-TYPE",
+                        )
+                    )
                 if conn.dataElement:
                     findings.append(
                         self.finding(
@@ -1411,19 +1420,148 @@ class ConnectionSemanticCase(ValidationCase):
                             code="CORE-040-CS-INVALID-DATAELEMENT",
                         )
                     )
-                operations = ctx.cs_operations_by_iface.get(itf.name, set())
-                if not conn.operation:
+                if conn.port_pair_key in seen_cs_port_pairs:
                     findings.append(
                         self.finding(
-                            f"ClientServer connector {conn.from_instance}.{conn.from_port} -> {conn.to_instance}.{conn.to_port} must set operation.",
-                            code="CORE-040-CS-MISSING-OPERATION",
+                            f"Duplicate clientServer connector '{conn.from_instance}.{conn.from_port}' -> "
+                            f"'{conn.to_instance}.{conn.to_port}' is not allowed; C/S connectors are unique per port pair.",
+                            code="CORE-040-CS-DUPLICATE-PORT-PAIR",
                         )
                     )
-                if conn.operation and conn.operation not in operations:
+                else:
+                    seen_cs_port_pairs.add(conn.port_pair_key)
+                if conn.operation:
                     findings.append(
                         self.finding(
-                            f"Connection operation '{conn.operation}' not found in interface '{itf.name}'.",
-                            code="CORE-040-CS-UNKNOWN-OPERATION",
+                            f"ClientServer connector {conn.from_instance}.{conn.from_port} -> {conn.to_instance}.{conn.to_port} "
+                            "must not set operation; C/S connectors are port-level and operation usage belongs in runnable behavior.",
+                            code="CORE-040-CS-INVALID-OPERATION",
+                        )
+                    )
+
+        return findings
+
+
+class CsPortConnectivityCase(ValidationCase):
+    case_id = "CORE-043"
+    description = "Validate clientServer connectivity against system instances and runnable behavior."
+    tags = ("core", "system", "connections", "runnables", "client-server")
+    default_severity = "error"
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.system.composition.components:
+            return False, "no system component prototypes defined"
+        has_cs_ports = any(
+            port.interfaceType == "clientServer"
+            for swc in ctx.project.swcs
+            for port in swc.ports
+        )
+        if not has_cs_ports:
+            return False, "no clientServer ports defined"
+        return True, None
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        findings: List[Finding] = []
+        calls_by_swc_port: dict[tuple[str, str], list[tuple[str, str]]] = {}
+        oies_by_swc_port: dict[tuple[str, str], list[tuple[str, str]]] = {}
+
+        for swc in sorted(ctx.project.swcs, key=lambda s: s.name):
+            for runnable in sorted(swc.runnables, key=lambda r: r.name):
+                for call in sorted(runnable.calls, key=lambda a: (a.port, a.operation)):
+                    calls_by_swc_port.setdefault((swc.name, call.port), []).append((runnable.name, call.operation))
+                for event in sorted(runnable.operationInvokedEvents, key=lambda e: (e.port, e.operation)):
+                    oies_by_swc_port.setdefault((swc.name, event.port), []).append((runnable.name, event.operation))
+
+        for instance in sorted(ctx.project.system.composition.components, key=lambda c: c.name):
+            swc = ctx.swc_by_name.get(instance.typeRef)
+            if swc is None:
+                continue
+
+            for port in sorted(swc.ports, key=lambda p: p.name):
+                if port.interfaceType != "clientServer":
+                    continue
+
+                port_ref = f"{instance.name}.{port.name}"
+                outgoing = ctx.outgoing_connectors_by_endpoint.get((instance.name, port.name), [])
+                incoming = ctx.incoming_connectors_by_endpoint.get((instance.name, port.name), [])
+
+                for runnable_name, operation in calls_by_swc_port.get((swc.name, port.name), []):
+                    if not incoming:
+                        findings.append(
+                            self.finding(
+                                f"SWC instance '{instance.name}' runnable '{runnable_name}' calls operation '{operation}' "
+                                f"through unconnected clientServer requires port '{port.name}'.",
+                                code="CORE-043-CS-CALL-UNCONNECTED",
+                            )
+                        )
+
+                for runnable_name, operation in oies_by_swc_port.get((swc.name, port.name), []):
+                    if not outgoing:
+                        findings.append(
+                            self.finding(
+                                f"SWC instance '{instance.name}' runnable '{runnable_name}' operationInvokedEvents waits on operation "
+                                f"'{operation}' from unconnected clientServer provides port '{port.name}'.",
+                                code="CORE-043-CS-OIE-UNCONNECTED",
+                            )
+                        )
+
+        return findings
+
+
+class CsPortUsageCase(ValidationCase):
+    case_id = "CORE-044"
+    description = "Validate that connected clientServer ports are exercised by runnable behavior."
+    tags = ("core", "system", "connections", "runnables", "client-server")
+    default_severity = "warning"
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.system.composition.connectors:
+            return False, "no system connectors defined"
+        return True, None
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        findings: List[Finding] = []
+        call_ports = {
+            (swc.name, access.port)
+            for swc in ctx.project.swcs
+            for runnable in swc.runnables
+            for access in runnable.calls
+        }
+        oie_ports = {
+            (swc.name, event.port)
+            for swc in ctx.project.swcs
+            for runnable in swc.runnables
+            for event in runnable.operationInvokedEvents
+        }
+
+        for instance in sorted(ctx.project.system.composition.components, key=lambda c: c.name):
+            swc = ctx.swc_by_name.get(instance.typeRef)
+            if swc is None:
+                continue
+
+            for port in sorted(swc.ports, key=lambda p: p.name):
+                if port.interfaceType != "clientServer":
+                    continue
+
+                is_connected = bool(
+                    ctx.outgoing_connectors_by_endpoint.get((instance.name, port.name), [])
+                    or ctx.incoming_connectors_by_endpoint.get((instance.name, port.name), [])
+                )
+                if not is_connected:
+                    continue
+
+                if port.direction == "provides" and (swc.name, port.name) not in oie_ports:
+                    findings.append(
+                        self.finding(
+                            f"Connected clientServer provides port '{instance.name}.{port.name}' is never used by any runnable operationInvokedEvent.",
+                            code="CORE-044-CS-CONNECTED-PROVIDES-UNUSED",
+                        )
+                    )
+                if port.direction == "requires" and (swc.name, port.name) not in call_ports:
+                    findings.append(
+                        self.finding(
+                            f"Connected clientServer requires port '{instance.name}.{port.name}' is never used by any runnable call.",
+                            code="CORE-044-CS-CONNECTED-REQUIRES-UNUSED",
                         )
                     )
 
@@ -1610,4 +1748,6 @@ def core_validation_cases() -> List[ValidationCase]:
         ConnectionSemanticCase(),
         SrPortConnectivityCase(),
         SrPortUsageCase(),
+        CsPortConnectivityCase(),
+        CsPortUsageCase(),
     ]

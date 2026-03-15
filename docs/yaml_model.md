@@ -199,7 +199,6 @@ system:
         to: "SpeedConsumer_1.Rp_VehicleSpeed"
       - from: "SpeedSensor_1.Pp_Diag"
         to: "SpeedConsumer_1.Rp_Diag"
-        operation: "ReadDTC"
 ```
 
-For senderReceiver interfaces, connectors are port-level only. Data-element-specific behavior belongs in runnable `reads`, `writes`, and `dataReceiveEvents`.
+System connectors are port-level only. SenderReceiver data-element usage belongs in runnable `reads`, `writes`, and `dataReceiveEvents`. ClientServer operation usage belongs in runnable `calls`, `operationInvokedEvents`, and `raisesErrors`; connector-level `operation` is not supported.

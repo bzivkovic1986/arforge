@@ -47,6 +47,7 @@ def test_init_default_creates_valid_project(tmp_path: Path) -> None:
     system_yaml = (project_dir / "system.yaml").read_text(encoding="utf-8")
     speed_consumer_yaml = (project_dir / "swcs" / "SpeedConsumer.yaml").read_text(encoding="utf-8")
     assert 'dataElement: "VehicleSpeed"' not in system_yaml
+    assert 'operation: "ReadDTC"' not in system_yaml
     assert 'dataReceiveEvents:' in speed_consumer_yaml
 
     out_file = tmp_path / "all.arxml"

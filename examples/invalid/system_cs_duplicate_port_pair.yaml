@@ -1,0 +1,14 @@
+system:
+  name: "BadSystem_CsDuplicatePortPair"
+  composition:
+    name: "Composition_BadSystem_CsDuplicatePortPair"
+    components:
+      - name: "DiagServer_1"
+        typeRef: "DiagServerOnly"
+      - name: "DiagClient_1"
+        typeRef: "DiagClientOnly"
+    connectors:
+      - from: "DiagServer_1.Pp_Diag"
+        to: "DiagClient_1.Rp_Diag"
+      - from: "DiagServer_1.Pp_Diag"
+        to: "DiagClient_1.Rp_Diag"

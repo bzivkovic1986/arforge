@@ -169,7 +169,6 @@ def system_yaml(system_name: str) -> str:
         to: "SpeedConsumer_1.Rp_VehicleSpeed"
       - from: "SpeedSensor_1.Pp_Diag"
         to: "SpeedConsumer_1.Rp_Diag"
-        operation: "ReadDTC"
 """
 
 

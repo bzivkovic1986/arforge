@@ -10,4 +10,3 @@ system:
     connectors:
       - from: "SpeedSensor_1.Pp_Diag"
         to: "DiagClient_1.Rp_Diag"
-        operation: "ReadDTC"

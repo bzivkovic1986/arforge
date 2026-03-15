@@ -13,5 +13,6 @@ inputs:
   interfaces:
     - "../interfaces/*.yaml"
   swcs:
-    - "../swcs/*.yaml"
-  system: "system_bad_operation.yaml"
+    - "swcs/DiagServerOnly.yaml"
+    - "swcs/DiagClientOnly.yaml"
+  system: "system_cs_duplicate_port_pair.yaml"
