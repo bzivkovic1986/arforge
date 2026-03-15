@@ -275,6 +275,25 @@ def test_split_export_includes_void_return_cs_operation_without_return_typeref(t
     assert "<SHORT-NAME>ReturnValue</SHORT-NAME>" not in log_event_segment
 
 
+def test_split_export_includes_array_implementation_datatype(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    shared_xml = (out_dir / "shared.arxml").read_text(encoding="utf-8")
+
+    array_segment = shared_xml.split("<SHORT-NAME>Impl_WheelSpeeds</SHORT-NAME>", 1)[1].split("</IMPLEMENTATION-DATA-TYPE>", 1)[0]
+    assert "<CATEGORY>ARRAY</CATEGORY>" in array_segment
+    assert "<SHORT-NAME>Impl_WheelSpeeds_Element</SHORT-NAME>" in array_segment
+    assert "<TYPE-TREF DEST=\"IMPLEMENTATION-DATA-TYPE\">/DEMO/ImplementationDataTypes/UInt16</TYPE-TREF>" in array_segment
+    assert "<ARRAY-SIZE>4</ARRAY-SIZE>" in array_segment
+
+    iface_segment = shared_xml.split("<SHORT-NAME>If_VehicleSpeed</SHORT-NAME>", 1)[1].split("</SENDER-RECEIVER-INTERFACE>", 1)[0]
+    assert "<SHORT-NAME>WheelSpeeds</SHORT-NAME>" in iface_segment
+    assert "<TYPE-TREF DEST=\"IMPLEMENTATION-DATA-TYPE\">/DEMO/ImplementationDataTypes/Impl_WheelSpeeds</TYPE-TREF>" in iface_segment
+
+
 def test_split_export_operation_invoked_events_reference_operations(tmp_path: Path) -> None:
     project = load_and_validate_aggregator(VALID_PROJECT)
     template_dir = REPO_ROOT / "templates"
@@ -299,6 +318,9 @@ def test_split_export_operation_invoked_events_reference_operations(tmp_path: Pa
         ("project_cs_duplicate_port_pair.yaml", "CORE-040-CS-DUPLICATE-PORT-PAIR"),
         ("project_cs_interface_mismatch.yaml", "CORE-040-INTERFACE-MISMATCH"),
         ("project_cs_wrong_directions.yaml", "CORE-040-FROM-DIRECTION"),
+        ("project_impl_array_application_ref.yaml", "CORE-010-ARRAY-APPLICATION-TYPE"),
+        ("project_impl_array_unknown_element_type.yaml", "CORE-010-ARRAY-UNKNOWN-ELEMENT-TYPE"),
+        ("project_impl_array_zero_length.yaml", "CORE-010-ARRAY-LENGTH"),
         ("project_sr_duplicate_port_pair.yaml", "CORE-040-SR-DUPLICATE-PORT-PAIR"),
         ("project_sr_read_unconnected.yaml", "CORE-041-SR-READ-UNCONNECTED"),
         ("project_sr_write_unconnected.yaml", "CORE-041-SR-WRITE-UNCONNECTED"),

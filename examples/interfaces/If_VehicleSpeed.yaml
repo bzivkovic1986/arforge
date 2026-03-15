@@ -4,5 +4,7 @@ interface:
   dataElements:
     - name: "VehicleSpeed"
       typeRef: "App_VehicleSpeed"
+    - name: "WheelSpeeds"
+      typeRef: "Impl_WheelSpeeds"
     - name: "WheelSpeed"
       typeRef: "SpeedPair_T"

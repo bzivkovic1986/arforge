@@ -58,6 +58,24 @@ Struct field policy:
 - field `typeRef` may target base or implementation types
 - field `typeRef` must not target application types
 
+Array (v0):
+
+```yaml
+implementationDataTypes:
+  - name: "Impl_WheelSpeeds"
+    kind: "array"
+    elementTypeRef: "UInt16"
+    length: 4
+```
+
+Array policy:
+
+- `kind` must be `array`
+- `elementTypeRef` may target base or implementation types
+- `elementTypeRef` must not target application types
+- `length` must be an integer `>= 1`
+- trivial direct self-reference is rejected
+
 ## Application data types
 
 ```yaml

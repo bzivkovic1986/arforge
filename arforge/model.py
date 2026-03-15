@@ -23,10 +23,16 @@ class ImplementationDataType:
     baseTypeRef: str | None = None
     kind: str | None = None
     fields: List[ImplementationField] = field(default_factory=list)
+    elementTypeRef: str | None = None
+    length: int | None = None
 
     @property
     def is_struct(self) -> bool:
         return bool(self.fields) or self.kind == "struct"
+
+    @property
+    def is_array(self) -> bool:
+        return self.kind == "array"
 
 
 @dataclass(frozen=True)
@@ -280,6 +286,8 @@ def from_dict(d: Dict[str, Any]) -> Project:
                 baseTypeRef=idt.get("baseTypeRef"),
                 kind=idt.get("kind"),
                 fields=[ImplementationField(**f) for f in idt.get("fields", [])],
+                elementTypeRef=idt.get("elementTypeRef"),
+                length=idt.get("length"),
             )
         )
     app_types = []

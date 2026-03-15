@@ -23,7 +23,8 @@
               "kind": {
                 "type": "string",
                 "enum": [
-                  "struct"
+                  "struct",
+                  "array"
                 ]
               },
               "baseTypeRef": {
@@ -50,6 +51,13 @@
                   },
                   "additionalProperties": false
                 }
+              },
+              "elementTypeRef": {
+                "type": "string",
+                "minLength": 1
+              },
+              "length": {
+                "type": "integer"
               }
             },
             "additionalProperties": false
@@ -61,15 +69,74 @@
                   "baseTypeRef"
                 ],
                 "not": {
-                  "required": [
-                    "fields"
+                  "anyOf": [
+                    {
+                      "required": [
+                        "fields"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "elementTypeRef"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "length"
+                      ]
+                    }
                   ]
                 }
               },
               {
                 "required": [
                   "fields"
-                ]
+                ],
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "baseTypeRef"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "elementTypeRef"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "length"
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "required": [
+                  "kind",
+                  "elementTypeRef",
+                  "length"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "array"
+                  }
+                },
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "baseTypeRef"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "fields"
+                      ]
+                    }
+                  ]
+                }
               }
             ]
           }

@@ -5,7 +5,7 @@ implementationDataTypes:
     baseTypeRef: "uint16"
   - name: "Impl_WheelSpeeds"
     kind: "array"
-    elementTypeRef: "UInt16"
+    elementTypeRef: "MissingType"
     length: 4
   - name: "SpeedPair_T"
     kind: "struct"
