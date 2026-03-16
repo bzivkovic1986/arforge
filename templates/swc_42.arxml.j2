@@ -14,7 +14,7 @@
               <SHORT-NAME>{{ swc.name }}</SHORT-NAME>
 
               <PORTS>
-                {% for p in swc.ports | sort(attribute="name") %}
+                {% for p in swc.ports %}
                   {% if p.direction == "provides" %}
                 <P-PORT-PROTOTYPE>
                   <SHORT-NAME>{{ p.name }}</SHORT-NAME>

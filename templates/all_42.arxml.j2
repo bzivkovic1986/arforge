@@ -183,18 +183,9 @@
             {% for itf in cs_interfaces %}
             <CLIENT-SERVER-INTERFACE>
               <SHORT-NAME>{{ itf.name }}</SHORT-NAME>
-              {% set ns = namespace(error_names=[], errors=[]) %}
-              {% for op in itf.operations | sort(attribute="name") %}
-                {% for possible_error in op.possibleErrors %}
-                  {% if possible_error.name not in ns.error_names %}
-                    {% set _ = ns.error_names.append(possible_error.name) %}
-                    {% set _ = ns.errors.append(possible_error) %}
-                  {% endif %}
-                {% endfor %}
-              {% endfor %}
-              {% if ns.errors %}
+              {% if cs_interface_errors[itf.name] %}
               <POSSIBLE-ERRORS>
-                {% for possible_error in ns.errors %}
+                {% for possible_error in cs_interface_errors[itf.name] %}
                 <APPLICATION-ERROR>
                   <SHORT-NAME>{{ possible_error.name }}</SHORT-NAME>
                   {% if possible_error.code is not none %}
@@ -205,7 +196,7 @@
               </POSSIBLE-ERRORS>
               {% endif %}
               <OPERATIONS>
-                {% for op in itf.operations | sort(attribute="name") %}
+                {% for op in itf.operations %}
                 <CLIENT-SERVER-OPERATION>
                   <SHORT-NAME>{{ op.name }}</SHORT-NAME>
                   {% if op.arguments or op.returnType != "void" %}
@@ -252,7 +243,7 @@
               <SHORT-NAME>{{ swc.name }}</SHORT-NAME>
 
               <PORTS>
-                {% for p in swc.ports | sort(attribute="name") %}
+                {% for p in swc.ports %}
                   {% if p.direction == "provides" %}
                 <P-PORT-PROTOTYPE>
                   <SHORT-NAME>{{ p.name }}</SHORT-NAME>
