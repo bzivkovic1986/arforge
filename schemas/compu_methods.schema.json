@@ -1,90 +1,226 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "arforge compu methods schema",
+  "title": "ARForge Compu Methods",
+  "description": "Schema for computation methods used by application data types.",
   "type": "object",
+  "$defs": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "textTableEntry": {
+      "type": "object",
+      "description": "One internal-value to text-label mapping in a text table compu method.",
+      "required": [
+        "value",
+        "label"
+      ],
+      "properties": {
+        "value": {
+          "type": "integer",
+          "description": "Internal numeric value.",
+          "examples": [
+            1
+          ]
+        },
+        "label": {
+          "type": "string",
+          "description": "Display label for the internal value.",
+          "minLength": 1,
+          "examples": [
+            "Failed"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "value": 2,
+          "label": "Pending"
+        }
+      ]
+    },
+    "linearMethod": {
+      "type": "object",
+      "description": "Linear conversion method using factor and offset.",
+      "required": [
+        "name",
+        "category",
+        "unitRef",
+        "factor",
+        "offset"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name",
+          "description": "Compu method short name.",
+          "examples": [
+            "CM_Speed_Kmh_Linear"
+          ]
+        },
+        "category": {
+          "type": "string",
+          "description": "Compu method category.",
+          "enum": [
+            "linear"
+          ],
+          "examples": [
+            "linear"
+          ]
+        },
+        "unitRef": {
+          "$ref": "#/$defs/name",
+          "description": "Referenced physical unit used for the converted values.",
+          "examples": [
+            "km_h"
+          ]
+        },
+        "factor": {
+          "type": "number",
+          "description": "Linear scaling factor applied to the internal value.",
+          "examples": [
+            0.1
+          ]
+        },
+        "offset": {
+          "type": "number",
+          "description": "Linear offset added after scaling.",
+          "examples": [
+            0.0
+          ]
+        },
+        "physMin": {
+          "type": "number",
+          "description": "Optional minimum physical value after conversion.",
+          "examples": [
+            0
+          ]
+        },
+        "physMax": {
+          "type": "number",
+          "description": "Optional maximum physical value after conversion.",
+          "examples": [
+            300
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "name": "CM_Speed_Kmh_Linear",
+          "category": "linear",
+          "unitRef": "km_h",
+          "factor": 0.1,
+          "offset": 0.0,
+          "physMin": 0,
+          "physMax": 300
+        }
+      ]
+    },
+    "textTableMethod": {
+      "type": "object",
+      "description": "Text table conversion method mapping discrete numeric values to labels.",
+      "required": [
+        "name",
+        "category",
+        "entries"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name",
+          "description": "Compu method short name.",
+          "examples": [
+            "CM_DtcStatus"
+          ]
+        },
+        "category": {
+          "type": "string",
+          "description": "Compu method category.",
+          "enum": [
+            "textTable"
+          ],
+          "examples": [
+            "textTable"
+          ]
+        },
+        "entries": {
+          "type": "array",
+          "description": "Mappings from numeric values to display labels.",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/textTableEntry"
+          },
+          "examples": [
+            [
+              {
+                "value": 0,
+                "label": "OK"
+              },
+              {
+                "value": 1,
+                "label": "Failed"
+              }
+            ]
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "name": "CM_DtcStatus",
+          "category": "textTable",
+          "entries": [
+            {
+              "value": 0,
+              "label": "OK"
+            },
+            {
+              "value": 1,
+              "label": "Failed"
+            }
+          ]
+        }
+      ]
+    }
+  },
   "required": [
     "compuMethods"
   ],
   "properties": {
     "compuMethods": {
       "type": "array",
+      "description": "List of compu methods available to application data types.",
       "items": {
         "oneOf": [
           {
-            "type": "object",
-            "required": [
-              "name",
-              "category",
-              "unitRef",
-              "factor",
-              "offset"
-            ],
-            "properties": {
-              "name": {
-                "type": "string",
-                "minLength": 1
-              },
-              "category": {
-                "const": "linear"
-              },
-              "unitRef": {
-                "type": "string",
-                "minLength": 1
-              },
-              "factor": {
-                "type": "number"
-              },
-              "offset": {
-                "type": "number"
-              },
-              "physMin": {
-                "type": "number"
-              },
-              "physMax": {
-                "type": "number"
-              }
-            },
-            "additionalProperties": false
+            "$ref": "#/$defs/linearMethod"
           },
           {
-            "type": "object",
-            "required": [
-              "name",
-              "category",
-              "entries"
-            ],
-            "properties": {
-              "name": {
-                "type": "string",
-                "minLength": 1
-              },
-              "category": {
-                "const": "textTable"
-              },
-              "entries": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "value",
-                    "label"
-                  ],
-                  "properties": {
-                    "value": {
-                      "type": "integer"
-                    },
-                    "label": {
-                      "type": "string"
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "additionalProperties": false
+            "$ref": "#/$defs/textTableMethod"
           }
         ]
-      }
+      },
+      "examples": [
+        [
+          {
+            "name": "CM_Speed_Kmh_Linear",
+            "category": "linear",
+            "unitRef": "km_h",
+            "factor": 0.1,
+            "offset": 0.0
+          },
+          {
+            "name": "CM_DtcStatus",
+            "category": "textTable",
+            "entries": [
+              {
+                "value": 0,
+                "label": "OK"
+              }
+            ]
+          }
+        ]
+      ]
     }
   },
   "additionalProperties": false

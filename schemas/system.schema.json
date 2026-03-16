@@ -1,24 +1,100 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "arforge system schema (composition-based)",
+  "title": "ARForge System",
+  "description": "Schema for the system composition that instantiates SWCs and connects their ports.",
   "type": "object",
+  "$defs": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "endpoint": {
+      "type": "string",
+      "description": "Component instance and port reference in the form InstanceName.PortName.",
+      "pattern": "^[A-Za-z0-9_]+\\.[A-Za-z0-9_]+$",
+      "examples": [
+        "SpeedSensor_1.Pp_VehicleSpeed"
+      ]
+    },
+    "componentPrototype": {
+      "type": "object",
+      "description": "Component instance declared in the system composition.",
+      "required": [
+        "name",
+        "typeRef"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name",
+          "description": "Instance name used by connector endpoints.",
+          "examples": [
+            "SpeedSensor_1"
+          ]
+        },
+        "typeRef": {
+          "$ref": "#/$defs/name",
+          "description": "Software component type instantiated by this component prototype.",
+          "examples": [
+            "SpeedSensor"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "name": "SpeedSensor_1",
+          "typeRef": "SpeedSensor"
+        }
+      ]
+    },
+    "connector": {
+      "type": "object",
+      "description": "Assembly connector between two component instance ports. Sender-receiver connectors may optionally name a data element, and client-server connectors may optionally name an operation.",
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/endpoint",
+          "description": "Source endpoint in the form InstanceName.PortName."
+        },
+        "to": {
+          "$ref": "#/$defs/endpoint",
+          "description": "Target endpoint in the form InstanceName.PortName."
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "from": "SpeedSensor_1.Pp_VehicleSpeed",
+          "to": "SpeedConsumer_1.Rp_VehicleSpeed"
+        }
+      ]
+    }
+  },
   "required": [
     "system"
   ],
   "properties": {
     "system": {
       "type": "object",
+      "description": "Single AUTOSAR system definition.",
       "required": [
         "name",
         "composition"
       ],
       "properties": {
         "name": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/name",
+          "description": "System short name.",
+          "examples": [
+            "DemoSystem"
+          ]
         },
         "composition": {
           "type": "object",
+          "description": "Top-level composition containing component instances and assembly connectors.",
           "required": [
             "name",
             "components",
@@ -26,67 +102,77 @@
           ],
           "properties": {
             "name": {
-              "type": "string",
-              "minLength": 1
+              "$ref": "#/$defs/name",
+              "description": "Composition short name.",
+              "examples": [
+                "Composition_DemoSystem"
+              ]
             },
             "components": {
               "type": "array",
+              "description": "Component instances inside the composition.",
               "minItems": 1,
               "items": {
-                "type": "object",
-                "required": [
-                  "name",
-                  "typeRef"
-                ],
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "typeRef": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                },
-                "additionalProperties": false
+                "$ref": "#/$defs/componentPrototype"
               }
             },
             "connectors": {
               "type": "array",
+              "description": "Assembly connectors between component instances.",
               "minItems": 1,
               "items": {
-                "type": "object",
-                "required": [
-                  "from",
-                  "to"
-                ],
-                "properties": {
-                  "from": {
-                    "type": "string",
-                    "pattern": "^[A-Za-z0-9_]+\\.[A-Za-z0-9_]+$"
-                  },
-                  "to": {
-                    "type": "string",
-                    "pattern": "^[A-Za-z0-9_]+\\.[A-Za-z0-9_]+$"
-                  },
-                  "dataElement": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "operation": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                },
-                "additionalProperties": false
+                "$ref": "#/$defs/connector"
               }
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "examples": [
+            {
+              "name": "Composition_DemoSystem",
+              "components": [
+                {
+                  "name": "SpeedSensor_1",
+                  "typeRef": "SpeedSensor"
+                }
+              ],
+              "connectors": [
+                {
+                  "from": "SpeedSensor_1.Pp_VehicleSpeed",
+                  "to": "SpeedConsumer_1.Rp_VehicleSpeed"
+                }
+              ]
+            }
+          ]
         }
       },
       "additionalProperties": false
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "examples": [
+    {
+      "system": {
+        "name": "DemoSystem",
+        "composition": {
+          "name": "Composition_DemoSystem",
+          "components": [
+            {
+              "name": "SpeedSensor_1",
+              "typeRef": "SpeedSensor"
+            },
+            {
+              "name": "SpeedConsumer_1",
+              "typeRef": "SpeedConsumer"
+            }
+          ],
+          "connectors": [
+            {
+              "from": "SpeedSensor_1.Pp_VehicleSpeed",
+              "to": "SpeedConsumer_1.Rp_VehicleSpeed"
+            }
+          ]
+        }
+      }
+    }
+  ]
 }

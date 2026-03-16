@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter
 from typing import Any, Dict, List, Optional, Sequence
-import warnings
 
 import json
 import yaml
@@ -25,7 +24,6 @@ class InputPatternReport:
 class AggregatorLoadReport:
     project_path: Path
     autosar_version: str
-    datatypes_file: Optional[Path]
     base_types_file: Optional[Path]
     implementation_types_file: Optional[Path]
     application_types_file: Optional[Path]
@@ -116,65 +114,44 @@ def load_aggregator_with_report(agg_path: Path, schema_path: Optional[Path] = No
         "system": None,
     }
 
-    datatypes_file: Optional[Path] = None
     base_types_file: Optional[Path] = None
     implementation_types_file: Optional[Path] = None
     application_types_file: Optional[Path] = None
     unit_patterns: List[InputPatternReport] = []
     compu_method_patterns: List[InputPatternReport] = []
 
-    uses_legacy = "datatypes" in inputs
     uses_split = all(k in inputs for k in ["baseTypes", "implementationDataTypes", "applicationDataTypes"])
-    if uses_legacy and uses_split:
-        raise ValidationError([f"{agg_path}:inputs: define either legacy 'datatypes' or split type inputs, not both."])
-    if not uses_legacy and not uses_split:
+    if not uses_split:
         raise ValidationError(
             [
-                f"{agg_path}:inputs: missing datatype inputs; define legacy 'datatypes' or split "
+                f"{agg_path}:inputs: missing datatype inputs; define "
                 f"'baseTypes' + 'implementationDataTypes' + 'applicationDataTypes'."
             ]
         )
 
-    if uses_legacy:
-        datatypes_file = (base_dir / inputs["datatypes"]).resolve()
-        dt_data = _load_yaml(datatypes_file)
-        dt_schema = _load_json(_schema_dir() / "datatypes.schema.json")
-        errs = _validate_with_schema(dt_data, dt_schema, str(datatypes_file))
-        if errs:
-            raise ValidationError(errs)
-        warnings.warn(
-            "Legacy 'inputs.datatypes' format is deprecated; use baseTypes, implementationDataTypes, and applicationDataTypes inputs.",
-            DeprecationWarning,
-        )
-        for dt in dt_data.get("datatypes", []):
-            if dt.get("category") == "implementation":
-                merged["implementationDataTypes"].append(
-                    {"name": dt["name"], "baseTypeRef": dt.get("baseType", "")}
-                )
-    else:
-        base_types_file = (base_dir / inputs["baseTypes"]).resolve()
-        base_types_data = _load_yaml(base_types_file)
-        base_types_schema = _load_json(_schema_dir() / "base_types.schema.json")
-        errs = _validate_with_schema(base_types_data, base_types_schema, str(base_types_file))
-        if errs:
-            raise ValidationError(errs)
-        merged["baseTypes"] = base_types_data.get("baseTypes", [])
+    base_types_file = (base_dir / inputs["baseTypes"]).resolve()
+    base_types_data = _load_yaml(base_types_file)
+    base_types_schema = _load_json(_schema_dir() / "base_types.schema.json")
+    errs = _validate_with_schema(base_types_data, base_types_schema, str(base_types_file))
+    if errs:
+        raise ValidationError(errs)
+    merged["baseTypes"] = base_types_data.get("baseTypes", [])
 
-        implementation_types_file = (base_dir / inputs["implementationDataTypes"]).resolve()
-        implementation_types_data = _load_yaml(implementation_types_file)
-        implementation_types_schema = _load_json(_schema_dir() / "implementation_types.schema.json")
-        errs = _validate_with_schema(implementation_types_data, implementation_types_schema, str(implementation_types_file))
-        if errs:
-            raise ValidationError(errs)
-        merged["implementationDataTypes"] = implementation_types_data.get("implementationDataTypes", [])
+    implementation_types_file = (base_dir / inputs["implementationDataTypes"]).resolve()
+    implementation_types_data = _load_yaml(implementation_types_file)
+    implementation_types_schema = _load_json(_schema_dir() / "implementation_types.schema.json")
+    errs = _validate_with_schema(implementation_types_data, implementation_types_schema, str(implementation_types_file))
+    if errs:
+        raise ValidationError(errs)
+    merged["implementationDataTypes"] = implementation_types_data.get("implementationDataTypes", [])
 
-        application_types_file = (base_dir / inputs["applicationDataTypes"]).resolve()
-        application_types_data = _load_yaml(application_types_file)
-        application_types_schema = _load_json(_schema_dir() / "application_types.schema.json")
-        errs = _validate_with_schema(application_types_data, application_types_schema, str(application_types_file))
-        if errs:
-            raise ValidationError(errs)
-        merged["applicationDataTypes"] = application_types_data.get("applicationDataTypes", [])
+    application_types_file = (base_dir / inputs["applicationDataTypes"]).resolve()
+    application_types_data = _load_yaml(application_types_file)
+    application_types_schema = _load_json(_schema_dir() / "application_types.schema.json")
+    errs = _validate_with_schema(application_types_data, application_types_schema, str(application_types_file))
+    if errs:
+        raise ValidationError(errs)
+    merged["applicationDataTypes"] = application_types_data.get("applicationDataTypes", [])
 
     if "units" in inputs:
         units_schema = _load_json(_schema_dir() / "units.schema.json")
@@ -236,7 +213,6 @@ def load_aggregator_with_report(agg_path: Path, schema_path: Optional[Path] = No
     report = AggregatorLoadReport(
         project_path=agg_path,
         autosar_version=project.autosar_version,
-        datatypes_file=datatypes_file,
         base_types_file=base_types_file,
         implementation_types_file=implementation_types_file,
         application_types_file=application_types_file,

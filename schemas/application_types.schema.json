@@ -1,55 +1,123 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "arforge application data types schema",
+  "title": "ARForge Application Data Types",
+  "description": "Schema for application data types layered on top of implementation data types.",
   "type": "object",
+  "$defs": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "constraint": {
+      "type": "object",
+      "description": "Physical or application-level numeric range constraint for a scalar application data type.",
+      "required": [
+        "min",
+        "max"
+      ],
+      "properties": {
+        "min": {
+          "type": "number",
+          "description": "Minimum allowed physical value.",
+          "examples": [
+            0
+          ]
+        },
+        "max": {
+          "type": "number",
+          "description": "Maximum allowed physical value.",
+          "examples": [
+            300
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "min": 0,
+          "max": 300
+        }
+      ]
+    },
+    "applicationType": {
+      "type": "object",
+      "description": "Application-facing data type mapped to an implementation data type.",
+      "required": [
+        "name",
+        "implementationTypeRef"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name",
+          "description": "Application data type short name.",
+          "examples": [
+            "App_VehicleSpeed"
+          ]
+        },
+        "implementationTypeRef": {
+          "$ref": "#/$defs/name",
+          "description": "Referenced implementation data type that carries the stored value.",
+          "examples": [
+            "UInt16"
+          ]
+        },
+        "constraint": {
+          "$ref": "#/$defs/constraint"
+        },
+        "unitRef": {
+          "$ref": "#/$defs/name",
+          "description": "Referenced physical unit used when interpreting the value.",
+          "examples": [
+            "km_h"
+          ]
+        },
+        "compuMethodRef": {
+          "$ref": "#/$defs/name",
+          "description": "Referenced compu method that converts internal values to physical values or labels.",
+          "examples": [
+            "CM_Speed_Kmh_Linear"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "name": "App_VehicleSpeed",
+          "implementationTypeRef": "UInt16",
+          "constraint": {
+            "min": 0,
+            "max": 300
+          },
+          "unitRef": "km_h",
+          "compuMethodRef": "CM_Speed_Kmh_Linear"
+        }
+      ]
+    }
+  },
   "required": [
     "applicationDataTypes"
   ],
   "properties": {
     "applicationDataTypes": {
       "type": "array",
+      "description": "List of application-facing data types.",
       "items": {
-        "type": "object",
-        "required": [
-          "name",
-          "implementationTypeRef"
-        ],
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "implementationTypeRef": {
-            "type": "string",
-            "minLength": 1
-          },
-          "constraint": {
-            "type": "object",
-            "required": [
-              "min",
-              "max"
-            ],
-            "properties": {
-              "min": {
-                "type": "number"
-              },
-              "max": {
-                "type": "number"
-              }
+        "$ref": "#/$defs/applicationType"
+      },
+      "examples": [
+        [
+          {
+            "name": "App_VehicleSpeed",
+            "implementationTypeRef": "UInt16",
+            "constraint": {
+              "min": 0,
+              "max": 300
             },
-            "additionalProperties": false
-          },
-          "unitRef": {
-            "type": "string",
-            "minLength": 1
-          },
-          "compuMethodRef": {
-            "type": "string",
-            "minLength": 1
+            "unitRef": "km_h",
+            "compuMethodRef": "CM_Speed_Kmh_Linear"
           }
-        },
-        "additionalProperties": false
-      }
+        ]
+      ]
     }
   },
   "additionalProperties": false

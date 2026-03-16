@@ -259,13 +259,8 @@ def _split_endpoint(ep: str) -> Tuple[str, str]:
 def _parse_application_errors(errors: List[Any]) -> List[ApplicationError]:
     parsed: List[ApplicationError] = []
     for error in errors:
-        if isinstance(error, str):
-            parsed.append(ApplicationError(name=error, code=None))
-            continue
         if isinstance(error, dict):
             parsed.append(ApplicationError(name=str(error.get("name", "")), code=error.get("code")))
-            continue
-        parsed.append(ApplicationError(name=str(error), code=None))
 
     return sorted(
         parsed,

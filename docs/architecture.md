@@ -27,7 +27,6 @@ The project loader supports:
 
 - split type inputs (`baseTypes`, `implementationDataTypes`, `applicationDataTypes`)
 - optional physical type inputs (`units`, `compuMethods`)
-- legacy `datatypes` input (deprecated warning)
 
 ## Validation architecture
 

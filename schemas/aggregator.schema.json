@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "autosar-tool aggregator project schema (glob enabled)",
+  "title": "ARForge Aggregator Project",
+  "description": "Top-level project file that points ARForge to the AUTOSAR model fragments that make up a project.",
   "type": "object",
   "required": [
     "autosar",
@@ -9,6 +10,7 @@
   "properties": {
     "autosar": {
       "type": "object",
+      "description": "AUTOSAR version and root package settings used when validating and exporting the project.",
       "required": [
         "version",
         "rootPackage"
@@ -16,100 +18,184 @@
       "properties": {
         "version": {
           "type": "string",
+          "description": "AUTOSAR Classic version targeted by this project.",
           "enum": [
+            "4.2"
+          ],
+          "examples": [
             "4.2"
           ]
         },
         "rootPackage": {
           "type": "string",
-          "minLength": 1
+          "description": "Top-level AR-PACKAGE name used as the export root.",
+          "minLength": 1,
+          "examples": [
+            "DEMO"
+          ]
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "examples": [
+        {
+          "version": "4.2",
+          "rootPackage": "DEMO"
+        }
+      ]
     },
     "inputs": {
       "type": "object",
+      "description": "File paths or glob patterns that collect the YAML fragments belonging to the project.",
       "required": [
         "interfaces",
-        "swcs"
+        "swcs",
+        "system"
       ],
       "allOf": [
         {
-          "anyOf": [
-            {
-              "required": [
-                "datatypes"
-              ]
-            },
-            {
-              "required": [
-                "baseTypes",
-                "implementationDataTypes",
-                "applicationDataTypes"
-              ]
-            }
-          ]
-        },
-        {
           "required": [
-            "system"
+            "baseTypes",
+            "implementationDataTypes",
+            "applicationDataTypes"
           ]
         }
       ],
       "properties": {
-        "datatypes": {
-          "type": "string",
-          "minLength": 1
-        },
         "baseTypes": {
           "type": "string",
-          "minLength": 1
+          "description": "Path to the base types YAML file.",
+          "minLength": 1,
+          "examples": [
+            "platform/base_types.yaml"
+          ]
         },
         "implementationDataTypes": {
           "type": "string",
-          "minLength": 1
+          "description": "Path to the implementation data types YAML file.",
+          "minLength": 1,
+          "examples": [
+            "types/implementation_types.yaml"
+          ]
         },
         "applicationDataTypes": {
           "type": "string",
-          "minLength": 1
+          "description": "Path to the application data types YAML file.",
+          "minLength": 1,
+          "examples": [
+            "types/application_types.yaml"
+          ]
         },
         "units": {
           "type": "array",
+          "description": "Optional unit definition files. Each entry may be a concrete file or a glob pattern.",
           "items": {
             "type": "string",
             "minLength": 1
-          }
+          },
+          "examples": [
+            [
+              "units/*.yaml"
+            ]
+          ]
         },
         "compuMethods": {
           "type": "array",
+          "description": "Optional compu method definition files. Each entry may be a concrete file or a glob pattern.",
           "items": {
             "type": "string",
             "minLength": 1
-          }
+          },
+          "examples": [
+            [
+              "compu_methods/*.yaml"
+            ]
+          ]
         },
         "interfaces": {
           "type": "array",
+          "description": "Sender-receiver and client-server interface files to include in the project.",
           "minItems": 1,
           "items": {
             "type": "string",
             "minLength": 1
-          }
+          },
+          "examples": [
+            [
+              "interfaces/*.yaml"
+            ]
+          ]
         },
         "swcs": {
           "type": "array",
+          "description": "Software component files to include in the project.",
           "minItems": 1,
           "items": {
             "type": "string",
             "minLength": 1
-          }
+          },
+          "examples": [
+            [
+              "swcs/*.yaml"
+            ]
+          ]
         },
         "system": {
           "type": "string",
-          "minLength": 1
+          "description": "System composition file that wires component instances together.",
+          "minLength": 1,
+          "examples": [
+            "system.yaml"
+          ]
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "examples": [
+        {
+          "baseTypes": "platform/base_types.yaml",
+          "implementationDataTypes": "types/implementation_types.yaml",
+          "applicationDataTypes": "types/application_types.yaml",
+          "units": [
+            "units/*.yaml"
+          ],
+          "compuMethods": [
+            "compu_methods/*.yaml"
+          ],
+          "interfaces": [
+            "interfaces/*.yaml"
+          ],
+          "swcs": [
+            "swcs/*.yaml"
+          ],
+          "system": "system.yaml"
+        }
+      ]
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "examples": [
+    {
+      "autosar": {
+        "version": "4.2",
+        "rootPackage": "DEMO"
+      },
+      "inputs": {
+        "baseTypes": "platform/base_types.yaml",
+        "implementationDataTypes": "types/implementation_types.yaml",
+        "applicationDataTypes": "types/application_types.yaml",
+        "units": [
+          "units/*.yaml"
+        ],
+        "compuMethods": [
+          "compu_methods/*.yaml"
+        ],
+        "interfaces": [
+          "interfaces/*.yaml"
+        ],
+        "swcs": [
+          "swcs/*.yaml"
+        ],
+        "system": "system.yaml"
+      }
+    }
+  ]
 }

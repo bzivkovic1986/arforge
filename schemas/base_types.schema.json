@@ -1,59 +1,87 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "arforge base types schema",
+  "title": "ARForge Base Types",
+  "description": "Schema for AUTOSAR platform base types used by implementation data types.",
   "type": "object",
+  "$defs": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "baseTypeDefinition": {
+      "type": "object",
+      "description": "Concrete base type definition with bit size and signedness.",
+      "required": [
+        "name",
+        "bitLength",
+        "signedness"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name",
+          "description": "Base type short name.",
+          "examples": [
+            "uint8"
+          ]
+        },
+        "bitLength": {
+          "type": "integer",
+          "description": "Number of bits carried by the base type.",
+          "minimum": 1,
+          "examples": [
+            16
+          ]
+        },
+        "signedness": {
+          "type": "string",
+          "description": "Signedness of the underlying machine type.",
+          "enum": [
+            "unsigned",
+            "signed"
+          ],
+          "examples": [
+            "unsigned"
+          ]
+        },
+        "nativeDeclaration": {
+          "type": "string",
+          "description": "C-style declaration name used during export.",
+          "examples": [
+            "uint16"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "name": "uint16",
+          "bitLength": 16,
+          "signedness": "unsigned",
+          "nativeDeclaration": "uint16"
+        }
+      ]
+    }
+  },
   "required": [
     "baseTypes"
   ],
   "properties": {
     "baseTypes": {
       "type": "array",
+      "description": "List of base type definitions.",
       "items": {
-        "oneOf": [
+        "$ref": "#/$defs/baseTypeDefinition"
+      },
+      "examples": [
+        [
           {
-            "type": "object",
-            "required": [
-              "name"
-            ],
-            "properties": {
-              "name": {
-                "type": "string",
-                "minLength": 1
-              }
-            },
-            "additionalProperties": false
-          },
-          {
-            "type": "object",
-            "required": [
-              "name",
-              "bitLength",
-              "signedness"
-            ],
-            "properties": {
-              "name": {
-                "type": "string",
-                "minLength": 1
-              },
-              "bitLength": {
-                "type": "integer",
-                "minimum": 1
-              },
-              "signedness": {
-                "type": "string",
-                "enum": [
-                  "unsigned",
-                  "signed"
-                ]
-              },
-              "nativeDeclaration": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": false
+            "name": "uint8",
+            "bitLength": 8,
+            "signedness": "unsigned",
+            "nativeDeclaration": "uint8"
           }
         ]
-      }
+      ]
     }
   },
   "additionalProperties": false

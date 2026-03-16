@@ -1,135 +1,247 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "autosar-tool interface schema (SR + CS)",
+  "title": "ARForge Interface",
+  "description": "Schema for sender-receiver and client-server interface definitions.",
   "type": "object",
+  "$defs": {
+    "refName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dataElement": {
+      "type": "object",
+      "description": "Sender-receiver data element exposed by the interface.",
+      "required": [
+        "name",
+        "typeRef"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/refName",
+          "description": "Data element short name.",
+          "examples": [
+            "VehicleSpeed"
+          ]
+        },
+        "typeRef": {
+          "$ref": "#/$defs/refName",
+          "description": "Application or implementation data type used by the data element.",
+          "examples": [
+            "App_VehicleSpeed"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "name": "VehicleSpeed",
+          "typeRef": "App_VehicleSpeed"
+        }
+      ]
+    },
+    "operationArgument": {
+      "type": "object",
+      "description": "Argument on a client-server operation.",
+      "required": [
+        "name",
+        "direction",
+        "typeRef"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/refName",
+          "description": "Argument short name.",
+          "examples": [
+            "DtcId"
+          ]
+        },
+        "direction": {
+          "type": "string",
+          "description": "Argument direction from the server implementation point of view.",
+          "enum": [
+            "in",
+            "out",
+            "inout"
+          ],
+          "examples": [
+            "in"
+          ]
+        },
+        "typeRef": {
+          "$ref": "#/$defs/refName",
+          "description": "Application or implementation data type used by the argument.",
+          "examples": [
+            "UInt16"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "name": "DtcState",
+          "direction": "out",
+          "typeRef": "UInt8"
+        }
+      ]
+    },
+    "possibleError": {
+      "type": "object",
+      "description": "Possible client-server error entry.",
+      "required": [
+        "name",
+        "code"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/refName",
+          "description": "Application-visible error name.",
+          "examples": [
+            "DTC_NOT_FOUND"
+          ]
+        },
+        "code": {
+          "type": "integer",
+          "description": "Numeric application error code.",
+          "examples": [
+            1
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "name": "DTC_NOT_FOUND",
+          "code": 1
+        }
+      ]
+    },
+    "operation": {
+      "type": "object",
+      "description": "Client-server operation signature.",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/refName",
+          "description": "Operation short name.",
+          "examples": [
+            "ReadDTC"
+          ]
+        },
+        "arguments": {
+          "type": "array",
+          "description": "Ordered list of operation arguments.",
+          "items": {
+            "$ref": "#/$defs/operationArgument"
+          },
+          "examples": [
+            [
+              {
+                "name": "DtcId",
+                "direction": "in",
+                "typeRef": "UInt16"
+              }
+            ]
+          ]
+        },
+        "returnType": {
+          "description": "Return type name or the literal value 'void' for no return data.",
+          "anyOf": [
+            {
+              "const": "void"
+            },
+            {
+              "$ref": "#/$defs/refName"
+            }
+          ],
+          "examples": [
+            "UInt8",
+            "void"
+          ]
+        },
+        "possibleErrors": {
+          "type": "array",
+          "description": "Possible application errors raised by the operation.",
+          "items": {
+            "$ref": "#/$defs/possibleError"
+          },
+          "examples": [
+            [
+              {
+                "name": "DTC_NOT_FOUND",
+                "code": 1
+              }
+            ]
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "name": "ReadDTC",
+          "arguments": [
+            {
+              "name": "DtcId",
+              "direction": "in",
+              "typeRef": "UInt16"
+            }
+          ],
+          "returnType": "UInt8",
+          "possibleErrors": [
+            {
+              "name": "DTC_NOT_FOUND",
+              "code": 1
+            }
+          ]
+        }
+      ]
+    }
+  },
   "required": [
     "interface"
   ],
   "properties": {
     "interface": {
       "type": "object",
+      "description": "Single sender-receiver or client-server interface.",
       "required": [
         "name",
         "type"
       ],
       "properties": {
         "name": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/refName",
+          "description": "Interface short name.",
+          "examples": [
+            "If_Diagnostics"
+          ]
         },
         "type": {
           "type": "string",
+          "description": "Interface kind supported by ARForge.",
           "enum": [
             "senderReceiver",
+            "clientServer"
+          ],
+          "examples": [
             "clientServer"
           ]
         },
         "dataElements": {
           "type": "array",
+          "description": "Data elements for a sender-receiver interface.",
           "minItems": 1,
           "items": {
-            "type": "object",
-            "required": [
-              "name",
-              "typeRef"
-            ],
-            "properties": {
-              "name": {
-                "type": "string",
-                "minLength": 1
-              },
-              "typeRef": {
-                "type": "string",
-                "minLength": 1
-              }
-            },
-            "additionalProperties": false
+            "$ref": "#/$defs/dataElement"
           }
         },
         "operations": {
           "type": "array",
+          "description": "Operations for a client-server interface.",
           "minItems": 1,
           "items": {
-            "type": "object",
-            "required": [
-              "name"
-            ],
-            "properties": {
-              "name": {
-                "type": "string",
-                "minLength": 1
-              },
-              "arguments": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "name",
-                    "direction",
-                    "typeRef"
-                  ],
-                  "properties": {
-                    "name": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "direction": {
-                      "type": "string",
-                      "enum": [
-                        "in",
-                        "out",
-                        "inout"
-                      ]
-                    },
-                    "typeRef": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              },
-              "returnType": {
-                "anyOf": [
-                  {
-                    "const": "void"
-                  },
-                  {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                ]
-              },
-              "possibleErrors": {
-                "type": "array",
-                "items": {
-                  "oneOf": [
-                    {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    {
-                      "type": "object",
-                      "required": [
-                        "name",
-                        "code"
-                      ],
-                      "properties": {
-                        "name": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "code": {
-                          "type": "integer"
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  ]
-                }
-              }
-            },
-            "additionalProperties": false
+            "$ref": "#/$defs/operation"
           }
         }
       },
@@ -173,7 +285,42 @@
           }
         }
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "examples": [
+        {
+          "name": "If_VehicleSpeed",
+          "type": "senderReceiver",
+          "dataElements": [
+            {
+              "name": "VehicleSpeed",
+              "typeRef": "App_VehicleSpeed"
+            }
+          ]
+        },
+        {
+          "name": "If_Diagnostics",
+          "type": "clientServer",
+          "operations": [
+            {
+              "name": "ReadDTC",
+              "arguments": [
+                {
+                  "name": "DtcId",
+                  "direction": "in",
+                  "typeRef": "UInt16"
+                }
+              ],
+              "returnType": "UInt8",
+              "possibleErrors": [
+                {
+                  "name": "DTC_NOT_FOUND",
+                  "code": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   },
   "additionalProperties": false

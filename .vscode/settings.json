@@ -46,10 +46,6 @@
 
     "./schemas/compu_methods.schema.json": [
       "**/compu_methods.yaml"
-    ],
-
-    "./schemas/datatypes.schema.json": [
-      "**/datatypes.yaml"
     ]
   }
 }
