@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from time import perf_counter
 from typing import Dict, List, Optional
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from .model import Project, Swc
+from .model import CompuMethod, Connection, Interface, Operation, Project, Runnable, Swc
 
 SHARED_TEMPLATE = "shared_42.arxml.j2"
 SWC_TEMPLATE = "swc_42.arxml.j2"
@@ -81,6 +81,124 @@ def _split_interfaces(project: Project):
     return sr, cs
 
 
+def _connection_sort_key(conn: Connection) -> tuple[str, str, str, str]:
+    return (
+        conn.from_instance,
+        conn.from_port,
+        conn.to_instance,
+        conn.to_port,
+    )
+
+
+def _sort_compu_method(compu_method: CompuMethod) -> CompuMethod:
+    return replace(
+        compu_method,
+        entries=sorted(compu_method.entries, key=lambda entry: (entry.value, entry.label)),
+    )
+
+
+def _sort_operation(operation: Operation) -> Operation:
+    # Preserve authored argument order because it defines the exported signature.
+    return replace(
+        operation,
+        arguments=list(operation.arguments),
+        possibleErrors=sorted(
+            operation.possibleErrors,
+            key=lambda err: (
+                err.name,
+                -1 if err.code is None else err.code,
+            ),
+        ),
+    )
+
+
+def _sort_interface(interface: Interface) -> Interface:
+    if interface.type == "senderReceiver":
+        return replace(
+            interface,
+            dataElements=sorted(interface.dataElements or [], key=lambda data_element: data_element.name),
+        )
+
+    operations = sorted((interface.operations or []), key=lambda operation: operation.name)
+    return replace(interface, operations=[_sort_operation(operation) for operation in operations])
+
+
+def _collect_interface_errors(interface: Interface) -> list[object]:
+    unique_errors: dict[str, object] = {}
+    for operation in interface.operations or []:
+        for error in operation.possibleErrors:
+            unique_errors.setdefault(error.name, error)
+    return list(unique_errors.values())
+
+
+def _sort_runnable(runnable: Runnable) -> Runnable:
+    return replace(
+        runnable,
+        reads=sorted(runnable.reads, key=lambda access: (access.port, access.dataElement)),
+        writes=sorted(runnable.writes, key=lambda access: (access.port, access.dataElement)),
+        calls=sorted(
+            runnable.calls,
+            key=lambda call: (
+                call.port,
+                call.operation,
+                -1 if call.timeoutMs is None else call.timeoutMs,
+            ),
+        ),
+        operationInvokedEvents=sorted(
+            runnable.operationInvokedEvents,
+            key=lambda event: (event.port, event.operation),
+        ),
+        dataReceiveEvents=sorted(
+            runnable.dataReceiveEvents,
+            key=lambda event: (event.port, event.dataElement),
+        ),
+        raisesErrors=sorted(
+            runnable.raisesErrors,
+            key=lambda raised_error: (raised_error.operation, raised_error.error),
+        ),
+    )
+
+
+def _sort_swc(swc: Swc) -> Swc:
+    return replace(
+        swc,
+        ports=sorted(swc.ports, key=lambda port: port.name),
+        runnables=sorted(
+            (_sort_runnable(runnable) for runnable in swc.runnables),
+            key=lambda runnable: runnable.name,
+        ),
+    )
+
+
+def _sort_project_for_export(project: Project) -> Project:
+    implementation_types = []
+    for implementation_type in sorted(project.implementationDataTypes, key=lambda data_type: data_type.name):
+        # Preserve authored field order because structure layout can be semantically meaningful.
+        implementation_types.append(replace(implementation_type, fields=list(implementation_type.fields)))
+
+    return replace(
+        project,
+        baseTypes=sorted(project.baseTypes, key=lambda data_type: data_type.name),
+        implementationDataTypes=implementation_types,
+        applicationDataTypes=sorted(project.applicationDataTypes, key=lambda data_type: data_type.name),
+        units=sorted(project.units, key=lambda unit: unit.name),
+        compuMethods=sorted(
+            (_sort_compu_method(compu_method) for compu_method in project.compuMethods),
+            key=lambda compu_method: compu_method.name,
+        ),
+        interfaces=sorted((_sort_interface(interface) for interface in project.interfaces), key=lambda interface: interface.name),
+        swcs=sorted((_sort_swc(swc) for swc in project.swcs), key=lambda swc: swc.name),
+        system=replace(
+            project.system,
+            composition=replace(
+                project.system.composition,
+                components=sorted(project.system.composition.components, key=lambda component: component.name),
+                connectors=sorted(project.system.composition.connectors, key=_connection_sort_key),
+            ),
+        ),
+    )
+
+
 def _model_summary(project: Project) -> ExportModelSummary:
     sr, cs = _split_interfaces(project)
     return ExportModelSummary(
@@ -104,16 +222,6 @@ def _build_connections(project: Project) -> List[Dict[str, object]]:
     swc_by_name = {swc.name: swc for swc in project.swcs}
     instance_by_name = {instance.name: instance for instance in project.system.composition.components}
 
-    def _sort_key(conn):
-        return (
-            conn.from_instance,
-            conn.from_port,
-            conn.to_instance,
-            conn.to_port,
-            conn.dataElement or "",
-            conn.operation or "",
-        )
-
     def _is_sender_receiver(conn) -> bool:
         from_instance = instance_by_name.get(conn.from_instance)
         if from_instance is None:
@@ -128,7 +236,7 @@ def _build_connections(project: Project) -> List[Dict[str, object]]:
 
     unique_connectors = []
     seen_port_pairs: set[tuple[str, str, str, str]] = set()
-    for connector in sorted(project.system.composition.connectors, key=_sort_key):
+    for connector in project.system.composition.connectors:
         if _is_sender_receiver(connector):
             if connector.port_pair_key in seen_port_pairs:
                 continue
@@ -156,11 +264,12 @@ def _build_connections(project: Project) -> List[Dict[str, object]]:
 def render_shared(project: Project, template_dir: Path, template_name: str = SHARED_TEMPLATE) -> str:
     env = _env(template_dir)
     tpl = env.get_template(template_name)
-    base_types = sorted(project.baseTypes, key=lambda x: x.name)
-    implementation_types = sorted(project.implementationDataTypes, key=lambda x: x.name)
-    application_types = sorted(project.applicationDataTypes, key=lambda x: x.name)
-    units = sorted(project.units, key=lambda x: x.name)
-    compu_methods = sorted(project.compuMethods, key=lambda x: x.name)
+    project = _sort_project_for_export(project)
+    base_types = project.baseTypes
+    implementation_types = project.implementationDataTypes
+    application_types = project.applicationDataTypes
+    units = project.units
+    compu_methods = project.compuMethods
     type_trefs: Dict[str, Dict[str, str]] = {
         d.name: {"package": "BaseTypes", "dest": "SW-BASE-TYPE"} for d in base_types
     }
@@ -181,24 +290,28 @@ def render_shared(project: Project, template_dir: Path, template_name: str = SHA
         type_trefs=type_trefs,
         sr_interfaces=sr,
         cs_interfaces=cs,
+        cs_interface_errors={interface.name: _collect_interface_errors(interface) for interface in cs},
     )
 
 
 def render_swc(project: Project, swc: Swc, template_dir: Path, template_name: str = SWC_TEMPLATE) -> str:
     env = _env(template_dir)
     tpl = env.get_template(template_name)
+    project = _sort_project_for_export(project)
+    swc = next(candidate for candidate in project.swcs if candidate.name == swc.name)
     return tpl.render(root_pkg=project.rootPackage, swc=swc)
 
 
 def render_system(project: Project, template_dir: Path, template_name: str = SYSTEM_TEMPLATE) -> str:
     env = _env(template_dir)
     tpl = env.get_template(template_name)
+    project = _sort_project_for_export(project)
     connections = _build_connections(project)
     return tpl.render(
         root_pkg=project.rootPackage,
         system_name=project.system.name,
         composition_name=project.system.composition.name,
-        components=sorted(project.system.composition.components, key=lambda x: x.name),
+        components=project.system.composition.components,
         connections=connections,
     )
 
@@ -214,6 +327,7 @@ def write_outputs_with_report(
     input_summary: Optional[ExportInputSummary] = None,
     stage_timings_ms: Optional[Dict[str, float]] = None,
 ) -> ExportReport:
+    project = _sort_project_for_export(project)
     timings_ms = dict(stage_timings_ms or {})
     outputs: List[OutputArtifact] = []
 
@@ -221,11 +335,11 @@ def write_outputs_with_report(
     if not split_by_swc:
         env = _env(template_dir)
         tpl = env.get_template(MONOLITHIC_TEMPLATE)
-        base_types = sorted(project.baseTypes, key=lambda x: x.name)
-        implementation_types = sorted(project.implementationDataTypes, key=lambda x: x.name)
-        application_types = sorted(project.applicationDataTypes, key=lambda x: x.name)
-        units = sorted(project.units, key=lambda x: x.name)
-        compu_methods = sorted(project.compuMethods, key=lambda x: x.name)
+        base_types = project.baseTypes
+        implementation_types = project.implementationDataTypes
+        application_types = project.applicationDataTypes
+        units = project.units
+        compu_methods = project.compuMethods
         type_trefs: Dict[str, Dict[str, str]] = {
             d.name: {"package": "BaseTypes", "dest": "SW-BASE-TYPE"} for d in base_types
         }
@@ -235,7 +349,7 @@ def write_outputs_with_report(
         type_trefs.update(
             {d.name: {"package": "ApplicationDataTypes", "dest": "APPLICATION-PRIMITIVE-DATA-TYPE"} for d in application_types}
         )
-        swcs = sorted(project.swcs, key=lambda x: x.name)
+        swcs = project.swcs
         sr, cs = _split_interfaces(project)
         connections = _build_connections(project)
         rendered = {
@@ -249,10 +363,11 @@ def write_outputs_with_report(
                 type_trefs=type_trefs,
                 sr_interfaces=sr,
                 cs_interfaces=cs,
+                cs_interface_errors={interface.name: _collect_interface_errors(interface) for interface in cs},
                 swcs=swcs,
                 system_name=project.system.name,
                 composition_name=project.system.composition.name,
-                instances=sorted(project.system.composition.components, key=lambda x: x.name),
+                instances=project.system.composition.components,
                 connections=connections,
             )
         }
@@ -262,7 +377,7 @@ def write_outputs_with_report(
         rendered = {}
         target_dir = out
         rendered[target_dir / "shared.arxml"] = render_shared(project, template_dir, template_name=SHARED_TEMPLATE)
-        for swc in sorted(project.swcs, key=lambda x: x.name):
+        for swc in project.swcs:
             rendered[target_dir / f"{swc.name}.arxml"] = render_swc(project, swc=swc, template_dir=template_dir, template_name=SWC_TEMPLATE)
         rendered[target_dir / "system.arxml"] = render_system(project, template_dir, template_name=SYSTEM_TEMPLATE)
         layout = "split-by-swc"
