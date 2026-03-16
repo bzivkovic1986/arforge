@@ -21,7 +21,6 @@ baseTypes:
 
 Base type entry formats:
 
-- legacy (backward-compatible): `{ name }`
 - raw type metadata: `{ name, bitLength, signedness, nativeDeclaration? }`
 
 Metadata rules:
@@ -104,9 +103,6 @@ Constraint policy (v0):
   - signed: `-(2^(bitLength-1)) .. (2^(bitLength-1) - 1)`
 - scalar float implementation types (`float32`, `float64`) accept integer or float bounds
 - non-scalar implementation types (for example `struct`) do not support constraints in v0
-- backward compatibility fallback for constrained integer checks exists only for legacy base types:
-  - `uint8` -> unsigned 8-bit
-  - `uint16` -> unsigned 16-bit
 
 Compu method linkage policy:
 

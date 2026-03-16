@@ -440,23 +440,11 @@ class InterfaceSemanticCase(ValidationCase):
                                 )
                             )
 
-                        if any(possible_error.code is None for possible_error in op.possibleErrors):
-                            findings.append(
-                                Finding(
-                                    code="CORE-010-CS-POSSIBLE-ERROR-LEGACY-FORMAT",
-                                    severity="warning",
-                                    message=(
-                                        f"Interface '{itf.name}' operation '{op.name}' uses legacy possibleErrors string entries; "
-                                        "prefer structured entries with {name, code}."
-                                    ),
-                                )
-                            )
-
                         seen_error_names: set[str] = set()
                         seen_error_codes: set[int] = set()
                         for possible_error in sorted(
                             op.possibleErrors,
-                            key=lambda e: (e.name, e.code is None, -1 if e.code is None else e.code),
+                            key=lambda e: (e.name, -1 if e.code is None else e.code),
                         ):
                             error_name = possible_error.name.strip()
                             if not error_name:
@@ -516,10 +504,6 @@ class ApplicationConstraintCase(ValidationCase):
     description = "Validate ApplicationDataType constraint ranges and compatibility with implementation types."
     tags = ("core", "types", "constraints")
 
-    _LEGACY_INTEGER_BASE_METADATA = {
-        "uint8": {"bitLength": 8, "signedness": "unsigned"},
-        "uint16": {"bitLength": 16, "signedness": "unsigned"},
-    }
     _FLOAT_BASE_TYPES = {"float32", "float64"}
 
     @staticmethod
@@ -532,12 +516,7 @@ class ApplicationConstraintCase(ValidationCase):
         if base_type.bitLength is not None and base_type.signedness is not None:
             if base_type.bitLength >= 1 and base_type.signedness in {"unsigned", "signed"}:
                 return base_type.bitLength, base_type.signedness
-            return None
-
-        legacy = self._LEGACY_INTEGER_BASE_METADATA.get(base_type_name.lower())
-        if legacy is None:
-            return None
-        return legacy["bitLength"], legacy["signedness"]
+        return None
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
         has_constraints = any(app.constraint is not None for app in ctx.project.applicationDataTypes)
@@ -1471,18 +1450,6 @@ class ConnectionSemanticCase(ValidationCase):
                     )
                 else:
                     seen_sr_port_pairs.add(conn.port_pair_key)
-                if conn.dataElement:
-                    findings.append(
-                        Finding(
-                            code="CORE-040-SR-DATAELEMENT-DEPRECATED",
-                            severity="warning",
-                            message=(
-                                f"SenderReceiver connector {conn.from_instance}.{conn.from_port} -> "
-                                f"{conn.to_instance}.{conn.to_port} sets dataElement '{conn.dataElement}', "
-                                "but SR connectors are port-level; move data-element usage to runnable reads/writes/dataReceiveEvents."
-                            ),
-                        )
-                    )
             else:
                 if from_port.interfaceType != "clientServer" or to_port.interfaceType != "clientServer":
                     findings.append(

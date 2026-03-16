@@ -23,7 +23,6 @@ class InputPatternExpansion:
 
 @dataclass(frozen=True)
 class ExportInputSummary:
-    datatypes_file: Optional[Path]
     base_types_file: Optional[Path]
     implementation_types_file: Optional[Path]
     application_types_file: Optional[Path]

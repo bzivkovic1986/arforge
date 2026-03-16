@@ -165,7 +165,6 @@ def export(
             raise typer.Exit(code=2)
 
         input_summary = ExportInputSummary(
-            datatypes_file=load_report.datatypes_file,
             base_types_file=load_report.base_types_file,
             implementation_types_file=load_report.implementation_types_file,
             application_types_file=load_report.application_types_file,
@@ -204,8 +203,6 @@ def export(
 
         console.print(f"project={project} autosar={export_report.autosar_version}")
         if export_report.input_summary:
-            if export_report.input_summary.datatypes_file:
-                console.print(f"datatypes (legacy): {export_report.input_summary.datatypes_file}")
             if export_report.input_summary.base_types_file:
                 console.print(f"baseTypes: {export_report.input_summary.base_types_file}")
             if export_report.input_summary.implementation_types_file:

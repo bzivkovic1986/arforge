@@ -1,147 +1,226 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "arforge implementation data types schema",
+  "title": "ARForge Implementation Data Types",
+  "description": "Schema for scalar, struct, and array implementation data types.",
   "type": "object",
+  "$defs": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "field": {
+      "type": "object",
+      "description": "Field in a struct implementation data type.",
+      "required": [
+        "name",
+        "typeRef"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name",
+          "description": "Struct field short name.",
+          "examples": [
+            "inner"
+          ]
+        },
+        "typeRef": {
+          "$ref": "#/$defs/name",
+          "description": "Referenced implementation data type used by the field.",
+          "examples": [
+            "UInt16"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "name": "quality",
+          "typeRef": "UInt16"
+        }
+      ]
+    },
+    "scalarType": {
+      "type": "object",
+      "description": "Scalar implementation data type backed directly by a base type.",
+      "required": [
+        "name",
+        "baseTypeRef"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name",
+          "description": "Implementation data type short name.",
+          "examples": [
+            "UInt16"
+          ]
+        },
+        "baseTypeRef": {
+          "$ref": "#/$defs/name",
+          "description": "Referenced base type name.",
+          "examples": [
+            "uint16"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "name": "UInt16",
+          "baseTypeRef": "uint16"
+        }
+      ]
+    },
+    "structType": {
+      "type": "object",
+      "description": "Struct implementation data type composed of named fields.",
+      "required": [
+        "name",
+        "fields"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name",
+          "description": "Implementation data type short name.",
+          "examples": [
+            "Impl_Outer"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "description": "Explicit type kind for struct definitions. Optional for backward compatibility.",
+          "enum": [
+            "struct"
+          ],
+          "examples": [
+            "struct"
+          ]
+        },
+        "fields": {
+          "type": "array",
+          "description": "Ordered struct fields.",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/field"
+          },
+          "examples": [
+            [
+              {
+                "name": "vehicle",
+                "typeRef": "UInt16"
+              },
+              {
+                "name": "wheel",
+                "typeRef": "UInt16"
+              }
+            ]
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "name": "Impl_Outer",
+          "kind": "struct",
+          "fields": [
+            {
+              "name": "inner",
+              "typeRef": "Impl_Inner"
+            },
+            {
+              "name": "quality",
+              "typeRef": "UInt16"
+            }
+          ]
+        }
+      ]
+    },
+    "arrayType": {
+      "type": "object",
+      "description": "Array implementation data type with a fixed number of elements.",
+      "required": [
+        "name",
+        "kind",
+        "elementTypeRef",
+        "length"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name",
+          "description": "Implementation data type short name.",
+          "examples": [
+            "Impl_WheelSpeeds"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "description": "Explicit type kind for array definitions.",
+          "enum": [
+            "array"
+          ],
+          "examples": [
+            "array"
+          ]
+        },
+        "elementTypeRef": {
+          "$ref": "#/$defs/name",
+          "description": "Referenced implementation data type used for each array element.",
+          "examples": [
+            "UInt16"
+          ]
+        },
+        "length": {
+          "type": "integer",
+          "description": "Fixed number of array elements. Semantic validation enforces a positive value.",
+          "examples": [
+            4
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "name": "Impl_WheelSpeeds",
+          "kind": "array",
+          "elementTypeRef": "UInt16",
+          "length": 4
+        }
+      ]
+    }
+  },
   "required": [
     "implementationDataTypes"
   ],
   "properties": {
     "implementationDataTypes": {
       "type": "array",
+      "description": "List of implementation data types used by interfaces and application data types.",
       "items": {
-        "allOf": [
+        "oneOf": [
           {
-            "type": "object",
-            "required": [
-              "name"
-            ],
-            "properties": {
-              "name": {
-                "type": "string",
-                "minLength": 1
-              },
-              "kind": {
-                "type": "string",
-                "enum": [
-                  "struct",
-                  "array"
-                ]
-              },
-              "baseTypeRef": {
-                "type": "string",
-                "minLength": 1
-              },
-              "fields": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "name",
-                    "typeRef"
-                  ],
-                  "properties": {
-                    "name": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "typeRef": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              },
-              "elementTypeRef": {
-                "type": "string",
-                "minLength": 1
-              },
-              "length": {
-                "type": "integer"
-              }
-            },
-            "additionalProperties": false
+            "$ref": "#/$defs/scalarType"
           },
           {
-            "oneOf": [
-              {
-                "required": [
-                  "baseTypeRef"
-                ],
-                "not": {
-                  "anyOf": [
-                    {
-                      "required": [
-                        "fields"
-                      ]
-                    },
-                    {
-                      "required": [
-                        "elementTypeRef"
-                      ]
-                    },
-                    {
-                      "required": [
-                        "length"
-                      ]
-                    }
-                  ]
-                }
-              },
-              {
-                "required": [
-                  "fields"
-                ],
-                "not": {
-                  "anyOf": [
-                    {
-                      "required": [
-                        "baseTypeRef"
-                      ]
-                    },
-                    {
-                      "required": [
-                        "elementTypeRef"
-                      ]
-                    },
-                    {
-                      "required": [
-                        "length"
-                      ]
-                    }
-                  ]
-                }
-              },
-              {
-                "required": [
-                  "kind",
-                  "elementTypeRef",
-                  "length"
-                ],
-                "properties": {
-                  "kind": {
-                    "const": "array"
-                  }
-                },
-                "not": {
-                  "anyOf": [
-                    {
-                      "required": [
-                        "baseTypeRef"
-                      ]
-                    },
-                    {
-                      "required": [
-                        "fields"
-                      ]
-                    }
-                  ]
-                }
-              }
-            ]
+            "$ref": "#/$defs/structType"
+          },
+          {
+            "$ref": "#/$defs/arrayType"
           }
         ]
-      }
+      },
+      "examples": [
+        [
+          {
+            "name": "UInt8",
+            "baseTypeRef": "uint8"
+          },
+          {
+            "name": "Impl_WheelSpeeds",
+            "kind": "array",
+            "elementTypeRef": "UInt16",
+            "length": 4
+          }
+        ]
+      ]
     }
   },
   "additionalProperties": false

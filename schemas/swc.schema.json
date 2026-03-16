@@ -1,13 +1,455 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "autosar-tool SWC schema",
+  "title": "ARForge Software Component",
+  "description": "Schema for a single AUTOSAR software component definition, including ports and runnables.",
   "type": "object",
+  "$defs": {
+    "namedRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dataAccess": {
+      "type": "object",
+      "description": "Runnable access to a sender-receiver data element on a port.",
+      "required": [
+        "port",
+        "dataElement"
+      ],
+      "properties": {
+        "port": {
+          "$ref": "#/$defs/namedRef",
+          "description": "Port on the SWC that exposes the sender-receiver interface."
+        },
+        "dataElement": {
+          "$ref": "#/$defs/namedRef",
+          "description": "Data element name inside the referenced sender-receiver interface."
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "port": "Rp_VehicleSpeed",
+          "dataElement": "VehicleSpeed"
+        }
+      ]
+    },
+    "operationAccess": {
+      "type": "object",
+      "description": "Runnable call to a client-server operation through a requires port.",
+      "required": [
+        "port",
+        "operation"
+      ],
+      "properties": {
+        "port": {
+          "$ref": "#/$defs/namedRef",
+          "description": "Requires port used to call the client-server operation."
+        },
+        "operation": {
+          "$ref": "#/$defs/namedRef",
+          "description": "Operation name defined on the client-server interface."
+        },
+        "timeoutMs": {
+          "type": "integer",
+          "description": "Timeout in milliseconds for synchronous client calls. Omit for asynchronous calls.",
+          "minimum": 0,
+          "examples": [
+            100
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "port": "Rp_Diag",
+          "operation": "ReadDTC",
+          "timeoutMs": 100
+        }
+      ]
+    },
+    "operationEvent": {
+      "type": "object",
+      "description": "Operation-invoked event binding for a server runnable.",
+      "required": [
+        "port",
+        "operation"
+      ],
+      "properties": {
+        "port": {
+          "$ref": "#/$defs/namedRef",
+          "description": "Provides port that receives the client-server operation invocation."
+        },
+        "operation": {
+          "$ref": "#/$defs/namedRef",
+          "description": "Operation that triggers the runnable."
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "port": "Pp_Diag",
+          "operation": "ReadDTC"
+        }
+      ]
+    },
+    "raisesError": {
+      "type": "object",
+      "description": "Error raised by a runnable while serving a specific client-server operation.",
+      "required": [
+        "operation",
+        "error"
+      ],
+      "properties": {
+        "operation": {
+          "$ref": "#/$defs/namedRef",
+          "description": "Operation on the SWC's provided client-server port that can raise the error."
+        },
+        "error": {
+          "$ref": "#/$defs/namedRef",
+          "description": "Possible error name declared on the corresponding interface operation."
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "operation": "ReadDTC",
+          "error": "DTC_NOT_FOUND"
+        }
+      ]
+    },
+    "runnable": {
+      "type": "object",
+      "description": "Executable unit inside the SWC. A runnable may be timer-triggered, initialization-triggered, or event-triggered.",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/namedRef",
+          "description": "Runnable short name.",
+          "examples": [
+            "Runnable_ReadSpeed"
+          ]
+        },
+        "timingEventMs": {
+          "type": "integer",
+          "description": "Periodic trigger interval in milliseconds.",
+          "minimum": 1,
+          "examples": [
+            10
+          ]
+        },
+        "initEvent": {
+          "type": "boolean",
+          "description": "Set to true to execute the runnable at initialization time.",
+          "examples": [
+            true
+          ]
+        },
+        "reads": {
+          "type": "array",
+          "description": "Sender-receiver data elements read by the runnable.",
+          "items": {
+            "$ref": "#/$defs/dataAccess"
+          },
+          "examples": [
+            [
+              {
+                "port": "Rp_VehicleSpeed",
+                "dataElement": "VehicleSpeed"
+              }
+            ]
+          ]
+        },
+        "writes": {
+          "type": "array",
+          "description": "Sender-receiver data elements written by the runnable.",
+          "items": {
+            "$ref": "#/$defs/dataAccess"
+          },
+          "examples": [
+            [
+              {
+                "port": "Pp_VehicleSpeed",
+                "dataElement": "VehicleSpeed"
+              }
+            ]
+          ]
+        },
+        "calls": {
+          "type": "array",
+          "description": "Client-server operations invoked by the runnable.",
+          "items": {
+            "$ref": "#/$defs/operationAccess"
+          },
+          "examples": [
+            [
+              {
+                "port": "Rp_Diag",
+                "operation": "ReadDTC",
+                "timeoutMs": 100
+              }
+            ]
+          ]
+        },
+        "operationInvokedEvents": {
+          "type": "array",
+          "description": "Client-server operations that trigger this runnable when the SWC acts as server.",
+          "items": {
+            "$ref": "#/$defs/operationEvent"
+          },
+          "examples": [
+            [
+              {
+                "port": "Pp_Diag",
+                "operation": "ReadDTC"
+              }
+            ]
+          ]
+        },
+        "dataReceiveEvents": {
+          "type": "array",
+          "description": "Sender-receiver data receive events that trigger this runnable.",
+          "items": {
+            "$ref": "#/$defs/dataAccess"
+          },
+          "examples": [
+            [
+              {
+                "port": "Rp_VehicleSpeed",
+                "dataElement": "VehicleSpeed"
+              }
+            ]
+          ]
+        },
+        "raisesErrors": {
+          "type": "array",
+          "description": "Possible client-server errors this runnable can raise while serving incoming operations.",
+          "items": {
+            "$ref": "#/$defs/raisesError"
+          },
+          "examples": [
+            [
+              {
+                "operation": "ReadDTC",
+                "error": "DTC_NOT_FOUND"
+              }
+            ]
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "name": "Runnable_UseSpeed",
+          "timingEventMs": 10,
+          "reads": [
+            {
+              "port": "Rp_VehicleSpeed",
+              "dataElement": "VehicleSpeed"
+            }
+          ],
+          "calls": [
+            {
+              "port": "Rp_Diag",
+              "operation": "ReadDTC",
+              "timeoutMs": 100
+            }
+          ]
+        }
+      ]
+    },
+    "srComSpec": {
+      "type": "object",
+      "description": "Sender-receiver communication specification for a port.",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "description": "Sender-receiver communication mode. Use queued to model queued data exchange.",
+          "enum": [
+            "implicit",
+            "explicit",
+            "queued"
+          ],
+          "examples": [
+            "queued"
+          ]
+        },
+        "queueLength": {
+          "type": "integer",
+          "description": "Queue capacity for queued sender-receiver communication.",
+          "minimum": 1,
+          "examples": [
+            8
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "queued"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "then": {
+            "required": [
+              "queueLength"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "queueLength"
+              ]
+            }
+          }
+        }
+      ],
+      "examples": [
+        {
+          "mode": "queued",
+          "queueLength": 8
+        }
+      ]
+    },
+    "csComSpec": {
+      "type": "object",
+      "description": "Client-server communication specification for a port.",
+      "required": [
+        "callMode"
+      ],
+      "properties": {
+        "callMode": {
+          "type": "string",
+          "description": "Invocation style used on the client-server port.",
+          "enum": [
+            "synchronous",
+            "asynchronous"
+          ],
+          "examples": [
+            "synchronous"
+          ]
+        },
+        "timeoutMs": {
+          "type": "integer",
+          "description": "Client-side timeout in milliseconds for synchronous calls.",
+          "minimum": 0,
+          "examples": [
+            50
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "callMode": {
+                "const": "asynchronous"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "timeoutMs"
+              ]
+            }
+          }
+        }
+      ],
+      "examples": [
+        {
+          "callMode": "synchronous",
+          "timeoutMs": 50
+        },
+        {
+          "callMode": "asynchronous"
+        }
+      ]
+    },
+    "port": {
+      "type": "object",
+      "description": "Port prototype exposed by the software component.",
+      "required": [
+        "name",
+        "direction",
+        "interfaceRef"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/namedRef",
+          "description": "Port short name.",
+          "examples": [
+            "Rp_VehicleSpeed"
+          ]
+        },
+        "direction": {
+          "type": "string",
+          "description": "Port direction from the SWC point of view.",
+          "enum": [
+            "provides",
+            "requires"
+          ],
+          "examples": [
+            "requires"
+          ]
+        },
+        "interfaceRef": {
+          "$ref": "#/$defs/namedRef",
+          "description": "Referenced sender-receiver or client-server interface name.",
+          "examples": [
+            "If_VehicleSpeed"
+          ]
+        },
+        "comSpec": {
+          "description": "Optional communication settings for the bound interface kind.",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/srComSpec"
+            },
+            {
+              "$ref": "#/$defs/csComSpec"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "name": "Rp_VehicleSpeed",
+          "direction": "requires",
+          "interfaceRef": "If_VehicleSpeed",
+          "comSpec": {
+            "mode": "queued",
+            "queueLength": 8
+          }
+        },
+        {
+          "name": "Rp_Diag",
+          "direction": "requires",
+          "interfaceRef": "If_Diagnostics",
+          "comSpec": {
+            "callMode": "synchronous",
+            "timeoutMs": 50
+          }
+        }
+      ]
+    }
+  },
   "required": [
     "swc"
   ],
   "properties": {
     "swc": {
       "type": "object",
+      "description": "Single software component definition.",
       "required": [
         "name",
         "runnables",
@@ -15,224 +457,96 @@
       ],
       "properties": {
         "name": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/namedRef",
+          "description": "Software component type name.",
+          "examples": [
+            "SpeedConsumer"
+          ]
         },
         "runnables": {
           "type": "array",
+          "description": "Runnables owned by the software component.",
           "minItems": 1,
           "items": {
-            "type": "object",
-            "required": [
-              "name"
-            ],
-            "properties": {
-              "name": {
-                "type": "string",
-                "minLength": 1
-              },
-              "timingEventMs": {
-                "type": "integer",
-                "minimum": 1
-              },
-              "initEvent": {
-                "type": "boolean"
-              },
-              "reads": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "port",
-                    "dataElement"
-                  ],
-                  "properties": {
-                    "port": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "dataElement": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              },
-              "writes": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "port",
-                    "dataElement"
-                  ],
-                  "properties": {
-                    "port": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "dataElement": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              },
-              "calls": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "port",
-                    "operation"
-                  ],
-                  "properties": {
-                    "port": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "operation": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "timeoutMs": {
-                      "type": "integer",
-                      "minimum": 0
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              },
-              "operationInvokedEvents": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "port",
-                    "operation"
-                  ],
-                  "properties": {
-                    "port": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "operation": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              },
-              "dataReceiveEvents": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "port",
-                    "dataElement"
-                  ],
-                  "properties": {
-                    "port": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "dataElement": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              },
-              "raisesErrors": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "operation",
-                    "error"
-                  ],
-                  "properties": {
-                    "operation": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "error": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            "additionalProperties": false
+            "$ref": "#/$defs/runnable"
           }
         },
         "ports": {
           "type": "array",
+          "description": "Ports exposed by the software component.",
           "minItems": 1,
           "items": {
-            "type": "object",
-            "required": [
-              "name",
-              "direction",
-              "interfaceRef"
-            ],
-            "properties": {
-              "name": {
-                "type": "string",
-                "minLength": 1
-              },
-              "direction": {
-                "type": "string",
-                "enum": [
-                  "provides",
-                  "requires"
-                ]
-              },
-              "interfaceRef": {
-                "type": "string",
-                "minLength": 1
-              },
-              "comSpec": {
-                "type": "object",
-                "properties": {
-                  "mode": {
-                    "type": "string",
-                    "enum": [
-                      "implicit",
-                      "explicit",
-                      "queued"
-                    ]
-                  },
-                  "queueLength": {
-                    "type": "integer"
-                  },
-                  "callMode": {
-                    "type": "string",
-                    "enum": [
-                      "synchronous",
-                      "asynchronous"
-                    ]
-                  },
-                  "timeoutMs": {
-                    "type": "integer",
-                    "minimum": 0
-                  }
-                },
-                "additionalProperties": false
-              }
-            },
-            "additionalProperties": false
+            "$ref": "#/$defs/port"
           }
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "examples": [
+        {
+          "name": "SpeedConsumer",
+          "runnables": [
+            {
+              "name": "Runnable_UseSpeed",
+              "timingEventMs": 10,
+              "reads": [
+                {
+                  "port": "Rp_VehicleSpeed",
+                  "dataElement": "VehicleSpeed"
+                }
+              ],
+              "calls": [
+                {
+                  "port": "Rp_Diag",
+                  "operation": "ReadDTC",
+                  "timeoutMs": 100
+                }
+              ]
+            }
+          ],
+          "ports": [
+            {
+              "name": "Rp_VehicleSpeed",
+              "direction": "requires",
+              "interfaceRef": "If_VehicleSpeed",
+              "comSpec": {
+                "mode": "queued",
+                "queueLength": 8
+              }
+            }
+          ]
+        }
+      ]
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "examples": [
+    {
+      "swc": {
+        "name": "SpeedSensor",
+        "runnables": [
+          {
+            "name": "Runnable_Init",
+            "initEvent": true
+          },
+          {
+            "name": "Runnable_ReadSpeed",
+            "timingEventMs": 10,
+            "writes": [
+              {
+                "port": "Pp_VehicleSpeed",
+                "dataElement": "VehicleSpeed"
+              }
+            ]
+          }
+        ],
+        "ports": [
+          {
+            "name": "Pp_VehicleSpeed",
+            "direction": "provides",
+            "interfaceRef": "If_VehicleSpeed"
+          }
+        ]
+      }
+    }
+  ]
 }
