@@ -4,6 +4,10 @@
   "description": "Schema for physical units referenced by application data types and compu methods.",
   "type": "object",
   "$defs": {
+    "descriptionProperty": {
+      "type": "string",
+      "description": "Optional human-readable documentation for this modeled object."
+    },
     "unit": {
       "type": "object",
       "description": "Physical unit definition.",
@@ -18,6 +22,9 @@
           "examples": [
             "km_h"
           ]
+        },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
         },
         "displayName": {
           "type": "string",

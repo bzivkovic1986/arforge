@@ -2,6 +2,7 @@
 # Project-facing types with optional units and compu methods.
 applicationDataTypes:
   - name: "App_VehicleSpeed"
+    description: "Vehicle speed value interpreted in kilometers per hour."
     implementationTypeRef: "UInt16"
     constraint:
       min: 0
@@ -9,6 +10,7 @@ applicationDataTypes:
     unitRef: "km_h"
     compuMethodRef: "CM_Speed_Kmh_Linear"
   - name: "App_DtcStatus"
+    description: "Application-visible diagnostic trouble code status."
     implementationTypeRef: "UInt8"
     compuMethodRef: "CM_DtcStatus"
 

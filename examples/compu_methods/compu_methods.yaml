@@ -2,6 +2,7 @@
 # Physical scaling and conversion rules used by application data types.
 compuMethods:
   - name: "CM_Speed_Kmh_Linear"
+    description: "Converts raw speed counts into km/h."
     category: "linear"
     unitRef: "km_h"
     factor: 0.1
@@ -9,6 +10,7 @@ compuMethods:
     physMin: 0
     physMax: 300
   - name: "CM_DtcStatus"
+    description: "Maps diagnostic state codes to readable labels."
     category: "textTable"
     entries:
       - value: 0

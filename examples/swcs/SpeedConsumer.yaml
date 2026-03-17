@@ -2,6 +2,7 @@
 # Defines ports, runnables, and internal behavior.
 swc:
   name: "SpeedConsumer"
+  description: "Consumes speed data and calls diagnostic services."
   category: "application"
   runnables:
     - name: "Runnable_UseSpeed"
@@ -23,6 +24,7 @@ swc:
           dataElement: "VehicleSpeed"
   ports:
     - name: "Rp_VehicleSpeed"
+      description: "Required SR port for incoming vehicle speed."
       direction: "requires"
       interfaceRef: "If_VehicleSpeed"
       comSpec:

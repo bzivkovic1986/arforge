@@ -8,6 +8,10 @@
       "type": "string",
       "minLength": 1
     },
+    "descriptionProperty": {
+      "type": "string",
+      "description": "Optional human-readable documentation for this modeled object."
+    },
     "field": {
       "type": "object",
       "description": "Field in a struct implementation data type.",
@@ -22,6 +26,9 @@
           "examples": [
             "inner"
           ]
+        },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
         },
         "typeRef": {
           "$ref": "#/$defs/name",
@@ -54,6 +61,9 @@
             "UInt16"
           ]
         },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
+        },
         "baseTypeRef": {
           "$ref": "#/$defs/name",
           "description": "Referenced base type name.",
@@ -84,6 +94,9 @@
           "examples": [
             "Impl_Outer"
           ]
+        },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
         },
         "kind": {
           "type": "string",
@@ -150,6 +163,9 @@
           "examples": [
             "Impl_WheelSpeeds"
           ]
+        },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
         },
         "kind": {
           "type": "string",

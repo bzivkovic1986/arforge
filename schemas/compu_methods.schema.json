@@ -8,6 +8,10 @@
       "type": "string",
       "minLength": 1
     },
+    "descriptionProperty": {
+      "type": "string",
+      "description": "Optional human-readable documentation for this modeled object."
+    },
     "textTableEntry": {
       "type": "object",
       "description": "One internal-value to text-label mapping in a text table compu method.",
@@ -57,6 +61,9 @@
           "examples": [
             "CM_Speed_Kmh_Linear"
           ]
+        },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
         },
         "category": {
           "type": "string",
@@ -132,6 +139,9 @@
           "examples": [
             "CM_DtcStatus"
           ]
+        },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
         },
         "category": {
           "type": "string",

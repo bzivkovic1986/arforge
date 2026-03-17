@@ -8,6 +8,10 @@
       "type": "string",
       "minLength": 1
     },
+    "descriptionProperty": {
+      "type": "string",
+      "description": "Optional human-readable documentation for this modeled object."
+    },
     "constraint": {
       "type": "object",
       "description": "Physical or application-level numeric range constraint for a scalar application data type.",
@@ -53,6 +57,9 @@
           "examples": [
             "App_VehicleSpeed"
           ]
+        },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
         },
         "implementationTypeRef": {
           "$ref": "#/$defs/name",
