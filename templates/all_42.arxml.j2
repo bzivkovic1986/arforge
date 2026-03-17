@@ -239,7 +239,7 @@
           <SHORT-NAME>Components</SHORT-NAME>
           <ELEMENTS>
             {% for swc in swcs %}
-            <APPLICATION-SW-COMPONENT-TYPE>
+            <{{ swc.component_type_tag }}>
               <SHORT-NAME>{{ swc.name }}</SHORT-NAME>
 
               <PORTS>
@@ -437,7 +437,7 @@
 
                 </SWC-INTERNAL-BEHAVIOR>
               </INTERNAL-BEHAVIORS>
-            </APPLICATION-SW-COMPONENT-TYPE>
+            </{{ swc.component_type_tag }}>
             {% endfor %}
           </ELEMENTS>
         </AR-PACKAGE>
@@ -451,7 +451,7 @@
                 {% for i in instances %}
                 <SW-COMPONENT-PROTOTYPE>
                   <SHORT-NAME>{{ i.name }}</SHORT-NAME>
-                  <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/{{ root_pkg }}/Components/{{ i.typeRef }}</TYPE-TREF>
+                  <TYPE-TREF DEST="{{ swc_type_dests[i.typeRef] }}">/{{ root_pkg }}/Components/{{ i.typeRef }}</TYPE-TREF>
                 </SW-COMPONENT-PROTOTYPE>
                 {% endfor %}
               </COMPONENTS>

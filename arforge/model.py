@@ -3,6 +3,17 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Tuple
 
+
+SWC_CATEGORY_APPLICATION = "application"
+SWC_CATEGORY_SERVICE = "service"
+SWC_CATEGORY_COMPLEX_DEVICE_DRIVER = "complexDeviceDriver"
+
+SWC_CATEGORY_TO_COMPONENT_TYPE = {
+    SWC_CATEGORY_APPLICATION: "APPLICATION-SW-COMPONENT-TYPE",
+    SWC_CATEGORY_SERVICE: "SERVICE-SW-COMPONENT-TYPE",
+    SWC_CATEGORY_COMPLEX_DEVICE_DRIVER: "COMPLEX-DEVICE-DRIVER-SW-COMPONENT-TYPE",
+}
+
 @dataclass(frozen=True)
 class BaseType:
     name: str
@@ -173,6 +184,15 @@ class Swc:
     name: str
     runnables: List[Runnable]
     ports: List[Port]
+    category: str = SWC_CATEGORY_APPLICATION
+
+    @property
+    def component_type_tag(self) -> str:
+        return SWC_CATEGORY_TO_COMPONENT_TYPE[self.category]
+
+    @property
+    def component_type_dest(self) -> str:
+        return self.component_type_tag
 
 @dataclass(frozen=True)
 class Connection:
@@ -390,7 +410,14 @@ def from_dict(d: Dict[str, Any]) -> Project:
                     comSpec=com_spec,
                 )
             )
-        swcs.append(Swc(name=s["name"], runnables=runs, ports=ports))
+        swcs.append(
+            Swc(
+                name=s["name"],
+                runnables=runs,
+                ports=ports,
+                category=s.get("category", SWC_CATEGORY_APPLICATION),
+            )
+        )
 
     system_data = d.get("system")
     if system_data:

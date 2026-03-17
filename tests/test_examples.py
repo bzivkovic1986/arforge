@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from dataclasses import replace
 import hashlib
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 
@@ -117,8 +119,46 @@ def test_split_export_system_contains_multiple_component_prototypes(tmp_path: Pa
     assert "<SHORT-NAME>SpeedConsumer_2</SHORT-NAME>" in system_xml
     assert system_xml.count("<SW-COMPONENT-PROTOTYPE>") == 4
     assert system_xml.count("<ASSEMBLY-SW-CONNECTOR>") == 6
-    assert "<TYPE-TREF DEST=\"APPLICATION-SW-COMPONENT-TYPE\">/DEMO/Components/SpeedSensor</TYPE-TREF>" in system_xml
+    assert "<TYPE-TREF DEST=\"SERVICE-SW-COMPONENT-TYPE\">/DEMO/Components/SpeedSensor</TYPE-TREF>" in system_xml
     assert "<CONTEXT-COMPONENT-REF DEST=\"SW-COMPONENT-PROTOTYPE\">/DEMO/System/Composition_DemoSystem/SpeedSensor_1</CONTEXT-COMPONENT-REF>" in system_xml
+
+
+def test_omitted_swc_category_defaults_to_application(tmp_path: Path) -> None:
+    project_dir = tmp_path / "examples"
+    shutil.copytree(REPO_ROOT / "examples", project_dir)
+    speed_sensor_path = project_dir / "swcs" / "SpeedSensor.yaml"
+    speed_sensor_yaml = speed_sensor_path.read_text(encoding="utf-8")
+    speed_sensor_path.write_text(speed_sensor_yaml.replace('  category: "service"\n', ""), encoding="utf-8")
+
+    project = load_and_validate_aggregator(project_dir / "autosar.project.yaml")
+    speed_sensor = next(swc for swc in project.swcs if swc.name == "SpeedSensor")
+    assert speed_sensor.category == "application"
+    assert speed_sensor.component_type_tag == "APPLICATION-SW-COMPONENT-TYPE"
+
+
+def test_split_export_uses_swc_category_for_component_types_and_prototype_dests(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    service_project = replace(
+        project,
+        swcs=[
+            replace(swc, category="service") if swc.name == "SpeedSensor" else replace(swc, category="complexDeviceDriver")
+            for swc in project.swcs
+        ],
+    )
+
+    _ = write_outputs(service_project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    speed_sensor_xml = (out_dir / "SpeedSensor.arxml").read_text(encoding="utf-8")
+    speed_consumer_xml = (out_dir / "SpeedConsumer.arxml").read_text(encoding="utf-8")
+    system_xml = (out_dir / "system.arxml").read_text(encoding="utf-8")
+
+    assert "<SERVICE-SW-COMPONENT-TYPE>" in speed_sensor_xml
+    assert "<APPLICATION-SW-COMPONENT-TYPE>" not in speed_sensor_xml
+    assert "<COMPLEX-DEVICE-DRIVER-SW-COMPONENT-TYPE>" in speed_consumer_xml
+    assert "<TYPE-TREF DEST=\"SERVICE-SW-COMPONENT-TYPE\">/DEMO/Components/SpeedSensor</TYPE-TREF>" in system_xml
+    assert "<TYPE-TREF DEST=\"COMPLEX-DEVICE-DRIVER-SW-COMPONENT-TYPE\">/DEMO/Components/SpeedConsumer</TYPE-TREF>" in system_xml
 
 
 def test_split_export_orders_interfaces_and_connector_fragments_deterministically(tmp_path: Path) -> None:

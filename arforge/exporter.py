@@ -169,6 +169,10 @@ def _sort_swc(swc: Swc) -> Swc:
     )
 
 
+def _swc_type_dests(project: Project) -> Dict[str, str]:
+    return {swc.name: swc.component_type_dest for swc in project.swcs}
+
+
 def _sort_project_for_export(project: Project) -> Project:
     implementation_types = []
     for implementation_type in sorted(project.implementationDataTypes, key=lambda data_type: data_type.name):
@@ -312,6 +316,7 @@ def render_system(project: Project, template_dir: Path, template_name: str = SYS
         composition_name=project.system.composition.name,
         components=project.system.composition.components,
         connections=connections,
+        swc_type_dests=_swc_type_dests(project),
     )
 
 
@@ -351,6 +356,7 @@ def write_outputs_with_report(
         swcs = project.swcs
         sr, cs = _split_interfaces(project)
         connections = _build_connections(project)
+        swc_type_dests = _swc_type_dests(project)
         rendered = {
             out: tpl.render(
                 root_pkg=project.rootPackage,
@@ -368,6 +374,7 @@ def write_outputs_with_report(
                 composition_name=project.system.composition.name,
                 instances=project.system.composition.components,
                 connections=connections,
+                swc_type_dests=swc_type_dests,
             )
         }
         layout = "monolithic"
