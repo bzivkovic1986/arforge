@@ -36,6 +36,7 @@ class ValidationReport:
             "cases": [
                 {
                     "case_id": c.case_id,
+                    "name": c.name,
                     "description": c.description,
                     "status": c.status,
                     "outcome": c.outcome,
@@ -60,6 +61,7 @@ class ValidationReport:
 @dataclass(frozen=True)
 class CaseResult:
     case_id: str
+    name: str
     description: str
     status: CaseStatus
     outcome: Optional[CaseOutcome]
@@ -227,6 +229,7 @@ class ValidationContext:
 
 class ValidationCase(ABC):
     case_id: str = ""
+    name: str = ""
     description: str = ""
     tags: Tuple[str, ...] = ()
     default_severity: Severity = "error"
@@ -267,6 +270,7 @@ class ValidationRunner:
                 case_results.append(
                     CaseResult(
                         case_id=case.case_id,
+                        name=case.name,
                         description=case.description,
                         status="skip",
                         outcome=None,
@@ -286,6 +290,7 @@ class ValidationRunner:
             case_results.append(
                 CaseResult(
                     case_id=case.case_id,
+                    name=case.name,
                     description=case.description,
                     status="run",
                     outcome="fail" if has_errors else "ok",

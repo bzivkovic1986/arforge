@@ -7,7 +7,8 @@ from .semantic_validation import Finding, ValidationCase, ValidationContext
 
 class DuplicateNameCase(ValidationCase):
     case_id = "CORE-001"
-    description = "Check global uniqueness constraints."
+    name = "GlobalUniqueness"
+    description = "Checks that globally named model elements remain unique."
     tags = ("core", "structure", "uniqueness")
 
     def run(self, ctx: ValidationContext) -> List[Finding]:
@@ -37,7 +38,8 @@ class DuplicateNameCase(ValidationCase):
 
 class BaseTypeMetadataCase(ValidationCase):
     case_id = "CORE-002"
-    description = "Validate base type metadata and per-base-type uniqueness."
+    name = "BaseTypeMetadata"
+    description = "Checks base type uniqueness and required metadata consistency."
     tags = ("core", "types", "base-types")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -90,7 +92,8 @@ class BaseTypeMetadataCase(ValidationCase):
 
 class InterfaceSemanticCase(ValidationCase):
     case_id = "CORE-010"
-    description = "Validate interface structure and datatype references."
+    name = "InterfaceSemantics"
+    description = "Checks interface structure and datatype references."
     tags = ("core", "interfaces")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -501,7 +504,8 @@ class InterfaceSemanticCase(ValidationCase):
 
 class ApplicationConstraintCase(ValidationCase):
     case_id = "CORE-011"
-    description = "Validate ApplicationDataType constraint ranges and compatibility with implementation types."
+    name = "ApplicationConstraints"
+    description = "Checks application datatype constraints against implementation types and compu methods."
     tags = ("core", "types", "constraints")
 
     _FLOAT_BASE_TYPES = {"float32", "float64"}
@@ -614,7 +618,8 @@ class ApplicationConstraintCase(ValidationCase):
 
 class SwcStructureCase(ValidationCase):
     case_id = "CORE-020"
-    description = "Validate SWC internal uniqueness constraints."
+    name = "SwcStructure"
+    description = "Checks SWC-local uniqueness for runnables and ports."
     tags = ("core", "swc")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -636,7 +641,8 @@ class SwcStructureCase(ValidationCase):
 
 class SwcPortInterfaceCase(ValidationCase):
     case_id = "CORE-021"
-    description = "Validate SWC ports against interface model."
+    name = "PortInterfaceReferences"
+    description = "Checks that each SWC port references an existing interface and uses the expected kind."
     tags = ("core", "swc", "interfaces")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -670,7 +676,8 @@ class SwcPortInterfaceCase(ValidationCase):
 
 class RunnableAccessSemanticCase(ValidationCase):
     case_id = "CORE-022"
-    description = "Validate runnable reads/writes/calls against SWC port and interface semantics."
+    name = "RunnableAccessSemantics"
+    description = "Checks runnable reads, writes, and calls against SWC port and interface semantics."
     tags = ("core", "swc", "runnables", "interfaces")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -829,7 +836,8 @@ class RunnableAccessSemanticCase(ValidationCase):
 
 class OperationInvokedEventCase(ValidationCase):
     case_id = "CORE-023"
-    description = "Validate operation-invoked event bindings for provided clientServer operations."
+    name = "OperationInvokedEvents"
+    description = "Checks operation-invoked event bindings for provided client-server operations."
     tags = ("core", "swc", "runnables", "interfaces")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -918,7 +926,8 @@ class OperationInvokedEventCase(ValidationCase):
 
 class RunnableTriggerPolicyCase(ValidationCase):
     case_id = "CORE-024"
-    description = "Enforce runnable trigger policy: exactly one trigger style per runnable."
+    name = "RunnableTriggerPolicy"
+    description = "Checks that each runnable uses exactly one trigger style."
     tags = ("core", "swc", "runnables")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -954,7 +963,8 @@ class RunnableTriggerPolicyCase(ValidationCase):
 
 class ComSpecSemanticCase(ValidationCase):
     case_id = "CORE-025"
-    description = "Validate sender-receiver and client-server ComSpec on SWC ports."
+    name = "PortComSpecSemantics"
+    description = "Checks sender-receiver and client-server ComSpec on SWC ports."
     tags = ("core", "swc", "ports", "comspec")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -1122,7 +1132,8 @@ class ComSpecSemanticCase(ValidationCase):
 
 class RunnableRaisedErrorCase(ValidationCase):
     case_id = "CORE-026"
-    description = "Validate runnable raisesErrors declarations for provided clientServer operations."
+    name = "RunnableRaisedErrors"
+    description = "Checks runnable raisesErrors declarations for provided client-server operations."
     tags = ("core", "swc", "runnables", "interfaces", "errors")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -1233,7 +1244,8 @@ class RunnableRaisedErrorCase(ValidationCase):
 
 class DataReceiveEventCase(ValidationCase):
     case_id = "CORE-027"
-    description = "Validate dataReceiveEvents bindings for required senderReceiver ports."
+    name = "DataReceiveEvents"
+    description = "Checks dataReceiveEvents bindings for required sender-receiver ports."
     tags = ("core", "swc", "runnables", "interfaces")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -1299,7 +1311,8 @@ class DataReceiveEventCase(ValidationCase):
 
 class SystemInstanceTypeCase(ValidationCase):
     case_id = "CORE-030"
-    description = "Validate composition component prototypes reference known SWC types."
+    name = "SystemInstanceTypes"
+    description = "Checks that composition component prototypes reference known SWC types."
     tags = ("core", "system")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -1333,7 +1346,8 @@ def _connection_sort_key(conn) -> tuple[str, str, str, str, str, str]:
 
 class ConnectionSemanticCase(ValidationCase):
     case_id = "CORE-040"
-    description = "Validate system connections and connector-level SR/CS semantics."
+    name = "ConnectionSemantics"
+    description = "Checks system connections and connector-level sender-receiver and client-server semantics."
     tags = ("core", "system", "connections")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -1490,7 +1504,8 @@ class ConnectionSemanticCase(ValidationCase):
 
 class CsPortConnectivityCase(ValidationCase):
     case_id = "CORE-043"
-    description = "Validate clientServer connectivity against system instances and runnable behavior."
+    name = "ClientServerConnectivity"
+    description = "Checks client-server port connectivity against instantiated components and runnable behavior."
     tags = ("core", "system", "connections", "runnables", "client-server")
     default_severity = "error"
 
@@ -1557,7 +1572,8 @@ class CsPortConnectivityCase(ValidationCase):
 
 class CsPortUsageCase(ValidationCase):
     case_id = "CORE-044"
-    description = "Validate that connected clientServer ports are exercised by runnable behavior."
+    name = "ClientServerUsage"
+    description = "Checks whether connected client-server ports are actually used by runnable behavior."
     tags = ("core", "system", "connections", "runnables", "client-server")
     default_severity = "warning"
 
@@ -1628,7 +1644,8 @@ class CsPortUsageCase(ValidationCase):
 
 class SrPortConnectivityCase(ValidationCase):
     case_id = "CORE-041"
-    description = "Validate senderReceiver connectivity against system instances and runnable behavior."
+    name = "SenderReceiverConnectivity"
+    description = "Checks sender-receiver port connectivity against instantiated components and runnable behavior."
     tags = ("core", "system", "connections", "runnables", "sender-receiver")
     default_severity = "error"
 
@@ -1714,7 +1731,8 @@ class SrPortConnectivityCase(ValidationCase):
 
 class SrPortUsageCase(ValidationCase):
     case_id = "CORE-042"
-    description = "Validate that connected senderReceiver ports are exercised by runnable behavior."
+    name = "SenderReceiverUsage"
+    description = "Checks whether connected sender-receiver ports are actually used by runnable behavior."
     tags = ("core", "system", "connections", "runnables", "sender-receiver")
     default_severity = "warning"
 

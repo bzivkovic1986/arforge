@@ -88,6 +88,32 @@ def test_cli_validate_smoke() -> None:
     assert result.returncode == 0, result.stdout + result.stderr
 
 
+def test_cli_validate_verbose_includes_case_name() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "arforge.cli", "validate", str(VALID_PROJECT), "-v"],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "CORE-021 PortInterfaceReferences RUN OK" in result.stdout
+
+
+def test_cli_validate_extra_verbose_includes_case_description() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "arforge.cli", "validate", str(VALID_PROJECT), "-vv"],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "CORE-021 PortInterfaceReferences" in result.stdout
+    assert "Checks that each SWC port references an existing interface and uses the" in result.stdout
+    assert "expected kind." in result.stdout
+
+
 def test_split_export_includes_sr_comspec_blocks(tmp_path: Path) -> None:
     project = load_and_validate_aggregator(VALID_PROJECT)
     template_dir = REPO_ROOT / "templates"

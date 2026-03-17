@@ -59,6 +59,31 @@ Findings are deterministic:
 
 ComSpec validation is implemented in dedicated case `CORE-025` to keep the rule isolated and maintainable.
 
+Runtime output from `arforge validate -v` shows each case code, name, result, timing, and finding count. `arforge validate -vv` also prints the matching one-line description shown below.
+
+## Core Validation Cases
+
+| Code | Name | Description |
+|------|------|-------------|
+| CORE-001 | GlobalUniqueness | Checks that globally named model elements remain unique. |
+| CORE-002 | BaseTypeMetadata | Checks base type uniqueness and required metadata consistency. |
+| CORE-010 | InterfaceSemantics | Checks interface structure and datatype references. |
+| CORE-011 | ApplicationConstraints | Checks application datatype constraints against implementation types and compu methods. |
+| CORE-020 | SwcStructure | Checks SWC-local uniqueness for runnables and ports. |
+| CORE-021 | PortInterfaceReferences | Checks that each SWC port references an existing interface and uses the expected kind. |
+| CORE-022 | RunnableAccessSemantics | Checks runnable reads, writes, and calls against SWC port and interface semantics. |
+| CORE-023 | OperationInvokedEvents | Checks operation-invoked event bindings for provided client-server operations. |
+| CORE-024 | RunnableTriggerPolicy | Checks that each runnable uses exactly one trigger style. |
+| CORE-025 | PortComSpecSemantics | Checks sender-receiver and client-server ComSpec on SWC ports. |
+| CORE-026 | RunnableRaisedErrors | Checks runnable raisesErrors declarations for provided client-server operations. |
+| CORE-027 | DataReceiveEvents | Checks dataReceiveEvents bindings for required sender-receiver ports. |
+| CORE-030 | SystemInstanceTypes | Checks that composition component prototypes reference known SWC types. |
+| CORE-040 | ConnectionSemantics | Checks system connections and connector-level sender-receiver and client-server semantics. |
+| CORE-041 | SenderReceiverConnectivity | Checks sender-receiver port connectivity against instantiated components and runnable behavior. |
+| CORE-042 | SenderReceiverUsage | Checks whether connected sender-receiver ports are actually used by runnable behavior. |
+| CORE-043 | ClientServerConnectivity | Checks client-server port connectivity against instantiated components and runnable behavior. |
+| CORE-044 | ClientServerUsage | Checks whether connected client-server ports are actually used by runnable behavior. |
+
 ## Fixture-driven testing
 
 `tests/test_examples.py`:
