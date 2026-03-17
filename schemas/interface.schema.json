@@ -8,6 +8,10 @@
       "type": "string",
       "minLength": 1
     },
+    "descriptionProperty": {
+      "type": "string",
+      "description": "Optional human-readable documentation for this modeled object."
+    },
     "dataElement": {
       "type": "object",
       "description": "Sender-receiver data element exposed by the interface.",
@@ -22,6 +26,9 @@
           "examples": [
             "VehicleSpeed"
           ]
+        },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
         },
         "typeRef": {
           "$ref": "#/$defs/refName",
@@ -54,6 +61,9 @@
           "examples": [
             "DtcId"
           ]
+        },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
         },
         "direction": {
           "type": "string",
@@ -99,6 +109,9 @@
             "DTC_NOT_FOUND"
           ]
         },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
+        },
         "code": {
           "type": "integer",
           "description": "Numeric application error code.",
@@ -128,6 +141,9 @@
           "examples": [
             "ReadDTC"
           ]
+        },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
         },
         "arguments": {
           "type": "array",
@@ -216,6 +232,9 @@
           "examples": [
             "If_Diagnostics"
           ]
+        },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
         },
         "type": {
           "type": "string",

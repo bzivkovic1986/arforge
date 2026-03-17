@@ -8,6 +8,10 @@
       "type": "string",
       "minLength": 1
     },
+    "descriptionProperty": {
+      "type": "string",
+      "description": "Optional human-readable documentation for this modeled object."
+    },
     "endpoint": {
       "type": "string",
       "description": "Component instance and port reference in the form InstanceName.PortName.",
@@ -30,6 +34,9 @@
           "examples": [
             "SpeedSensor_1"
           ]
+        },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
         },
         "typeRef": {
           "$ref": "#/$defs/name",
@@ -58,6 +65,9 @@
         "from": {
           "$ref": "#/$defs/endpoint",
           "description": "Source endpoint in the form InstanceName.PortName."
+        },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
         },
         "to": {
           "$ref": "#/$defs/endpoint",
@@ -92,6 +102,9 @@
             "DemoSystem"
           ]
         },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
+        },
         "composition": {
           "type": "object",
           "description": "Top-level composition containing component instances and assembly connectors.",
@@ -107,6 +120,9 @@
               "examples": [
                 "Composition_DemoSystem"
               ]
+            },
+            "description": {
+              "$ref": "#/$defs/descriptionProperty"
             },
             "components": {
               "type": "array",

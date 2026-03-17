@@ -8,6 +8,10 @@
       "type": "string",
       "minLength": 1
     },
+    "descriptionProperty": {
+      "type": "string",
+      "description": "Optional human-readable documentation for this modeled object."
+    },
     "dataAccess": {
       "type": "object",
       "description": "Runnable access to a sender-receiver data element on a port.",
@@ -130,6 +134,9 @@
           "examples": [
             "Runnable_ReadSpeed"
           ]
+        },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
         },
         "timingEventMs": {
           "type": "integer",
@@ -390,6 +397,9 @@
             "Rp_VehicleSpeed"
           ]
         },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
+        },
         "direction": {
           "type": "string",
           "description": "Port direction from the SWC point of view.",
@@ -462,6 +472,9 @@
           "examples": [
             "SpeedConsumer"
           ]
+        },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
         },
         "category": {
           "type": "string",

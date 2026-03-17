@@ -2,9 +2,11 @@
 # Defines a Sender-Receiver or Client-Server AUTOSAR interface.
 interface:
   name: "If_VehicleSpeed"
+  description: "Provides vehicle speed related sender-receiver data."
   type: "senderReceiver"
   dataElements:
     - name: "VehicleSpeed"
+      description: "Current vehicle speed in km/h."
       typeRef: "App_VehicleSpeed"
     - name: "WheelSpeeds"
       typeRef: "Impl_WheelSpeeds"

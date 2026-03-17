@@ -8,6 +8,10 @@
       "type": "string",
       "minLength": 1
     },
+    "descriptionProperty": {
+      "type": "string",
+      "description": "Optional human-readable documentation for this modeled object."
+    },
     "baseTypeDefinition": {
       "type": "object",
       "description": "Concrete base type definition with bit size and signedness.",
@@ -23,6 +27,9 @@
           "examples": [
             "uint8"
           ]
+        },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
         },
         "bitLength": {
           "type": "integer",

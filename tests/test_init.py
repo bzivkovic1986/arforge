@@ -47,11 +47,15 @@ def test_init_default_creates_valid_project(tmp_path: Path) -> None:
     system_yaml = (project_dir / "system.yaml").read_text(encoding="utf-8")
     interface_yaml = (project_dir / "interfaces" / "If_SystemValue.yaml").read_text(encoding="utf-8")
     consumer_yaml = (project_dir / "swcs" / "SystemValueConsumer.yaml").read_text(encoding="utf-8")
+    application_types_yaml = (project_dir / "types" / "application_types.yaml").read_text(encoding="utf-8")
     assert project_yaml.startswith("# ARForge: Project input manifest")
     assert system_yaml.startswith("# ARForge: System composition")
     assert interface_yaml.startswith("# ARForge: Interface definition")
     assert 'dataElement: "SystemValue"' not in system_yaml
     assert 'dataReceiveEvents:' in consumer_yaml
+    assert 'description: "Publishes the current demo system value."' in interface_yaml
+    assert 'description: "Consumes the demo system value through queued reception."' in consumer_yaml
+    assert 'description: "Project-level value shared between the demo components."' in application_types_yaml
 
     out_dir = tmp_path / "out"
     written = write_outputs(project, template_dir=TEMPLATE_DIR, out=out_dir, split_by_swc=True)

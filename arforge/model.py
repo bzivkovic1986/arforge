@@ -17,6 +17,7 @@ SWC_CATEGORY_TO_COMPONENT_TYPE = {
 @dataclass(frozen=True)
 class BaseType:
     name: str
+    description: str | None = None
     bitLength: int | None = None
     signedness: str | None = None
     nativeDeclaration: str | None = None
@@ -26,11 +27,13 @@ class BaseType:
 class ImplementationField:
     name: str
     typeRef: str
+    description: str | None = None
 
 
 @dataclass(frozen=True)
 class ImplementationDataType:
     name: str
+    description: str | None = None
     baseTypeRef: str | None = None
     kind: str | None = None
     fields: List[ImplementationField] = field(default_factory=list)
@@ -50,6 +53,7 @@ class ImplementationDataType:
 class ApplicationDataType:
     name: str
     implementationTypeRef: str
+    description: str | None = None
     constraint: "ConstraintRange | None" = None
     unitRef: str | None = None
     compuMethodRef: str | None = None
@@ -64,6 +68,7 @@ class ConstraintRange:
 @dataclass(frozen=True)
 class Unit:
     name: str
+    description: str | None = None
     displayName: str | None = None
 
 
@@ -77,6 +82,7 @@ class TextTableEntry:
 class CompuMethod:
     name: str
     category: str
+    description: str | None = None
     unitRef: str | None = None
     factor: float | None = None
     offset: float | None = None
@@ -88,10 +94,12 @@ class CompuMethod:
 class DataElement:
     name: str
     typeRef: str
+    description: str | None = None
 
 @dataclass(frozen=True)
 class Operation:
     name: str
+    description: str | None = None
     arguments: List["OperationArgument"] = field(default_factory=list)
     returnType: str = "void"
     possibleErrors: List["ApplicationError"] = field(default_factory=list)
@@ -101,6 +109,7 @@ class Operation:
 class ApplicationError:
     name: str
     code: int | None = None
+    description: str | None = None
 
 
 @dataclass(frozen=True)
@@ -108,17 +117,20 @@ class OperationArgument:
     name: str
     direction: str
     typeRef: str
+    description: str | None = None
 
 @dataclass(frozen=True)
 class Interface:
     name: str
     type: str  # senderReceiver | clientServer
+    description: str | None = None
     dataElements: List[DataElement] | None = None
     operations: List[Operation] | None = None
 
 @dataclass(frozen=True)
 class Runnable:
     name: str
+    description: str | None = None
     timingEventMs: int | None = None
     initEvent: bool = False
     reads: List["DataAccess"] = field(default_factory=list)
@@ -146,12 +158,14 @@ class OperationCall:
 class OperationInvokedEvent:
     port: str
     operation: str
+    description: str | None = None
 
 
 @dataclass(frozen=True)
 class DataReceiveEvent:
     port: str
     dataElement: str
+    description: str | None = None
 
 
 @dataclass(frozen=True)
@@ -177,6 +191,7 @@ class Port:
     direction: str  # provides | requires
     interfaceRef: str
     interfaceType: str  # senderReceiver | clientServer
+    description: str | None = None
     comSpec: ComSpec | None = None
 
 @dataclass(frozen=True)
@@ -184,6 +199,7 @@ class Swc:
     name: str
     runnables: List[Runnable]
     ports: List[Port]
+    description: str | None = None
     category: str = SWC_CATEGORY_APPLICATION
 
     @property
@@ -200,6 +216,7 @@ class Connection:
     from_port: str
     to_instance: str
     to_port: str
+    description: str | None = None
     dataElement: str | None = None
     operation: str | None = None
 
@@ -227,6 +244,7 @@ class Connection:
 class ComponentPrototype:
     name: str
     typeRef: str
+    description: str | None = None
 
 
 @dataclass(frozen=True)
@@ -234,12 +252,14 @@ class Composition:
     name: str
     components: List[ComponentPrototype]
     connectors: List[Connection]
+    description: str | None = None
 
 
 @dataclass(frozen=True)
 class System:
     name: str
     composition: Composition
+    description: str | None = None
 
     @property
     def instances(self) -> List[ComponentPrototype]:
@@ -280,7 +300,13 @@ def _parse_application_errors(errors: List[Any]) -> List[ApplicationError]:
     parsed: List[ApplicationError] = []
     for error in errors:
         if isinstance(error, dict):
-            parsed.append(ApplicationError(name=str(error.get("name", "")), code=error.get("code")))
+            parsed.append(
+                ApplicationError(
+                    name=str(error.get("name", "")),
+                    code=error.get("code"),
+                    description=error.get("description"),
+                )
+            )
 
     return sorted(
         parsed,
@@ -298,6 +324,7 @@ def from_dict(d: Dict[str, Any]) -> Project:
         impl_types.append(
             ImplementationDataType(
                 name=idt["name"],
+                description=idt.get("description"),
                 baseTypeRef=idt.get("baseTypeRef"),
                 kind=idt.get("kind"),
                 fields=[ImplementationField(**f) for f in idt.get("fields", [])],
@@ -313,6 +340,7 @@ def from_dict(d: Dict[str, Any]) -> Project:
             ApplicationDataType(
                 name=adt["name"],
                 implementationTypeRef=adt["implementationTypeRef"],
+                description=adt.get("description"),
                 constraint=constraint,
                 unitRef=adt.get("unitRef"),
                 compuMethodRef=adt.get("compuMethodRef"),
@@ -325,6 +353,7 @@ def from_dict(d: Dict[str, Any]) -> Project:
             CompuMethod(
                 name=cm["name"],
                 category=cm["category"],
+                description=cm.get("description"),
                 unitRef=cm.get("unitRef"),
                 factor=cm.get("factor"),
                 offset=cm.get("offset"),
@@ -338,7 +367,15 @@ def from_dict(d: Dict[str, Any]) -> Project:
     for itf in d.get("interfaces", []):
         if itf["type"] == "senderReceiver":
             des = [DataElement(**de) for de in itf.get("dataElements", [])]
-            ifaces.append(Interface(name=itf["name"], type=itf["type"], dataElements=des, operations=None))
+            ifaces.append(
+                Interface(
+                    name=itf["name"],
+                    type=itf["type"],
+                    description=itf.get("description"),
+                    dataElements=des,
+                    operations=None,
+                )
+            )
         else:
             ops = []
             for op in itf.get("operations", []):
@@ -346,12 +383,21 @@ def from_dict(d: Dict[str, Any]) -> Project:
                 ops.append(
                     Operation(
                         name=op["name"],
+                        description=op.get("description"),
                         arguments=op_args,
                         returnType=op.get("returnType", "void"),
                         possibleErrors=_parse_application_errors(op.get("possibleErrors", [])),
                     )
                 )
-            ifaces.append(Interface(name=itf["name"], type=itf["type"], dataElements=None, operations=ops))
+            ifaces.append(
+                Interface(
+                    name=itf["name"],
+                    type=itf["type"],
+                    description=itf.get("description"),
+                    dataElements=None,
+                    operations=ops,
+                )
+            )
 
     iface_by_name = {i.name: i for i in ifaces}
 
@@ -360,6 +406,7 @@ def from_dict(d: Dict[str, Any]) -> Project:
         runs = [
             Runnable(
                 name=r["name"],
+                description=r.get("description"),
                 timingEventMs=r.get("timingEventMs"),
                 initEvent=bool(r.get("initEvent", False)),
                 reads=sorted(
@@ -407,6 +454,7 @@ def from_dict(d: Dict[str, Any]) -> Project:
                     direction=p["direction"],
                     interfaceRef=it_name,
                     interfaceType=interfaceType,
+                    description=p.get("description"),
                     comSpec=com_spec,
                 )
             )
@@ -415,6 +463,7 @@ def from_dict(d: Dict[str, Any]) -> Project:
                 name=s["name"],
                 runnables=runs,
                 ports=ports,
+                description=s.get("description"),
                 category=s.get("category", SWC_CATEGORY_APPLICATION),
             )
         )
@@ -422,17 +471,40 @@ def from_dict(d: Dict[str, Any]) -> Project:
     system_data = d.get("system")
     if system_data:
         composition_data = system_data["composition"]
-        instances = [ComponentPrototype(name=i["name"], typeRef=i["typeRef"]) for i in composition_data.get("components", [])]
+        instances = [
+            ComponentPrototype(
+                name=i["name"],
+                typeRef=i["typeRef"],
+                description=i.get("description"),
+            )
+            for i in composition_data.get("components", [])
+        ]
         conns: List[Connection] = []
         for c in composition_data.get("connectors", []):
             fs, fp = _split_endpoint(c["from"])
             ts, tp = _split_endpoint(c["to"])
-            conns.append(Connection(
-                from_instance=fs, from_port=fp, to_instance=ts, to_port=tp,
-                dataElement=c.get("dataElement"), operation=c.get("operation")
-            ))
-        composition = Composition(name=composition_data["name"], components=instances, connectors=conns)
-        system = System(name=system_data["name"], composition=composition)
+            conns.append(
+                Connection(
+                    from_instance=fs,
+                    from_port=fp,
+                    to_instance=ts,
+                    to_port=tp,
+                    description=c.get("description"),
+                    dataElement=c.get("dataElement"),
+                    operation=c.get("operation"),
+                )
+            )
+        composition = Composition(
+            name=composition_data["name"],
+            components=instances,
+            connectors=conns,
+            description=composition_data.get("description"),
+        )
+        system = System(
+            name=system_data["name"],
+            composition=composition,
+            description=system_data.get("description"),
+        )
     else:
         raise KeyError("Missing required 'system' model.")
 

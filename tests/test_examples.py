@@ -36,6 +36,32 @@ def test_validate_main_example_passes() -> None:
     load_and_validate_aggregator(VALID_PROJECT)
 
 
+def test_descriptions_are_loaded_into_model_ir() -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+
+    assert next(interface for interface in project.interfaces if interface.name == "If_VehicleSpeed").description == (
+        "Provides vehicle speed related sender-receiver data."
+    )
+    assert next(swc for swc in project.swcs if swc.name == "SpeedConsumer").description == (
+        "Consumes speed data and calls diagnostic services."
+    )
+    speed_port = next(
+        port
+        for swc in project.swcs
+        if swc.name == "SpeedConsumer"
+        for port in swc.ports
+        if port.name == "Rp_VehicleSpeed"
+    )
+    assert speed_port.description == "Required SR port for incoming vehicle speed."
+    assert next(data_type for data_type in project.applicationDataTypes if data_type.name == "App_VehicleSpeed").description == (
+        "Vehicle speed value interpreted in kilometers per hour."
+    )
+    assert next(compu for compu in project.compuMethods if compu.name == "CM_Speed_Kmh_Linear").description == (
+        "Converts raw speed counts into km/h."
+    )
+    assert project.system.description == "Example system with paired sensor and consumer instances."
+
+
 @pytest.mark.parametrize(
     "fixture_path",
     _invalid_project_fixtures(),

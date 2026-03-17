@@ -2,6 +2,7 @@
 # Defines component prototypes and connectors between ports.
 system:
   name: "DemoSystem"
+  description: "Example system with paired sensor and consumer instances."
   composition:
     name: "Composition_DemoSystem"
     components:
