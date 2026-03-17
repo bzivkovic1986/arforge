@@ -1,0 +1,17 @@
+# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Tests validation failure for cs call on unconnected requires port.
+system:
+  name: "BadSystem_CsCallUnconnected"
+  composition:
+    name: "Composition_BadSystem_CsCallUnconnected"
+    components:
+      - name: "SpeedSensor_1"
+        typeRef: "SpeedSensor"
+      - name: "SpeedConsumer_1"
+        typeRef: "SpeedConsumer"
+    connectors:
+      - from: "SpeedSensor_1.Pp_VehicleSpeed"
+        to: "SpeedConsumer_1.Rp_VehicleSpeed"
+      - from: "SpeedSensor_1.Pp_Diag"
+        to: "SpeedConsumer_1.Rp_DiagAsync"

@@ -28,7 +28,12 @@ def _is_project_fixture(path: Path) -> bool:
 
 
 def _invalid_project_fixtures() -> list[Path]:
-    fixtures = [p for p in sorted(INVALID_DIR.glob("*.yaml")) if _is_project_fixture(p)]
+    warning_only = {"project_connected_sr_port_unused.yaml"}
+    fixtures = [
+        p
+        for p in sorted(INVALID_DIR.glob("*.yaml"))
+        if _is_project_fixture(p) and p.name not in warning_only
+    ]
     return fixtures
 
 
@@ -415,6 +420,7 @@ def test_split_export_operation_invoked_events_reference_operations(tmp_path: Pa
         ("project_data_receive_event_unknown_dataelement.yaml", "CORE-027-DRE-UNKNOWN-DATAELEMENT"),
         ("project_data_receive_event_on_provides_port.yaml", "CORE-027-DRE-DIRECTION"),
         ("project_data_receive_event_on_client_server_port.yaml", "CORE-027-DRE-INTERFACE-TYPE"),
+        ("project_cs_call_unconnected.yaml", "CORE-043-CS-CALL-UNCONNECTED"),
         ("project_cs_duplicate_port_pair.yaml", "CORE-040-CS-DUPLICATE-PORT-PAIR"),
         ("project_cs_interface_mismatch.yaml", "CORE-040-INTERFACE-MISMATCH"),
         ("project_cs_wrong_directions.yaml", "CORE-040-FROM-DIRECTION"),
@@ -434,6 +440,22 @@ def test_data_receive_event_invalid_fixtures_emit_expected_codes(fixture_name: s
     report = build_semantic_report(project, ruleset="core")
     error_codes = {finding.code for finding in report.error_findings()}
     assert expected_code in error_codes
+
+
+@pytest.mark.parametrize(
+    ("fixture_name", "expected_warning"),
+    [
+        ("project_sr_read_unconnected.yaml", "CORE-041-SR-REQUIRES-NO-INCOMING"),
+        ("project_sr_write_unconnected.yaml", "CORE-041-SR-PROVIDES-NO-OUTGOING"),
+        ("project_cs_call_unconnected.yaml", "CORE-044-CS-REQUIRES-NO-CONNECTOR"),
+        ("project_connected_sr_port_unused.yaml", "CORE-042-SR-CONNECTED-REQUIRES-UNUSED"),
+    ],
+)
+def test_invalid_project_fixtures_emit_expected_warnings(fixture_name: str, expected_warning: str) -> None:
+    project = load_aggregator(INVALID_DIR / fixture_name)
+    report = build_semantic_report(project, ruleset="core")
+    warning_codes = {finding.code for finding in report.findings if finding.severity == "warning"}
+    assert expected_warning in warning_codes
 
 
 def test_split_export_is_deterministic(tmp_path: Path) -> None:

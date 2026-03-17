@@ -47,6 +47,10 @@ Current core rules include:
   - senderReceiver: `mode` required, queued requires `queueLength >= 1`, non-queued must not define `queueLength`, CS fields not allowed
   - clientServer: `callMode` required (`synchronous | asynchronous`), `timeoutMs >= 0`, timeout only allowed for synchronous, SR fields not allowed
 - system connector compatibility checks
+- instantiated-port connectivity and runnable usage checks:
+  - errors for runnable reads/writes/calls/events that reference unconnected instantiated ports
+  - warnings for instantiated SR/CS ports with no connector
+  - warnings for connected SR/CS ports that no runnable in the SWC type actually uses
 
 Findings are deterministic:
 
