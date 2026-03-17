@@ -1,3 +1,5 @@
+﻿# ARForge: Implementation data types
+# Maps AUTOSAR implementation types onto platform base types.
 implementationDataTypes:
   - name: "UInt8"
     baseTypeRef: "uint8"
@@ -26,3 +28,4 @@ implementationDataTypes:
         typeRef: "UInt16"
       - name: "wheel"
         typeRef: "UInt16"
+

@@ -1,3 +1,5 @@
+﻿# ARForge: Interface definition
+# Defines a Sender-Receiver or Client-Server AUTOSAR interface.
 interface:
   name: "If_VehicleSpeed"
   type: "senderReceiver"
@@ -10,3 +12,4 @@ interface:
       typeRef: "Impl_Outer"
     - name: "WheelSpeed"
       typeRef: "SpeedPair_T"
+

@@ -1,3 +1,8 @@
+﻿# ARForge: Invalid example fixture
+# Domain: unit validation.
+# Tests validation failure for speed units.
 units:
   - name: "km_h"
     displayName: "km/h"
+
+

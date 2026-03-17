@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Tests validation failure for duplicate instances.
 system:
   name: "BadSystem_DuplicateInstances"
   composition:
@@ -10,3 +13,5 @@ system:
     connectors:
       - from: "SpeedSensor_1.Pp_VehicleSpeed"
         to: "SpeedSensor_1.Rp_VehicleSpeed"
+
+

@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Tests validation failure for runnable both trigger styles.
 autosar:
   version: "4.2"
   rootPackage: "DEMO"
@@ -12,3 +15,5 @@ inputs:
     - "swcs/SpeedSensor_both_trigger_styles.yaml"
     - "../swcs/SpeedConsumer.yaml"
   system: "../system.yaml"
+
+

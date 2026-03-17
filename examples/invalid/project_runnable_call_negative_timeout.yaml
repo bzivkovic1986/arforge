@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Tests validation failure for runnable call negative timeout.
 autosar:
   version: "4.2"
   rootPackage: "DEMO"
@@ -16,3 +19,5 @@ inputs:
     - "../swcs/SpeedSensor.yaml"
     - "swcs/SpeedConsumer_call_negative_timeout.yaml"
   system: "../system.yaml"
+
+

@@ -1,3 +1,5 @@
+﻿# ARForge: Compu methods
+# Physical scaling and conversion rules used by application data types.
 compuMethods:
   - name: "CM_Speed_Kmh_Linear"
     category: "linear"
@@ -15,3 +17,4 @@ compuMethods:
         label: "Failed"
       - value: 2
         label: "Pending"
+

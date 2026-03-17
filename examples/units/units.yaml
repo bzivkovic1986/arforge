@@ -1,0 +1,6 @@
+﻿# ARForge: Units
+# Physical units referenced by application data types and compu methods.
+units:
+  - name: "km_h"
+    displayName: "km/h"
+

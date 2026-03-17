@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: software component validation.
+# Tests validation failure for comspec on client server port.
 swc:
   name: "SpeedConsumer"
   runnables:
@@ -18,3 +21,5 @@ swc:
       interfaceRef: "If_Diagnostics"
       comSpec:
         mode: "explicit"
+
+

@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: software component validation.
+# Tests validation failure for comspec cs async on provides.
 swc:
   name: "SpeedSensor"
   runnables:
@@ -24,3 +27,5 @@ swc:
       interfaceRef: "If_Diagnostics"
       comSpec:
         callMode: "asynchronous"
+
+

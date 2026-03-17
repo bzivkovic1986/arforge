@@ -1,6 +1,11 @@
+﻿# ARForge: Invalid example fixture
+# Domain: compu method validation.
+# Tests validation failure for text table empty label.
 compuMethods:
   - name: "CM_DtcStatus"
     category: "textTable"
     entries:
       - value: 0
         label: ""
+
+

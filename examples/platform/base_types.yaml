@@ -1,3 +1,5 @@
+﻿# ARForge: Base type definitions
+# Platform-specific primitive and raw types.
 baseTypes:
   - name: "uint8"
     bitLength: 8
@@ -7,3 +9,4 @@ baseTypes:
     bitLength: 16
     signedness: "unsigned"
     nativeDeclaration: "uint16"
+

@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: software component validation.
+# Tests validation failure for comspec sr with cs fields.
 swc:
   name: "SpeedConsumer"
   runnables:
@@ -19,3 +22,5 @@ swc:
     - name: "Rp_Diag"
       direction: "requires"
       interfaceRef: "If_Diagnostics"
+
+

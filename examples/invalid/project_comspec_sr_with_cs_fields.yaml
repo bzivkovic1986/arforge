@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Tests validation failure for comspec sr with cs fields.
 autosar:
   version: "4.2"
   rootPackage: "DEMO"
@@ -16,3 +19,5 @@ inputs:
     - "../swcs/SpeedSensor.yaml"
     - "swcs/SpeedConsumer_comspec_sr_with_cs_fields.yaml"
   system: "../system.yaml"
+
+

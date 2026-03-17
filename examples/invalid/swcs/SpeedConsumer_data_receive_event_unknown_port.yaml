@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: software component validation.
+# Tests validation failure for data receive event unknown port.
 swc:
   name: "SpeedConsumer"
   runnables:
@@ -23,3 +26,5 @@ swc:
     - name: "Rp_DiagAsync"
       direction: "requires"
       interfaceRef: "If_Diagnostics"
+
+

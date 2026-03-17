@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: compu method validation.
+# Tests validation failure for text table duplicate values.
 compuMethods:
   - name: "CM_DtcStatus"
     category: "textTable"
@@ -6,3 +9,5 @@ compuMethods:
         label: "OK"
       - value: 0
         label: "Failed"
+
+

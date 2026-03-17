@@ -1,3 +1,5 @@
+﻿# ARForge: Software Component Type
+# Defines ports, runnables, and internal behavior.
 swc:
   name: "SpeedSensor"
   category: "service"
@@ -27,3 +29,4 @@ swc:
     - name: "Pp_Diag"
       direction: "provides"
       interfaceRef: "If_Diagnostics"
+

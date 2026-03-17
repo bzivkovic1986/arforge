@@ -37,10 +37,10 @@ The project loader supports:
 ## Export architecture
 
 - Shared artifacts:
-  - `shared.arxml` (types + interfaces)
+  - `<RootPackage>_SharedTypes.arxml` (types + interfaces)
 - Per-component artifacts:
   - `<SWC>.arxml`
 - System artifact:
-  - `system.arxml`
+  - `<System>.arxml`
 
 Or a monolithic output (`all_42.arxml.j2`) when split mode is disabled.

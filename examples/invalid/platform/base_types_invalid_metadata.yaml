@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: platform type validation.
+# Tests validation failure for invalid metadata.
 baseTypes:
   - name: "uint8"
     bitLength: 0
@@ -5,3 +8,5 @@ baseTypes:
   - name: "uint16"
     bitLength: 16
     signedness: "UNSIGNED"
+
+

@@ -1,3 +1,5 @@
+﻿# ARForge: Project input manifest
+# Lists the YAML files that make up this AUTOSAR project.
 autosar:
   version: "4.2"
   rootPackage: "DEMO"
@@ -15,3 +17,4 @@ inputs:
   swcs:
     - "swcs/*.yaml"
   system: "system.yaml"
+

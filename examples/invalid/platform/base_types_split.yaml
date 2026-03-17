@@ -1,2 +1,7 @@
+﻿# ARForge: Invalid example fixture
+# Domain: platform type validation.
+# Tests validation failure for split.
 baseTypes:
   - name: "uint16"
+
+

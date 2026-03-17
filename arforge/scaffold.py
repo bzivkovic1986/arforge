@@ -4,8 +4,16 @@ from pathlib import Path
 from typing import Dict
 
 
+def _with_header(*header_lines: str, body: str) -> str:
+    header = "\n".join(f"# {line}" for line in header_lines)
+    return f"{header}\n{body}"
+
+
 def project_yaml(system_name: str) -> str:
-    return f"""autosar:
+    return _with_header(
+        "ARForge: Project input manifest",
+        "Lists the YAML files that make up this AUTOSAR project.",
+        body=f"""autosar:
   version: "4.2"
   rootPackage: "{system_name.upper()}"
 
@@ -22,11 +30,15 @@ inputs:
   swcs:
     - "swcs/*.yaml"
   system: "system.yaml"
-"""
+""",
+    )
 
 
 def base_types_yaml() -> str:
-    return """baseTypes:
+    return _with_header(
+        "ARForge: Base type definitions",
+        "Platform-specific primitive and raw types.",
+        body="""baseTypes:
   - name: "uint8"
     bitLength: 8
     signedness: "unsigned"
@@ -35,206 +47,164 @@ def base_types_yaml() -> str:
     bitLength: 16
     signedness: "unsigned"
     nativeDeclaration: "uint16"
-"""
+""",
+    )
 
 
 def implementation_types_yaml() -> str:
-    return """implementationDataTypes:
+    return _with_header(
+        "ARForge: Implementation data types",
+        "Maps AUTOSAR implementation types onto platform base types.",
+        body="""implementationDataTypes:
   - name: "UInt8"
     baseTypeRef: "uint8"
   - name: "UInt16"
     baseTypeRef: "uint16"
-"""
+""",
+    )
 
 
 def application_types_yaml() -> str:
-    return """applicationDataTypes:
-  - name: "App_VehicleSpeed"
+    return _with_header(
+        "ARForge: Application data types",
+        "Project-facing types with optional units and compu methods.",
+        body="""applicationDataTypes:
+  - name: "App_SystemValue"
     implementationTypeRef: "UInt16"
     constraint:
       min: 0
-      max: 300
-    unitRef: "km_h"
-    compuMethodRef: "CM_Speed_Kmh_Linear"
-"""
+      max: 1000
+    unitRef: "raw_count"
+    compuMethodRef: "CM_SystemValue_Identity"
+""",
+    )
 
 
 def units_yaml() -> str:
-    return """units:
-  - name: "km_h"
-    displayName: "km/h"
-"""
+    return _with_header(
+        "ARForge: Units",
+        "Physical units referenced by application data types and compu methods.",
+        body="""units:
+  - name: "raw_count"
+    displayName: "count"
+""",
+    )
 
 
 def compu_methods_yaml() -> str:
-    return """compuMethods:
-  - name: "CM_Speed_Kmh_Linear"
+    return _with_header(
+        "ARForge: Compu methods",
+        "Simple physical scaling definitions for application data types.",
+        body="""compuMethods:
+  - name: "CM_SystemValue_Identity"
     category: "linear"
-    unitRef: "km_h"
-    factor: 0.1
+    unitRef: "raw_count"
+    factor: 1.0
     offset: 0.0
     physMin: 0
-    physMax: 300
-"""
+    physMax: 1000
+""",
+    )
 
 
-def interface_vehicle_speed_yaml() -> str:
-    return """interface:
-  name: "If_VehicleSpeed"
+def interface_system_value_yaml() -> str:
+    return _with_header(
+        "ARForge: Interface definition",
+        "Defines a Sender-Receiver or Client-Server AUTOSAR interface.",
+        body="""interface:
+  name: "If_SystemValue"
   type: "senderReceiver"
   dataElements:
-    - name: "VehicleSpeed"
-      typeRef: "App_VehicleSpeed"
-"""
+    - name: "SystemValue"
+      typeRef: "App_SystemValue"
+""",
+    )
 
 
-def interface_diagnostics_yaml() -> str:
-    return """interface:
-  name: "If_Diagnostics"
-  type: "clientServer"
-  operations:
-    - name: "ReadDTC"
-      arguments:
-        - name: "DtcId"
-          direction: "in"
-          typeRef: "UInt16"
-      returnType: "UInt8"
-"""
-
-
-def swc_speed_sensor_yaml() -> str:
-    return """swc:
-  name: "SpeedSensor"
+def swc_provider_yaml() -> str:
+    return _with_header(
+        "ARForge: Software Component Type",
+        "Defines ports, runnables, and internal behavior.",
+        body="""swc:
+  name: "SystemValueProvider"
   runnables:
-    - name: "Runnable_ReadSpeed"
+    - name: "Runnable_WriteSystemValue"
       timingEventMs: 10
       writes:
-        - port: "Pp_VehicleSpeed"
-          dataElement: "VehicleSpeed"
-    - name: "Runnable_DiagServer"
-      operationInvokedEvents:
-        - port: "Pp_Diag"
-          operation: "ReadDTC"
+        - port: "Pp_SystemValue"
+          dataElement: "SystemValue"
   ports:
-    - name: "Pp_VehicleSpeed"
+    - name: "Pp_SystemValue"
       direction: "provides"
-      interfaceRef: "If_VehicleSpeed"
-    - name: "Pp_Diag"
-      direction: "provides"
-      interfaceRef: "If_Diagnostics"
-"""
+      interfaceRef: "If_SystemValue"
+""",
+    )
 
 
-def swc_speed_consumer_yaml() -> str:
-    return """swc:
-  name: "SpeedConsumer"
+def swc_consumer_yaml() -> str:
+    return _with_header(
+        "ARForge: Software Component Type",
+        "Defines ports, runnables, and internal behavior.",
+        body="""swc:
+  name: "SystemValueConsumer"
   runnables:
-    - name: "Runnable_UseSpeed"
+    - name: "Runnable_ReadSystemValue"
       timingEventMs: 10
       reads:
-        - port: "Rp_VehicleSpeed"
-          dataElement: "VehicleSpeed"
-      calls:
-        - port: "Rp_Diag"
-          operation: "ReadDTC"
-    - name: "Runnable_OnVehicleSpeed"
+        - port: "Rp_SystemValue"
+          dataElement: "SystemValue"
+    - name: "Runnable_OnSystemValue"
       dataReceiveEvents:
-        - port: "Rp_VehicleSpeed"
-          dataElement: "VehicleSpeed"
+        - port: "Rp_SystemValue"
+          dataElement: "SystemValue"
   ports:
-    - name: "Rp_VehicleSpeed"
+    - name: "Rp_SystemValue"
       direction: "requires"
-      interfaceRef: "If_VehicleSpeed"
-      comSpec:
-        mode: "queued"
-        queueLength: 8
-    - name: "Rp_Diag"
-      direction: "requires"
-      interfaceRef: "If_Diagnostics"
-"""
-
-
-def system_yaml(system_name: str) -> str:
-    return f"""system:
-  name: "{system_name}"
-  composition:
-    name: "Composition_{system_name}"
-    components:
-      - name: "SpeedSensor_1"
-        typeRef: "SpeedSensor"
-      - name: "SpeedConsumer_1"
-        typeRef: "SpeedConsumer"
-    connectors:
-      - from: "SpeedSensor_1.Pp_VehicleSpeed"
-        to: "SpeedConsumer_1.Rp_VehicleSpeed"
-      - from: "SpeedSensor_1.Pp_Diag"
-        to: "SpeedConsumer_1.Rp_Diag"
-"""
-
-
-def placeholder_interface_yaml() -> str:
-    return """interface:
-  name: "If_Data"
-  type: "senderReceiver"
-  dataElements:
-    - name: "Value"
-      typeRef: "App_VehicleSpeed"
-"""
-
-
-def placeholder_producer_yaml() -> str:
-    return """swc:
-  name: "Producer"
-  runnables:
-    - name: "Runnable_Produce"
-      timingEventMs: 10
-      writes:
-        - port: "Pp_Data"
-          dataElement: "Value"
-  ports:
-    - name: "Pp_Data"
-      direction: "provides"
-      interfaceRef: "If_Data"
-"""
-
-
-def placeholder_consumer_yaml() -> str:
-    return """swc:
-  name: "Consumer"
-  runnables:
-    - name: "Runnable_Consume"
-      timingEventMs: 10
-      reads:
-        - port: "Rp_Data"
-          dataElement: "Value"
-    - name: "Runnable_OnData"
-      dataReceiveEvents:
-        - port: "Rp_Data"
-          dataElement: "Value"
-  ports:
-    - name: "Rp_Data"
-      direction: "requires"
-      interfaceRef: "If_Data"
+      interfaceRef: "If_SystemValue"
       comSpec:
         mode: "queued"
         queueLength: 1
-"""
+""",
+    )
 
 
-def placeholder_system_yaml(system_name: str) -> str:
-    return f"""system:
+def system_yaml(system_name: str) -> str:
+    return _with_header(
+        "ARForge: System composition",
+        "Defines component prototypes and connectors between ports.",
+        body=f"""system:
   name: "{system_name}"
   composition:
     name: "Composition_{system_name}"
     components:
-      - name: "Producer_1"
-        typeRef: "Producer"
-      - name: "Consumer_1"
-        typeRef: "Consumer"
+      - name: "SystemValueProvider_1"
+        typeRef: "SystemValueProvider"
+      - name: "SystemValueConsumer_1"
+        typeRef: "SystemValueConsumer"
     connectors:
-      - from: "Producer_1.Pp_Data"
-        to: "Consumer_1.Rp_Data"
-"""
+      - from: "SystemValueProvider_1.Pp_SystemValue"
+        to: "SystemValueConsumer_1.Rp_SystemValue"
+""",
+    )
+
+
+def structure_only_system_yaml(system_name: str) -> str:
+    return _with_header(
+        "ARForge: System composition",
+        "Add components and connectors here when you are ready to model the system.",
+        body=f"""# Example shape:
+# system:
+#   name: "{system_name}"
+#   composition:
+#     name: "Composition_{system_name}"
+#     components:
+#       - name: "MyComponent_1"
+#         typeRef: "MyComponent"
+#     connectors:
+#       - from: "MyProvider_1.Pp_Port"
+#         to: "MyConsumer_1.Rp_Port"
+""",
+    )
 
 
 def scaffold_files(system_name: str, *, no_example: bool = False) -> Dict[Path, str]:
@@ -248,16 +218,12 @@ def scaffold_files(system_name: str, *, no_example: bool = False) -> Dict[Path, 
     }
 
     if no_example:
-        files[Path("interfaces/placeholder_interface.yaml")] = placeholder_interface_yaml()
-        files[Path("swcs/producer.yaml")] = placeholder_producer_yaml()
-        files[Path("swcs/consumer.yaml")] = placeholder_consumer_yaml()
-        files[Path("system.yaml")] = placeholder_system_yaml(system_name)
+        files[Path("system.yaml")] = structure_only_system_yaml(system_name)
         return files
 
-    files[Path("interfaces/If_VehicleSpeed.yaml")] = interface_vehicle_speed_yaml()
-    files[Path("interfaces/If_Diagnostics.yaml")] = interface_diagnostics_yaml()
-    files[Path("swcs/SpeedSensor.yaml")] = swc_speed_sensor_yaml()
-    files[Path("swcs/SpeedConsumer.yaml")] = swc_speed_consumer_yaml()
+    files[Path("interfaces/If_SystemValue.yaml")] = interface_system_value_yaml()
+    files[Path("swcs/SystemValueProvider.yaml")] = swc_provider_yaml()
+    files[Path("swcs/SystemValueConsumer.yaml")] = swc_consumer_yaml()
     files[Path("system.yaml")] = system_yaml(system_name)
     return files
 
@@ -269,6 +235,15 @@ def scaffold_project(path: Path, *, name: str = "DemoSystem", force: bool = Fals
 
     target.mkdir(parents=True, exist_ok=True)
     files = scaffold_files(name, no_example=no_example)
+    for rel_dir in [
+        Path("interfaces"),
+        Path("swcs"),
+        Path("platform"),
+        Path("types"),
+        Path("units"),
+        Path("compu_methods"),
+    ]:
+        (target / rel_dir).mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
     for rel_path in sorted(files.keys(), key=lambda p: p.as_posix()):
         out_path = target / rel_path

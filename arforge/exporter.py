@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from pathlib import Path
+import re
 from time import perf_counter
 from typing import Dict, List, Optional
 
@@ -171,6 +172,29 @@ def _sort_swc(swc: Swc) -> Swc:
 
 def _swc_type_dests(project: Project) -> Dict[str, str]:
     return {swc.name: swc.component_type_dest for swc in project.swcs}
+
+
+def _safe_filename_stem(value: Optional[str], fallback: str) -> str:
+    candidate = (value or "").strip()
+    candidate = re.sub(r"[^A-Za-z0-9_.-]+", "_", candidate)
+    candidate = candidate.strip("._-")
+    return candidate or fallback
+
+
+def _shared_output_name(project: Project) -> str:
+    stem = _safe_filename_stem(
+        project.rootPackage or project.system.name or project.system.composition.name,
+        "Shared",
+    )
+    return f"{stem}_SharedTypes.arxml"
+
+
+def _system_output_name(project: Project) -> str:
+    stem = _safe_filename_stem(
+        project.system.name or project.system.composition.name or project.rootPackage,
+        "system",
+    )
+    return f"{stem}.arxml"
 
 
 def _sort_project_for_export(project: Project) -> Project:
@@ -382,10 +406,10 @@ def write_outputs_with_report(
     else:
         rendered = {}
         target_dir = out
-        rendered[target_dir / "shared.arxml"] = render_shared(project, template_dir, template_name=SHARED_TEMPLATE)
+        rendered[target_dir / _shared_output_name(project)] = render_shared(project, template_dir, template_name=SHARED_TEMPLATE)
         for swc in project.swcs:
             rendered[target_dir / f"{swc.name}.arxml"] = render_swc(project, swc=swc, template_dir=template_dir, template_name=SWC_TEMPLATE)
-        rendered[target_dir / "system.arxml"] = render_system(project, template_dir, template_name=SYSTEM_TEMPLATE)
+        rendered[target_dir / _system_output_name(project)] = render_system(project, template_dir, template_name=SYSTEM_TEMPLATE)
         layout = "split-by-swc"
         templates = {
             "shared": SHARED_TEMPLATE,

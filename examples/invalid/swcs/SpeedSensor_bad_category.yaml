@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: software component validation.
+# Tests validation failure for bad category.
 swc:
   name: "SpeedSensor"
   category: "adaptive"
@@ -27,3 +30,5 @@ swc:
     - name: "Pp_Diag"
       direction: "provides"
       interfaceRef: "If_Diagnostics"
+
+

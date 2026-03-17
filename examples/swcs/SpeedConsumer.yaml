@@ -1,3 +1,5 @@
+﻿# ARForge: Software Component Type
+# Defines ports, runnables, and internal behavior.
 swc:
   name: "SpeedConsumer"
   category: "application"
@@ -37,3 +39,4 @@ swc:
       interfaceRef: "If_Diagnostics"
       comSpec:
         callMode: "asynchronous"
+

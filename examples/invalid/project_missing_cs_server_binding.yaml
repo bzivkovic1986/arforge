@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Tests validation failure for missing cs server binding.
 autosar:
   version: "4.2"
   rootPackage: "DEMO"
@@ -12,3 +15,5 @@ inputs:
     - "swcs/SpeedSensor_missing_cs_binding.yaml"
     - "../swcs/SpeedConsumer.yaml"
   system: "../system.yaml"
+
+

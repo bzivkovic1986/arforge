@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Tests validation failure for cs interface mismatch.
 system:
   name: "BadSystem_CsInterfaceMismatch"
   composition:
@@ -10,3 +13,5 @@ system:
     connectors:
       - from: "DiagServer_1.Pp_Diag"
         to: "DiagClientAlt_1.Rp_Diag"
+
+

@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: software component validation.
+# Tests validation failure for diagclientalt.
 swc:
   name: "DiagClientAlt"
   runnables:
@@ -12,3 +15,5 @@ swc:
       interfaceRef: "If_Diagnostics_Alt"
       comSpec:
         callMode: "synchronous"
+
+

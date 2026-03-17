@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Tests validation failure for sr read unconnected.
 system:
   name: "BadSystem_SrReadUnconnected"
   composition:
@@ -12,3 +15,5 @@ system:
         to: "SpeedConsumer_1.Rp_Diag"
       - from: "SpeedSensor_1.Pp_Diag"
         to: "SpeedConsumer_1.Rp_DiagAsync"
+
+

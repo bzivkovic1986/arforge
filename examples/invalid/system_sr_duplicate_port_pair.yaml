@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Tests validation failure for sr duplicate port pair.
 system:
   name: "BadSystem_SrDuplicatePortPair"
   composition:
@@ -12,3 +15,5 @@ system:
         to: "SpeedConsumer_1.Rp_VehicleSpeed"
       - from: "SpeedSensor_1.Pp_VehicleSpeed"
         to: "SpeedConsumer_1.Rp_VehicleSpeed"
+
+

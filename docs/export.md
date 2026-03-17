@@ -6,9 +6,9 @@ Export is implemented by `arforge/exporter.py` and Jinja2 templates in `template
 
 Split mode (`--split-by-swc`):
 
-- `shared.arxml`
+- `<RootPackage>_SharedTypes.arxml`
 - `<SWC>.arxml` per SWC
-- `system.arxml`
+- `<System>.arxml`
 
 Monolithic mode:
 
@@ -16,7 +16,7 @@ Monolithic mode:
 
 ## Shared ARXML content
 
-`shared.arxml` currently contains:
+The shared types artifact currently contains:
 
 - `BaseTypes` package
 - `ImplementationDataTypes` package (including struct members)
