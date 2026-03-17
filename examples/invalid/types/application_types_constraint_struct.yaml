@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: data type validation.
+# Tests validation failure for constraint struct.
 applicationDataTypes:
   - name: "App_VehicleSpeed"
     implementationTypeRef: "UInt16"
@@ -8,3 +11,5 @@ applicationDataTypes:
     constraint:
       min: 0
       max: 300
+
+

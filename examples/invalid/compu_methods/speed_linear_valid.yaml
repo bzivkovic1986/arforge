@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: compu method validation.
+# Tests validation failure for speed linear valid.
 compuMethods:
   - name: "CM_Speed_Kmh_Linear"
     category: "linear"
@@ -6,3 +9,5 @@ compuMethods:
     offset: 0.0
     physMin: 0
     physMax: 300
+
+

@@ -17,6 +17,8 @@ from arforge.validate import ValidationError, build_semantic_report, load_aggreg
 REPO_ROOT = Path(__file__).resolve().parent.parent
 VALID_PROJECT = REPO_ROOT / "examples" / "autosar.project.yaml"
 INVALID_DIR = REPO_ROOT / "examples" / "invalid"
+SHARED_EXAMPLE_OUTPUT = "DEMO_SharedTypes.arxml"
+SYSTEM_EXAMPLE_OUTPUT = "DemoSystem.arxml"
 
 
 def _is_project_fixture(path: Path) -> bool:
@@ -111,7 +113,7 @@ def test_split_export_system_contains_multiple_component_prototypes(tmp_path: Pa
     out_dir = tmp_path / "out"
     _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
 
-    system_xml = (out_dir / "system.arxml").read_text(encoding="utf-8")
+    system_xml = (out_dir / SYSTEM_EXAMPLE_OUTPUT).read_text(encoding="utf-8")
 
     assert "<SHORT-NAME>SpeedSensor_1</SHORT-NAME>" in system_xml
     assert "<SHORT-NAME>SpeedSensor_2</SHORT-NAME>" in system_xml
@@ -152,7 +154,7 @@ def test_split_export_uses_swc_category_for_component_types_and_prototype_dests(
 
     speed_sensor_xml = (out_dir / "SpeedSensor.arxml").read_text(encoding="utf-8")
     speed_consumer_xml = (out_dir / "SpeedConsumer.arxml").read_text(encoding="utf-8")
-    system_xml = (out_dir / "system.arxml").read_text(encoding="utf-8")
+    system_xml = (out_dir / SYSTEM_EXAMPLE_OUTPUT).read_text(encoding="utf-8")
 
     assert "<SERVICE-SW-COMPONENT-TYPE>" in speed_sensor_xml
     assert "<APPLICATION-SW-COMPONENT-TYPE>" not in speed_sensor_xml
@@ -167,8 +169,8 @@ def test_split_export_orders_interfaces_and_connector_fragments_deterministicall
     out_dir = tmp_path / "out"
     _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
 
-    shared_xml = (out_dir / "shared.arxml").read_text(encoding="utf-8")
-    system_xml = (out_dir / "system.arxml").read_text(encoding="utf-8")
+    shared_xml = (out_dir / SHARED_EXAMPLE_OUTPUT).read_text(encoding="utf-8")
+    system_xml = (out_dir / SYSTEM_EXAMPLE_OUTPUT).read_text(encoding="utf-8")
 
     vehicle_speed_segment = shared_xml.split("<SHORT-NAME>If_VehicleSpeed</SHORT-NAME>", 1)[1].split("</SENDER-RECEIVER-INTERFACE>", 1)[0]
     assert vehicle_speed_segment.index("<SHORT-NAME>VehicleSnapshot</SHORT-NAME>") < vehicle_speed_segment.index("<SHORT-NAME>VehicleSpeed</SHORT-NAME>")
@@ -211,8 +213,26 @@ def test_split_export_reports_swc_outputs_in_name_order(tmp_path: Path) -> None:
     out_dir = tmp_path / "out"
     report = write_outputs_with_report(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
 
-    swc_outputs = [artifact.path.name for artifact in report.outputs if artifact.path.name.endswith(".arxml") and artifact.path.name not in {"shared.arxml", "system.arxml"}]
+    swc_outputs = [
+        artifact.path.name
+        for artifact in report.outputs
+        if artifact.path.name.endswith(".arxml") and artifact.path.name not in {SHARED_EXAMPLE_OUTPUT, SYSTEM_EXAMPLE_OUTPUT}
+    ]
     assert swc_outputs == ["SpeedConsumer.arxml", "SpeedSensor.arxml"]
+
+
+def test_split_export_uses_meaningful_shared_and_system_filenames(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    written = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    assert [path.name for path in written] == [
+        SHARED_EXAMPLE_OUTPUT,
+        "SpeedConsumer.arxml",
+        "SpeedSensor.arxml",
+        SYSTEM_EXAMPLE_OUTPUT,
+    ]
 
 
 def test_split_export_includes_server_raised_error_refs(tmp_path: Path) -> None:
@@ -222,7 +242,7 @@ def test_split_export_includes_server_raised_error_refs(tmp_path: Path) -> None:
     _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
 
     speed_sensor_xml = (out_dir / "SpeedSensor.arxml").read_text(encoding="utf-8")
-    shared_xml = (out_dir / "shared.arxml").read_text(encoding="utf-8")
+    shared_xml = (out_dir / SHARED_EXAMPLE_OUTPUT).read_text(encoding="utf-8")
 
     assert "<RAISED-APPLICATION-ERROR-REFS>" in speed_sensor_xml
     assert "<TARGET-PROVIDED-OPERATION-REF DEST=\"CLIENT-SERVER-OPERATION\">/DEMO/Interfaces/If_Diagnostics/ReadDTC</TARGET-PROVIDED-OPERATION-REF>" in speed_sensor_xml
@@ -238,7 +258,7 @@ def test_split_export_includes_cs_operation_arguments_return_and_errors(tmp_path
     out_dir = tmp_path / "out"
     _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
 
-    shared_xml = (out_dir / "shared.arxml").read_text(encoding="utf-8")
+    shared_xml = (out_dir / SHARED_EXAMPLE_OUTPUT).read_text(encoding="utf-8")
 
     read_dtc_segment = shared_xml.split("<SHORT-NAME>ReadDTC</SHORT-NAME>", 1)[1].split("</CLIENT-SERVER-OPERATION>", 1)[0]
     assert "<ARGUMENTS>" in read_dtc_segment
@@ -296,7 +316,7 @@ def test_split_export_includes_void_return_cs_operation_without_return_typeref(t
     out_dir = tmp_path / "out"
     _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
 
-    shared_xml = (out_dir / "shared.arxml").read_text(encoding="utf-8")
+    shared_xml = (out_dir / SHARED_EXAMPLE_OUTPUT).read_text(encoding="utf-8")
 
     assert "<SHORT-NAME>LogEvent</SHORT-NAME>" in shared_xml
     log_event_segment = shared_xml.split("<SHORT-NAME>LogEvent</SHORT-NAME>", 1)[1].split("</CLIENT-SERVER-OPERATION>", 1)[0]
@@ -311,7 +331,7 @@ def test_split_export_includes_array_implementation_datatype(tmp_path: Path) -> 
     out_dir = tmp_path / "out"
     _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
 
-    shared_xml = (out_dir / "shared.arxml").read_text(encoding="utf-8")
+    shared_xml = (out_dir / SHARED_EXAMPLE_OUTPUT).read_text(encoding="utf-8")
 
     array_segment = shared_xml.split("<SHORT-NAME>Impl_WheelSpeeds</SHORT-NAME>", 1)[1].split("</IMPLEMENTATION-DATA-TYPE>", 1)[0]
     assert "<CATEGORY>ARRAY</CATEGORY>" in array_segment
@@ -330,7 +350,7 @@ def test_split_export_includes_nested_struct_implementation_datatypes(tmp_path: 
     out_dir = tmp_path / "out"
     _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
 
-    shared_xml = (out_dir / "shared.arxml").read_text(encoding="utf-8")
+    shared_xml = (out_dir / SHARED_EXAMPLE_OUTPUT).read_text(encoding="utf-8")
 
     inner_segment = shared_xml.split("<SHORT-NAME>Impl_Inner</SHORT-NAME>", 1)[1].split("</IMPLEMENTATION-DATA-TYPE>", 1)[0]
     assert "<CATEGORY>STRUCTURE</CATEGORY>" in inner_segment

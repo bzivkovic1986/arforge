@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Tests validation failure for data receive event on provides port.
 autosar:
   version: "4.2"
   rootPackage: "DEMO"
@@ -16,3 +19,5 @@ inputs:
     - "swcs/SpeedSensor_data_receive_event_on_provides_port.yaml"
     - "../swcs/SpeedConsumer.yaml"
   system: "../system.yaml"
+
+

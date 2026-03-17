@@ -34,29 +34,36 @@ def test_init_default_creates_valid_project(tmp_path: Path) -> None:
         "types/application_types.yaml",
         "units/units.yaml",
         "compu_methods/compu_methods.yaml",
-        "interfaces/If_VehicleSpeed.yaml",
-        "interfaces/If_Diagnostics.yaml",
-        "swcs/SpeedSensor.yaml",
-        "swcs/SpeedConsumer.yaml",
+        "interfaces/If_SystemValue.yaml",
+        "swcs/SystemValueProvider.yaml",
+        "swcs/SystemValueConsumer.yaml",
         "system.yaml",
     ]
     for rel in expected_files:
         assert (project_dir / rel).is_file(), f"Missing scaffold file: {rel}"
 
     project = load_and_validate_aggregator(project_dir / "autosar.project.yaml")
+    project_yaml = (project_dir / "autosar.project.yaml").read_text(encoding="utf-8")
     system_yaml = (project_dir / "system.yaml").read_text(encoding="utf-8")
-    speed_consumer_yaml = (project_dir / "swcs" / "SpeedConsumer.yaml").read_text(encoding="utf-8")
-    assert 'dataElement: "VehicleSpeed"' not in system_yaml
-    assert 'operation: "ReadDTC"' not in system_yaml
-    assert 'dataReceiveEvents:' in speed_consumer_yaml
+    interface_yaml = (project_dir / "interfaces" / "If_SystemValue.yaml").read_text(encoding="utf-8")
+    consumer_yaml = (project_dir / "swcs" / "SystemValueConsumer.yaml").read_text(encoding="utf-8")
+    assert project_yaml.startswith("# ARForge: Project input manifest")
+    assert system_yaml.startswith("# ARForge: System composition")
+    assert interface_yaml.startswith("# ARForge: Interface definition")
+    assert 'dataElement: "SystemValue"' not in system_yaml
+    assert 'dataReceiveEvents:' in consumer_yaml
 
-    out_file = tmp_path / "all.arxml"
-    written = write_outputs(project, template_dir=TEMPLATE_DIR, out=out_file, split_by_swc=False)
-    assert written == [out_file]
-    assert out_file.is_file()
+    out_dir = tmp_path / "out"
+    written = write_outputs(project, template_dir=TEMPLATE_DIR, out=out_dir, split_by_swc=True)
+    assert [path.name for path in written] == [
+        "DEMOSYSTEM_SharedTypes.arxml",
+        "SystemValueConsumer.arxml",
+        "SystemValueProvider.arxml",
+        "DemoSystem.arxml",
+    ]
 
 
-def test_init_no_example_creates_placeholder_model(tmp_path: Path) -> None:
+def test_init_no_example_creates_structure_only_project(tmp_path: Path) -> None:
     project_dir = tmp_path / "empty"
     result = _run_init(project_dir, "--no-example")
     assert result.returncode == 0, result.stdout + result.stderr
@@ -68,27 +75,18 @@ def test_init_no_example_creates_placeholder_model(tmp_path: Path) -> None:
         "types/application_types.yaml",
         "units/units.yaml",
         "compu_methods/compu_methods.yaml",
-        "interfaces/placeholder_interface.yaml",
-        "swcs/producer.yaml",
-        "swcs/consumer.yaml",
         "system.yaml",
     ]
     for rel in expected_files:
         assert (project_dir / rel).is_file(), f"Missing scaffold file: {rel}"
 
-    project = load_and_validate_aggregator(project_dir / "autosar.project.yaml")
+    assert (project_dir / "interfaces").is_dir()
+    assert (project_dir / "swcs").is_dir()
+    assert list((project_dir / "interfaces").glob("*.yaml")) == []
+    assert list((project_dir / "swcs").glob("*.yaml")) == []
     system_yaml = (project_dir / "system.yaml").read_text(encoding="utf-8")
-    consumer_yaml = (project_dir / "swcs" / "consumer.yaml").read_text(encoding="utf-8")
-    assert 'dataElement: "Value"' not in system_yaml
-    assert 'dataReceiveEvents:' in consumer_yaml
-
-    out_dir = tmp_path / "out"
-    written = write_outputs(project, template_dir=TEMPLATE_DIR, out=out_dir, split_by_swc=True)
-    assert len(written) == 4
-    assert (out_dir / "shared.arxml").is_file()
-    assert (out_dir / "Producer.arxml").is_file()
-    assert (out_dir / "Consumer.arxml").is_file()
-    assert (out_dir / "system.arxml").is_file()
+    assert system_yaml.startswith("# ARForge: System composition")
+    assert "Example shape:" in system_yaml
 
 
 def test_init_fails_for_non_empty_dir_without_force(tmp_path: Path) -> None:

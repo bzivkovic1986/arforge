@@ -1,3 +1,5 @@
+﻿# ARForge: Application data types
+# Project-facing types with optional units and compu methods.
 applicationDataTypes:
   - name: "App_VehicleSpeed"
     implementationTypeRef: "UInt16"
@@ -9,3 +11,4 @@ applicationDataTypes:
   - name: "App_DtcStatus"
     implementationTypeRef: "UInt8"
     compuMethodRef: "CM_DtcStatus"
+

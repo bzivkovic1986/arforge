@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Tests validation failure for runnable raises unbound operation.
 autosar:
   version: "4.2"
   rootPackage: "DEMO"
@@ -16,3 +19,5 @@ inputs:
     - "swcs/SpeedSensor_raises_unbound_operation.yaml"
     - "../swcs/SpeedConsumer.yaml"
   system: "../system.yaml"
+
+

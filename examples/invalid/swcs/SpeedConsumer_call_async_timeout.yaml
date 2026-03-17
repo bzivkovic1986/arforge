@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: software component validation.
+# Tests validation failure for call async timeout.
 swc:
   name: "SpeedConsumer"
   runnables:
@@ -24,3 +27,5 @@ swc:
       interfaceRef: "If_Diagnostics"
       comSpec:
         callMode: "asynchronous"
+
+

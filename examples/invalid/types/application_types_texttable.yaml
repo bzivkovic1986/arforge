@@ -1,6 +1,11 @@
+﻿# ARForge: Invalid example fixture
+# Domain: data type validation.
+# Tests validation failure for texttable.
 applicationDataTypes:
   - name: "App_VehicleSpeed"
     implementationTypeRef: "UInt16"
   - name: "App_DtcStatus"
     implementationTypeRef: "UInt8"
     compuMethodRef: "CM_DtcStatus"
+
+

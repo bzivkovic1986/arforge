@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Tests validation failure for negative possible error code.
 autosar:
   version: "4.2"
   rootPackage: "DEMO"
@@ -16,3 +19,5 @@ inputs:
   swcs:
     - "../swcs/*.yaml"
   system: "../system.yaml"
+
+

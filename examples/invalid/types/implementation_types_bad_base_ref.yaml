@@ -1,3 +1,8 @@
+﻿# ARForge: Invalid example fixture
+# Domain: data type validation.
+# Tests validation failure for bad base ref.
 implementationDataTypes:
   - name: "UInt16"
     baseTypeRef: "uint16_missing"
+
+

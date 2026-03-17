@@ -1,3 +1,5 @@
+﻿# ARForge: System composition
+# Defines component prototypes and connectors between ports.
 system:
   name: "DemoSystem"
   composition:
@@ -24,3 +26,4 @@ system:
         to: "SpeedConsumer_2.Rp_Diag"
       - from: "SpeedSensor_2.Pp_Diag"
         to: "SpeedConsumer_2.Rp_DiagAsync"
+

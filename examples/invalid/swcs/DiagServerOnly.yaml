@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: software component validation.
+# Tests validation failure for diagserveronly.
 swc:
   name: "DiagServerOnly"
   runnables:
@@ -13,3 +16,5 @@ swc:
     - name: "Pp_Diag"
       direction: "provides"
       interfaceRef: "If_Diagnostics"
+
+

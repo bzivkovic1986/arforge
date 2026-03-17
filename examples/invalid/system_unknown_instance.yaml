@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Tests validation failure for unknown instance.
 system:
   name: "BadSystem_UnknownInstance"
   composition:
@@ -11,3 +14,5 @@ system:
       - from: "MissingInstance.Pp_VehicleSpeed"
         to: "SpeedConsumer_1.Rp_VehicleSpeed"
         dataElement: "VehicleSpeed"
+
+

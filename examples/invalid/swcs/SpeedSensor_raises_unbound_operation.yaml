@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: software component validation.
+# Tests validation failure for raises unbound operation.
 swc:
   name: "SpeedSensor"
   runnables:
@@ -20,3 +23,5 @@ swc:
     - name: "Pp_Diag"
       direction: "provides"
       interfaceRef: "If_Diagnostics"
+
+

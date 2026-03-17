@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Tests validation failure for cs wrong directions.
 system:
   name: "BadSystem_CsWrongDirections"
   composition:
@@ -10,3 +13,5 @@ system:
     connectors:
       - from: "DiagClient_1.Rp_Diag"
         to: "DiagClient_2.Rp_Diag"
+
+

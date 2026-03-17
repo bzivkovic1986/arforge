@@ -116,7 +116,7 @@ def export(
     split_by_swc: bool = typer.Option(
         False,
         "--split-by-swc",
-        help="Write shared.arxml + one <SWC>.arxml per component + system.arxml",
+        help="Write <Project>_SharedTypes.arxml + one <SWC>.arxml per component + <System>.arxml",
     ),
     templates: Path = typer.Option(None, help="Template directory"),
     verbose: int = typer.Option(
@@ -219,7 +219,7 @@ def export(
                 console.print(f"system: {export_report.input_summary.system_file}")
 
         if export_report.layout == "split-by-swc":
-            console.print("layout=split-by-swc (shared + per-SWC + system)")
+            console.print("layout=split-by-swc (shared types + per-SWC + system)")
         else:
             console.print("layout=monolithic")
 
@@ -270,7 +270,7 @@ def init(
     no_example: bool = typer.Option(
         False,
         "--no-example",
-        help="Create a minimal valid placeholder model instead of the default SpeedSensor/SpeedConsumer example.",
+        help="Create the project structure without the runnable example.",
     ),
 ):
     """Scaffold a new ARForge project directory."""
@@ -280,7 +280,7 @@ def init(
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=2)
 
-    mode = "placeholder" if no_example else "example"
+    mode = "structure-only" if no_example else "example"
     console.print(Panel.fit(f"[green]Scaffold created[/green] ({mode})", title="init"))
     for p in written:
         console.print(f" - {p}")

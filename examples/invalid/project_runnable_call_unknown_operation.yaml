@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Tests validation failure for runnable call unknown operation.
 autosar:
   version: "4.2"
   rootPackage: "DEMO"
@@ -16,3 +19,5 @@ inputs:
     - "../swcs/SpeedSensor.yaml"
     - "swcs/SpeedConsumer_call_unknown_operation.yaml"
   system: "../system.yaml"
+
+

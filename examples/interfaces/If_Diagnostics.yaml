@@ -1,3 +1,5 @@
+﻿# ARForge: Interface definition
+# Defines a Sender-Receiver or Client-Server AUTOSAR interface.
 interface:
   name: "If_Diagnostics"
   type: "clientServer"
@@ -27,3 +29,4 @@ interface:
           direction: "in"
           typeRef: "UInt16"
       returnType: "void"
+

@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Tests validation failure for init event bad type.
 autosar:
   version: "4.2"
   rootPackage: "DEMO"
@@ -12,3 +15,5 @@ inputs:
     - "swcs/SpeedSensor_init_event_bad_type.yaml"
     - "../swcs/SpeedConsumer.yaml"
   system: "../system.yaml"
+
+

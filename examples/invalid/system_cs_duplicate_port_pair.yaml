@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Tests validation failure for cs duplicate port pair.
 system:
   name: "BadSystem_CsDuplicatePortPair"
   composition:
@@ -12,3 +15,5 @@ system:
         to: "DiagClient_1.Rp_Diag"
       - from: "DiagServer_1.Pp_Diag"
         to: "DiagClient_1.Rp_Diag"
+
+

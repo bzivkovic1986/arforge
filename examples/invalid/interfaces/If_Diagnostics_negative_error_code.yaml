@@ -1,3 +1,6 @@
+﻿# ARForge: Invalid example fixture
+# Domain: interface validation.
+# Tests validation failure for negative error code.
 interface:
   name: "If_Diagnostics"
   type: "clientServer"
@@ -13,3 +16,5 @@ interface:
           code: -1
     - name: "ClearDTC"
       returnType: "void"
+
+

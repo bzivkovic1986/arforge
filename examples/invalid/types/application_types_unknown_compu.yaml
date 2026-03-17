@@ -1,5 +1,10 @@
+﻿# ARForge: Invalid example fixture
+# Domain: data type validation.
+# Tests validation failure for unknown compu.
 applicationDataTypes:
   - name: "App_VehicleSpeed"
     implementationTypeRef: "UInt16"
     unitRef: "km_h"
     compuMethodRef: "CM_Unknown"
+
+
