@@ -7,7 +7,8 @@ from .semantic_validation import Finding, ValidationCase, ValidationContext
 
 class DuplicateNameCase(ValidationCase):
     case_id = "CORE-001"
-    description = "Check global uniqueness constraints."
+    name = "GlobalUniqueness"
+    description = "Checks that globally named model elements remain unique."
     tags = ("core", "structure", "uniqueness")
 
     def run(self, ctx: ValidationContext) -> List[Finding]:
@@ -37,7 +38,8 @@ class DuplicateNameCase(ValidationCase):
 
 class BaseTypeMetadataCase(ValidationCase):
     case_id = "CORE-002"
-    description = "Validate base type metadata and per-base-type uniqueness."
+    name = "BaseTypeMetadata"
+    description = "Checks base type uniqueness and required metadata consistency."
     tags = ("core", "types", "base-types")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -90,7 +92,8 @@ class BaseTypeMetadataCase(ValidationCase):
 
 class InterfaceSemanticCase(ValidationCase):
     case_id = "CORE-010"
-    description = "Validate interface structure and datatype references."
+    name = "InterfaceSemantics"
+    description = "Checks interface structure and datatype references."
     tags = ("core", "interfaces")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -501,7 +504,8 @@ class InterfaceSemanticCase(ValidationCase):
 
 class ApplicationConstraintCase(ValidationCase):
     case_id = "CORE-011"
-    description = "Validate ApplicationDataType constraint ranges and compatibility with implementation types."
+    name = "ApplicationConstraints"
+    description = "Checks application datatype constraints against implementation types and compu methods."
     tags = ("core", "types", "constraints")
 
     _FLOAT_BASE_TYPES = {"float32", "float64"}
@@ -614,7 +618,8 @@ class ApplicationConstraintCase(ValidationCase):
 
 class SwcStructureCase(ValidationCase):
     case_id = "CORE-020"
-    description = "Validate SWC internal uniqueness constraints."
+    name = "SwcStructure"
+    description = "Checks SWC-local uniqueness for runnables and ports."
     tags = ("core", "swc")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -636,7 +641,8 @@ class SwcStructureCase(ValidationCase):
 
 class SwcPortInterfaceCase(ValidationCase):
     case_id = "CORE-021"
-    description = "Validate SWC ports against interface model."
+    name = "PortInterfaceReferences"
+    description = "Checks that each SWC port references an existing interface and uses the expected kind."
     tags = ("core", "swc", "interfaces")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -670,7 +676,8 @@ class SwcPortInterfaceCase(ValidationCase):
 
 class RunnableAccessSemanticCase(ValidationCase):
     case_id = "CORE-022"
-    description = "Validate runnable reads/writes/calls against SWC port and interface semantics."
+    name = "RunnableAccessSemantics"
+    description = "Checks runnable reads, writes, and calls against SWC port and interface semantics."
     tags = ("core", "swc", "runnables", "interfaces")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -829,7 +836,8 @@ class RunnableAccessSemanticCase(ValidationCase):
 
 class OperationInvokedEventCase(ValidationCase):
     case_id = "CORE-023"
-    description = "Validate operation-invoked event bindings for provided clientServer operations."
+    name = "OperationInvokedEvents"
+    description = "Checks operation-invoked event bindings for provided client-server operations."
     tags = ("core", "swc", "runnables", "interfaces")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -918,7 +926,8 @@ class OperationInvokedEventCase(ValidationCase):
 
 class RunnableTriggerPolicyCase(ValidationCase):
     case_id = "CORE-024"
-    description = "Enforce runnable trigger policy: exactly one trigger style per runnable."
+    name = "RunnableTriggerPolicy"
+    description = "Checks that each runnable uses exactly one trigger style."
     tags = ("core", "swc", "runnables")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -954,7 +963,8 @@ class RunnableTriggerPolicyCase(ValidationCase):
 
 class ComSpecSemanticCase(ValidationCase):
     case_id = "CORE-025"
-    description = "Validate sender-receiver and client-server ComSpec on SWC ports."
+    name = "PortComSpecSemantics"
+    description = "Checks sender-receiver and client-server ComSpec on SWC ports."
     tags = ("core", "swc", "ports", "comspec")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -1122,7 +1132,8 @@ class ComSpecSemanticCase(ValidationCase):
 
 class RunnableRaisedErrorCase(ValidationCase):
     case_id = "CORE-026"
-    description = "Validate runnable raisesErrors declarations for provided clientServer operations."
+    name = "RunnableRaisedErrors"
+    description = "Checks runnable raisesErrors declarations for provided client-server operations."
     tags = ("core", "swc", "runnables", "interfaces", "errors")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -1233,7 +1244,8 @@ class RunnableRaisedErrorCase(ValidationCase):
 
 class DataReceiveEventCase(ValidationCase):
     case_id = "CORE-027"
-    description = "Validate dataReceiveEvents bindings for required senderReceiver ports."
+    name = "DataReceiveEvents"
+    description = "Checks dataReceiveEvents bindings for required sender-receiver ports."
     tags = ("core", "swc", "runnables", "interfaces")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -1299,7 +1311,8 @@ class DataReceiveEventCase(ValidationCase):
 
 class SystemInstanceTypeCase(ValidationCase):
     case_id = "CORE-030"
-    description = "Validate composition component prototypes reference known SWC types."
+    name = "SystemInstanceTypes"
+    description = "Checks that composition component prototypes reference known SWC types."
     tags = ("core", "system")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -1333,7 +1346,8 @@ def _connection_sort_key(conn) -> tuple[str, str, str, str, str, str]:
 
 class ConnectionSemanticCase(ValidationCase):
     case_id = "CORE-040"
-    description = "Validate system connections and connector-level SR/CS semantics."
+    name = "ConnectionSemantics"
+    description = "Checks system connections and connector-level sender-receiver and client-server semantics."
     tags = ("core", "system", "connections")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -1490,7 +1504,8 @@ class ConnectionSemanticCase(ValidationCase):
 
 class CsPortConnectivityCase(ValidationCase):
     case_id = "CORE-043"
-    description = "Validate clientServer connectivity against system instances and runnable behavior."
+    name = "ClientServerConnectivity"
+    description = "Checks client-server port connectivity against instantiated components and runnable behavior."
     tags = ("core", "system", "connections", "runnables", "client-server")
     default_severity = "error"
 
@@ -1508,16 +1523,6 @@ class CsPortConnectivityCase(ValidationCase):
 
     def run(self, ctx: ValidationContext) -> List[Finding]:
         findings: List[Finding] = []
-        calls_by_swc_port: dict[tuple[str, str], list[tuple[str, str]]] = {}
-        oies_by_swc_port: dict[tuple[str, str], list[tuple[str, str]]] = {}
-
-        for swc in sorted(ctx.project.swcs, key=lambda s: s.name):
-            for runnable in sorted(swc.runnables, key=lambda r: r.name):
-                for call in sorted(runnable.calls, key=lambda a: (a.port, a.operation)):
-                    calls_by_swc_port.setdefault((swc.name, call.port), []).append((runnable.name, call.operation))
-                for event in sorted(runnable.operationInvokedEvents, key=lambda e: (e.port, e.operation)):
-                    oies_by_swc_port.setdefault((swc.name, event.port), []).append((runnable.name, event.operation))
-
         for instance in sorted(ctx.project.system.composition.components, key=lambda c: c.name):
             swc = ctx.swc_by_name.get(instance.typeRef)
             if swc is None:
@@ -1527,12 +1532,13 @@ class CsPortConnectivityCase(ValidationCase):
                 if port.interfaceType != "clientServer":
                     continue
 
-                port_ref = f"{instance.name}.{port.name}"
-                outgoing = ctx.outgoing_connectors_by_endpoint.get((instance.name, port.name), [])
-                incoming = ctx.incoming_connectors_by_endpoint.get((instance.name, port.name), [])
+                connectivity = ctx.find_instance_port_connectivity(instance.name, port.name)
+                if connectivity is None:
+                    continue
+                usage = ctx.find_swc_port_usage(swc.name, port.name)
 
-                for runnable_name, operation in calls_by_swc_port.get((swc.name, port.name), []):
-                    if not incoming:
+                for runnable_name, operation in usage.calls:
+                    if not connectivity.incoming_connectors:
                         findings.append(
                             self.finding(
                                 f"SWC instance '{instance.name}' runnable '{runnable_name}' calls operation '{operation}' "
@@ -1541,8 +1547,8 @@ class CsPortConnectivityCase(ValidationCase):
                             )
                         )
 
-                for runnable_name, operation in oies_by_swc_port.get((swc.name, port.name), []):
-                    if not outgoing:
+                for runnable_name, operation in usage.operation_invoked_events:
+                    if not connectivity.outgoing_connectors:
                         findings.append(
                             self.finding(
                                 f"SWC instance '{instance.name}' runnable '{runnable_name}' operationInvokedEvents waits on operation "
@@ -1551,34 +1557,40 @@ class CsPortConnectivityCase(ValidationCase):
                             )
                         )
 
+                for runnable_name, operation, error_name in usage.raises_errors:
+                    if not connectivity.outgoing_connectors:
+                        findings.append(
+                            self.finding(
+                                f"SWC instance '{instance.name}' runnable '{runnable_name}' raises error '{error_name}' for operation "
+                                f"'{operation}' on unconnected clientServer provides port '{port.name}'.",
+                                code="CORE-043-CS-RAISE-UNCONNECTED",
+                            )
+                        )
+
         return findings
 
 
 class CsPortUsageCase(ValidationCase):
     case_id = "CORE-044"
-    description = "Validate that connected clientServer ports are exercised by runnable behavior."
+    name = "ClientServerUsage"
+    description = "Checks whether connected client-server ports are actually used by runnable behavior."
     tags = ("core", "system", "connections", "runnables", "client-server")
     default_severity = "warning"
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
-        if not ctx.project.system.composition.connectors:
-            return False, "no system connectors defined"
+        if not ctx.project.system.composition.components:
+            return False, "no system component prototypes defined"
+        has_cs_ports = any(
+            port.interfaceType == "clientServer"
+            for swc in ctx.project.swcs
+            for port in swc.ports
+        )
+        if not has_cs_ports:
+            return False, "no clientServer ports defined"
         return True, None
 
     def run(self, ctx: ValidationContext) -> List[Finding]:
         findings: List[Finding] = []
-        call_ports = {
-            (swc.name, access.port)
-            for swc in ctx.project.swcs
-            for runnable in swc.runnables
-            for access in runnable.calls
-        }
-        oie_ports = {
-            (swc.name, event.port)
-            for swc in ctx.project.swcs
-            for runnable in swc.runnables
-            for event in runnable.operationInvokedEvents
-        }
 
         for instance in sorted(ctx.project.system.composition.components, key=lambda c: c.name):
             swc = ctx.swc_by_name.get(instance.typeRef)
@@ -1589,21 +1601,37 @@ class CsPortUsageCase(ValidationCase):
                 if port.interfaceType != "clientServer":
                     continue
 
-                is_connected = bool(
-                    ctx.outgoing_connectors_by_endpoint.get((instance.name, port.name), [])
-                    or ctx.incoming_connectors_by_endpoint.get((instance.name, port.name), [])
-                )
-                if not is_connected:
+                connectivity = ctx.find_instance_port_connectivity(instance.name, port.name)
+                if connectivity is None:
+                    continue
+                usage = ctx.find_swc_port_usage(swc.name, port.name)
+
+                if port.direction == "provides" and not connectivity.outgoing_connectors:
+                    findings.append(
+                        self.finding(
+                            f"ClientServer provides port '{instance.name}.{port.name}' has no connector.",
+                            code="CORE-044-CS-PROVIDES-NO-CONNECTOR",
+                        )
+                    )
+                if port.direction == "requires" and not connectivity.incoming_connectors:
+                    findings.append(
+                        self.finding(
+                            f"ClientServer requires port '{instance.name}.{port.name}' has no connector.",
+                            code="CORE-044-CS-REQUIRES-NO-CONNECTOR",
+                        )
+                    )
+
+                if not connectivity.is_connected:
                     continue
 
-                if port.direction == "provides" and (swc.name, port.name) not in oie_ports:
+                if port.direction == "provides" and not usage.operation_invoked_events:
                     findings.append(
                         self.finding(
                             f"Connected clientServer provides port '{instance.name}.{port.name}' is never used by any runnable operationInvokedEvent.",
                             code="CORE-044-CS-CONNECTED-PROVIDES-UNUSED",
                         )
                     )
-                if port.direction == "requires" and (swc.name, port.name) not in call_ports:
+                if port.direction == "requires" and not usage.calls:
                     findings.append(
                         self.finding(
                             f"Connected clientServer requires port '{instance.name}.{port.name}' is never used by any runnable call.",
@@ -1616,9 +1644,9 @@ class CsPortUsageCase(ValidationCase):
 
 class SrPortConnectivityCase(ValidationCase):
     case_id = "CORE-041"
-    description = "Validate senderReceiver connectivity against system instances and runnable behavior."
+    name = "SenderReceiverConnectivity"
+    description = "Checks sender-receiver port connectivity against instantiated components and runnable behavior."
     tags = ("core", "system", "connections", "runnables", "sender-receiver")
-    # Chosen as error for now so example fixtures remain deterministic; make configurable later.
     default_severity = "error"
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -1636,18 +1664,6 @@ class SrPortConnectivityCase(ValidationCase):
     def run(self, ctx: ValidationContext) -> List[Finding]:
         findings: List[Finding] = []
 
-        reads_by_swc_port: dict[tuple[str, str], list[tuple[str, str]]] = {}
-        writes_by_swc_port: dict[tuple[str, str], list[tuple[str, str]]] = {}
-        dres_by_swc_port: dict[tuple[str, str], list[tuple[str, str]]] = {}
-        for swc in sorted(ctx.project.swcs, key=lambda s: s.name):
-            for runnable in sorted(swc.runnables, key=lambda r: r.name):
-                for read in sorted(runnable.reads, key=lambda a: (a.port, a.dataElement)):
-                    reads_by_swc_port.setdefault((swc.name, read.port), []).append((runnable.name, read.dataElement))
-                for write in sorted(runnable.writes, key=lambda a: (a.port, a.dataElement)):
-                    writes_by_swc_port.setdefault((swc.name, write.port), []).append((runnable.name, write.dataElement))
-                for dre in sorted(runnable.dataReceiveEvents, key=lambda e: (e.port, e.dataElement)):
-                    dres_by_swc_port.setdefault((swc.name, dre.port), []).append((runnable.name, dre.dataElement))
-
         for instance in sorted(ctx.project.system.composition.components, key=lambda c: c.name):
             swc = ctx.swc_by_name.get(instance.typeRef)
             if swc is None:
@@ -1658,26 +1674,30 @@ class SrPortConnectivityCase(ValidationCase):
                     continue
 
                 port_ref = f"{instance.name}.{port.name}"
-                outgoing = ctx.outgoing_connectors_by_endpoint.get((instance.name, port.name), [])
-                incoming = ctx.incoming_connectors_by_endpoint.get((instance.name, port.name), [])
+                connectivity = ctx.find_instance_port_connectivity(instance.name, port.name)
+                if connectivity is None:
+                    continue
+                usage = ctx.find_swc_port_usage(swc.name, port.name)
 
-                if port.direction == "provides" and not outgoing:
+                if port.direction == "provides" and not connectivity.outgoing_connectors:
                     findings.append(
                         self.finding(
                             f"SenderReceiver provides port '{port_ref}' has no outgoing connector.",
                             code="CORE-041-SR-PROVIDES-NO-OUTGOING",
+                            severity="warning",
                         )
                     )
-                if port.direction == "requires" and not incoming:
+                if port.direction == "requires" and not connectivity.incoming_connectors:
                     findings.append(
                         self.finding(
                             f"SenderReceiver requires port '{port_ref}' has no incoming connector.",
                             code="CORE-041-SR-REQUIRES-NO-INCOMING",
+                            severity="warning",
                         )
                     )
 
-                for runnable_name, data_element in reads_by_swc_port.get((swc.name, port.name), []):
-                    if not incoming:
+                for runnable_name, data_element in usage.reads:
+                    if not connectivity.incoming_connectors:
                         findings.append(
                             self.finding(
                                 f"SWC instance '{instance.name}' runnable '{runnable_name}' reads dataElement '{data_element}' "
@@ -1686,8 +1706,8 @@ class SrPortConnectivityCase(ValidationCase):
                             )
                         )
 
-                for runnable_name, data_element in dres_by_swc_port.get((swc.name, port.name), []):
-                    if not incoming:
+                for runnable_name, data_element in usage.data_receive_events:
+                    if not connectivity.incoming_connectors:
                         findings.append(
                             self.finding(
                                 f"SWC instance '{instance.name}' runnable '{runnable_name}' dataReceiveEvents waits on dataElement "
@@ -1696,8 +1716,8 @@ class SrPortConnectivityCase(ValidationCase):
                             )
                         )
 
-                for runnable_name, data_element in writes_by_swc_port.get((swc.name, port.name), []):
-                    if not outgoing:
+                for runnable_name, data_element in usage.writes:
+                    if not connectivity.outgoing_connectors:
                         findings.append(
                             self.finding(
                                 f"SWC instance '{instance.name}' runnable '{runnable_name}' writes dataElement '{data_element}' "
@@ -1711,10 +1731,10 @@ class SrPortConnectivityCase(ValidationCase):
 
 class SrPortUsageCase(ValidationCase):
     case_id = "CORE-042"
-    description = "Validate that connected senderReceiver ports are exercised by runnable behavior."
+    name = "SenderReceiverUsage"
+    description = "Checks whether connected sender-receiver ports are actually used by runnable behavior."
     tags = ("core", "system", "connections", "runnables", "sender-receiver")
-    # Chosen as error for now so example fixtures remain deterministic; make configurable later.
-    default_severity = "error"
+    default_severity = "warning"
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
         if not ctx.project.system.composition.connectors:
@@ -1723,24 +1743,6 @@ class SrPortUsageCase(ValidationCase):
 
     def run(self, ctx: ValidationContext) -> List[Finding]:
         findings: List[Finding] = []
-        read_ports = {
-            (swc.name, access.port)
-            for swc in ctx.project.swcs
-            for runnable in swc.runnables
-            for access in runnable.reads
-        }
-        write_ports = {
-            (swc.name, access.port)
-            for swc in ctx.project.swcs
-            for runnable in swc.runnables
-            for access in runnable.writes
-        }
-        dre_ports = {
-            (swc.name, event.port)
-            for swc in ctx.project.swcs
-            for runnable in swc.runnables
-            for event in runnable.dataReceiveEvents
-        }
 
         for instance in sorted(ctx.project.system.composition.components, key=lambda c: c.name):
             swc = ctx.swc_by_name.get(instance.typeRef)
@@ -1751,21 +1753,19 @@ class SrPortUsageCase(ValidationCase):
                 if port.interfaceType != "senderReceiver":
                     continue
 
-                is_connected = bool(
-                    ctx.outgoing_connectors_by_endpoint.get((instance.name, port.name), [])
-                    or ctx.incoming_connectors_by_endpoint.get((instance.name, port.name), [])
-                )
-                if not is_connected:
+                connectivity = ctx.find_instance_port_connectivity(instance.name, port.name)
+                if connectivity is None or not connectivity.is_connected:
                     continue
+                usage = ctx.find_swc_port_usage(swc.name, port.name)
 
-                if port.direction == "provides" and (swc.name, port.name) not in write_ports:
+                if port.direction == "provides" and not usage.writes:
                     findings.append(
                         self.finding(
                             f"Connected senderReceiver provides port '{instance.name}.{port.name}' is never used by any runnable write.",
                             code="CORE-042-SR-CONNECTED-PROVIDES-UNUSED",
                         )
                     )
-                if port.direction == "requires" and (swc.name, port.name) not in read_ports and (swc.name, port.name) not in dre_ports:
+                if port.direction == "requires" and not usage.reads and not usage.data_receive_events:
                     findings.append(
                         self.finding(
                             f"Connected senderReceiver requires port '{instance.name}.{port.name}' is never used by any runnable read or dataReceiveEvent.",

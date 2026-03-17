@@ -36,6 +36,7 @@ class ValidationReport:
             "cases": [
                 {
                     "case_id": c.case_id,
+                    "name": c.name,
                     "description": c.description,
                     "status": c.status,
                     "outcome": c.outcome,
@@ -60,6 +61,7 @@ class ValidationReport:
 @dataclass(frozen=True)
 class CaseResult:
     case_id: str
+    name: str
     description: str
     status: CaseStatus
     outcome: Optional[CaseOutcome]
@@ -67,6 +69,35 @@ class CaseResult:
     duration_ms: float
     finding_count: int
     findings: List[Finding]
+
+
+@dataclass(frozen=True)
+class InstancePortConnectivity:
+    instance_name: str
+    swc_name: str
+    port: Port
+    incoming_connectors: Tuple[Connection, ...]
+    outgoing_connectors: Tuple[Connection, ...]
+
+    @property
+    def endpoint_key(self) -> Tuple[str, str]:
+        return (self.instance_name, self.port.name)
+
+    @property
+    def is_connected(self) -> bool:
+        return bool(self.incoming_connectors or self.outgoing_connectors)
+
+
+@dataclass(frozen=True)
+class SwcPortUsage:
+    swc_name: str
+    port_name: str
+    reads: Tuple[Tuple[str, str], ...] = ()
+    writes: Tuple[Tuple[str, str], ...] = ()
+    calls: Tuple[Tuple[str, str], ...] = ()
+    data_receive_events: Tuple[Tuple[str, str], ...] = ()
+    operation_invoked_events: Tuple[Tuple[str, str], ...] = ()
+    raises_errors: Tuple[Tuple[str, str, str], ...] = ()
 
 
 class ValidationContext:
@@ -112,6 +143,71 @@ class ValidationContext:
                 [],
             ).append(connector)
 
+        self.instantiated_port_connections: Dict[tuple[str, str], InstancePortConnectivity] = {}
+        self.instantiated_port_connections_by_interface_type: Dict[str, List[InstancePortConnectivity]] = {}
+        for instance in sorted(project.system.composition.components, key=lambda c: (c.name, c.typeRef)):
+            swc = self.swc_by_name.get(instance.typeRef)
+            if swc is None:
+                continue
+            for port in sorted(swc.ports, key=lambda p: p.name):
+                endpoint = (instance.name, port.name)
+                connectivity = InstancePortConnectivity(
+                    instance_name=instance.name,
+                    swc_name=swc.name,
+                    port=port,
+                    incoming_connectors=tuple(self.incoming_connectors_by_endpoint.get(endpoint, [])),
+                    outgoing_connectors=tuple(self.outgoing_connectors_by_endpoint.get(endpoint, [])),
+                )
+                self.instantiated_port_connections[endpoint] = connectivity
+                self.instantiated_port_connections_by_interface_type.setdefault(port.interfaceType, []).append(connectivity)
+
+        swc_port_usage: Dict[tuple[str, str], Dict[str, List[tuple[str, ...]]]] = {}
+        for swc in sorted(project.swcs, key=lambda s: s.name):
+            for runnable in sorted(swc.runnables, key=lambda r: r.name):
+                for read in sorted(runnable.reads, key=lambda a: (a.port, a.dataElement)):
+                    swc_port_usage.setdefault((swc.name, read.port), {}).setdefault("reads", []).append(
+                        (runnable.name, read.dataElement)
+                    )
+                for write in sorted(runnable.writes, key=lambda a: (a.port, a.dataElement)):
+                    swc_port_usage.setdefault((swc.name, write.port), {}).setdefault("writes", []).append(
+                        (runnable.name, write.dataElement)
+                    )
+                for call in sorted(runnable.calls, key=lambda a: (a.port, a.operation)):
+                    swc_port_usage.setdefault((swc.name, call.port), {}).setdefault("calls", []).append(
+                        (runnable.name, call.operation)
+                    )
+                for event in sorted(runnable.dataReceiveEvents, key=lambda e: (e.port, e.dataElement)):
+                    swc_port_usage.setdefault((swc.name, event.port), {}).setdefault("data_receive_events", []).append(
+                        (runnable.name, event.dataElement)
+                    )
+                for event in sorted(runnable.operationInvokedEvents, key=lambda e: (e.port, e.operation)):
+                    swc_port_usage.setdefault((swc.name, event.port), {}).setdefault("operation_invoked_events", []).append(
+                        (runnable.name, event.operation)
+                    )
+
+                oie_ports_by_operation: Dict[str, List[str]] = {}
+                for event in sorted(runnable.operationInvokedEvents, key=lambda e: (e.operation, e.port)):
+                    oie_ports_by_operation.setdefault(event.operation, []).append(event.port)
+                for raised_error in sorted(runnable.raisesErrors, key=lambda e: (e.operation, e.error)):
+                    for port_name in sorted(oie_ports_by_operation.get(raised_error.operation, [])):
+                        swc_port_usage.setdefault((swc.name, port_name), {}).setdefault("raises_errors", []).append(
+                            (runnable.name, raised_error.operation, raised_error.error)
+                        )
+
+        self.runnable_port_usage_by_swc_port: Dict[tuple[str, str], SwcPortUsage] = {}
+        for key in sorted(swc_port_usage.keys()):
+            usage = swc_port_usage[key]
+            self.runnable_port_usage_by_swc_port[key] = SwcPortUsage(
+                swc_name=key[0],
+                port_name=key[1],
+                reads=tuple(usage.get("reads", [])),
+                writes=tuple(usage.get("writes", [])),
+                calls=tuple(usage.get("calls", [])),
+                data_receive_events=tuple(usage.get("data_receive_events", [])),
+                operation_invoked_events=tuple(usage.get("operation_invoked_events", [])),
+                raises_errors=tuple(usage.get("raises_errors", [])),
+            )
+
     def find_swc_port(self, swc_name: str, port_name: str) -> Optional[Port]:
         return self.ports_by_swc.get(swc_name, {}).get(port_name)
 
@@ -121,9 +217,19 @@ class ValidationContext:
             return None
         return self.swc_by_name.get(instance.typeRef)
 
+    def find_instance_port_connectivity(self, instance_name: str, port_name: str) -> Optional[InstancePortConnectivity]:
+        return self.instantiated_port_connections.get((instance_name, port_name))
+
+    def find_swc_port_usage(self, swc_name: str, port_name: str) -> SwcPortUsage:
+        return self.runnable_port_usage_by_swc_port.get(
+            (swc_name, port_name),
+            SwcPortUsage(swc_name=swc_name, port_name=port_name),
+        )
+
 
 class ValidationCase(ABC):
     case_id: str = ""
+    name: str = ""
     description: str = ""
     tags: Tuple[str, ...] = ()
     default_severity: Severity = "error"
@@ -135,10 +241,17 @@ class ValidationCase(ABC):
     def applicability(self, ctx: ValidationContext) -> Tuple[bool, Optional[str]]:
         return True, None
 
-    def finding(self, message: str, *, location: Optional[str] = None, code: Optional[str] = None) -> Finding:
+    def finding(
+        self,
+        message: str,
+        *,
+        location: Optional[str] = None,
+        code: Optional[str] = None,
+        severity: Optional[Severity] = None,
+    ) -> Finding:
         return Finding(
             code=code or self.case_id,
-            severity=self.default_severity,
+            severity=severity or self.default_severity,
             message=message,
             location=location,
         )
@@ -157,6 +270,7 @@ class ValidationRunner:
                 case_results.append(
                     CaseResult(
                         case_id=case.case_id,
+                        name=case.name,
                         description=case.description,
                         status="skip",
                         outcome=None,
@@ -176,6 +290,7 @@ class ValidationRunner:
             case_results.append(
                 CaseResult(
                     case_id=case.case_id,
+                    name=case.name,
                     description=case.description,
                     status="run",
                     outcome="fail" if has_errors else "ok",

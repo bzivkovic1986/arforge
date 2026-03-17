@@ -49,6 +49,10 @@ def _print_pattern_summary(label: str, patterns: list[InputPatternExpansion], pr
             console.print(f"   - ... ({len(p.matched_files) - preview_limit} more)")
 
 
+def _format_case_metrics(case) -> str:
+    return f"(ms={case.duration_ms:.2f} findings={case.finding_count})"
+
+
 @app.command()
 def validate(
     project: Path,
@@ -81,15 +85,19 @@ def validate(
         for case in report.case_results:
             if case.status == "skip":
                 if verbose >= 2:
-                    console.print(f" - {case.case_id} SKIP ({case.reason}) (ms=0.00 findings=0)")
+                    console.print(f" - {case.case_id} {case.name}")
+                    console.print(f"   {case.description}")
+                    console.print(f"   SKIP ({case.reason}) {_format_case_metrics(case)}")
                 else:
-                    console.print(f" - {case.case_id} SKIP ({case.reason})")
+                    console.print(f" - {case.case_id} {case.name} SKIP ({case.reason}) {_format_case_metrics(case)}")
                 continue
 
-            line = f" - {case.case_id} RUN {case.outcome.upper()}"
             if verbose >= 2:
-                line += f" (ms={case.duration_ms:.2f} findings={case.finding_count})"
-            console.print(line)
+                console.print(f" - {case.case_id} {case.name}")
+                console.print(f"   {case.description}")
+                console.print(f"   RUN {case.outcome.upper()} {_format_case_metrics(case)}")
+            else:
+                console.print(f" - {case.case_id} {case.name} RUN {case.outcome.upper()} {_format_case_metrics(case)}")
 
         if error_messages:
             console.print(Panel.fit(f"[red]FAILED[/red] {project}", title="validate"))
