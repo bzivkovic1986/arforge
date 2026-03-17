@@ -1,5 +1,6 @@
 swc:
   name: "SpeedConsumer"
+  category: "application"
   runnables:
     - name: "Runnable_UseSpeed"
       timingEventMs: 10

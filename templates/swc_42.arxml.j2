@@ -10,7 +10,7 @@
         <AR-PACKAGE>
           <SHORT-NAME>Components</SHORT-NAME>
           <ELEMENTS>
-            <APPLICATION-SW-COMPONENT-TYPE>
+            <{{ swc.component_type_tag }}>
               <SHORT-NAME>{{ swc.name }}</SHORT-NAME>
 
               <PORTS>
@@ -208,7 +208,7 @@
 
                 </SWC-INTERNAL-BEHAVIOR>
               </INTERNAL-BEHAVIORS>
-            </APPLICATION-SW-COMPONENT-TYPE>
+            </{{ swc.component_type_tag }}>
           </ELEMENTS>
         </AR-PACKAGE>
 

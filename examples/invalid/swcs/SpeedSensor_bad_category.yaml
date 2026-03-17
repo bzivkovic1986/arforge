@@ -1,6 +1,6 @@
 swc:
   name: "SpeedSensor"
-  category: "service"
+  category: "adaptive"
   runnables:
     - name: "Runnable_Init"
       initEvent: true

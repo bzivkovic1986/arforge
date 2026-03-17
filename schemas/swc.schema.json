@@ -463,6 +463,18 @@
             "SpeedConsumer"
           ]
         },
+        "category": {
+          "type": "string",
+          "description": "AUTOSAR software component category. Defaults to application when omitted.",
+          "enum": [
+            "application",
+            "service",
+            "complexDeviceDriver"
+          ],
+          "examples": [
+            "application"
+          ]
+        },
         "runnables": {
           "type": "array",
           "description": "Runnables owned by the software component.",
@@ -484,6 +496,7 @@
       "examples": [
         {
           "name": "SpeedConsumer",
+          "category": "application",
           "runnables": [
             {
               "name": "Runnable_UseSpeed",

@@ -16,7 +16,7 @@
                 {% for c in components %}
                 <SW-COMPONENT-PROTOTYPE>
                   <SHORT-NAME>{{ c.name }}</SHORT-NAME>
-                  <TYPE-TREF DEST="APPLICATION-SW-COMPONENT-TYPE">/{{ root_pkg }}/Components/{{ c.typeRef }}</TYPE-TREF>
+                  <TYPE-TREF DEST="{{ swc_type_dests[c.typeRef] }}">/{{ root_pkg }}/Components/{{ c.typeRef }}</TYPE-TREF>
                 </SW-COMPONENT-PROTOTYPE>
                 {% endfor %}
               </COMPONENTS>
