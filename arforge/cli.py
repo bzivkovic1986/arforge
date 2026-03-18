@@ -14,7 +14,6 @@ from .validate import (
     build_semantic_report,
     format_finding,
     load_aggregator,
-    load_and_validate_aggregator,
     load_aggregator_with_report,
 )
 
@@ -57,6 +56,32 @@ def _format_cli_finding(finding) -> str:
     return f"{finding.code} {format_finding(finding)}"
 
 
+def _severity_label(severity: str) -> str:
+    return severity.upper()
+
+
+def _severity_style(severity: str) -> str:
+    if severity == "error":
+        return "red"
+    if severity == "warning":
+        return "yellow"
+    return "cyan"
+
+
+def _print_colored_finding(prefix: str, finding) -> None:
+    label = _severity_label(finding.severity)
+    style = _severity_style(finding.severity)
+    console.print(f"{prefix}[{style}]{label}[/{style}] {_format_cli_finding(finding)}")
+
+
+def _print_validation_summary(report) -> None:
+    counts = report.severity_counts()
+    console.print("summary:")
+    console.print(f" - errors: {counts['error']}")
+    console.print(f" - warnings: {counts['warning']}")
+    console.print(f" - infos: {counts['info']}")
+
+
 @app.command()
 def validate(
     project: Path,
@@ -75,43 +100,39 @@ def validate(
     """Validate project YAMLs (supports globs).
     Use -v/-vv for semantic validation execution details."""
     try:
-        if verbose <= 0:
-            _ = load_and_validate_aggregator(project)
-            console.print(Panel.fit(f"[green]OK[/green] Valid: {project}", title="validate"))
-            return
-
         parsed = load_aggregator(project)
         report = build_semantic_report(parsed, ruleset="core")
-        error_messages = [_format_cli_finding(f) for f in report.error_findings()]
-        non_error_findings = [f for f in report.findings if f.severity != "error"]
+        has_errors = bool(report.error_findings())
 
-        console.print(f"ruleset={report.ruleset} cases={len(report.case_results)}")
-        for case in report.case_results:
-            if case.status == "skip":
+        if verbose > 0:
+            console.print(f"ruleset={report.ruleset} cases={len(report.case_results)}")
+            for case in report.case_results:
+                if case.status == "skip":
+                    if verbose >= 2:
+                        console.print(f" - {case.case_id} {case.name}")
+                        console.print(f"   {case.description}")
+                        console.print(f"   SKIP ({case.reason}) {_format_case_metrics(case)}")
+                    else:
+                        console.print(f" - {case.case_id} {case.name} SKIP ({case.reason}) {_format_case_metrics(case)}")
+                    continue
+
                 if verbose >= 2:
                     console.print(f" - {case.case_id} {case.name}")
                     console.print(f"   {case.description}")
-                    console.print(f"   SKIP ({case.reason}) {_format_case_metrics(case)}")
+                    console.print(f"   RUN {case.outcome.upper()} {_format_case_metrics(case)}")
+                    for finding in case.findings:
+                        _print_colored_finding("   ", finding)
                 else:
-                    console.print(f" - {case.case_id} {case.name} SKIP ({case.reason}) {_format_case_metrics(case)}")
-                continue
+                    console.print(f" - {case.case_id} {case.name} RUN {case.outcome.upper()} {_format_case_metrics(case)}")
+        elif report.findings:
+            for finding in report.findings:
+                _print_colored_finding("", finding)
 
-            if verbose >= 2:
-                console.print(f" - {case.case_id} {case.name}")
-                console.print(f"   {case.description}")
-                console.print(f"   RUN {case.outcome.upper()} {_format_case_metrics(case)}")
-            else:
-                console.print(f" - {case.case_id} {case.name} RUN {case.outcome.upper()} {_format_case_metrics(case)}")
+        _print_validation_summary(report)
 
-        if error_messages:
+        if has_errors:
             console.print(Panel.fit(f"[red]FAILED[/red] {project}", title="validate"))
-            for msg in error_messages:
-                console.print(f" - {msg}")
             raise typer.Exit(code=2)
-
-        if non_error_findings:
-            for finding in non_error_findings:
-                console.print(f" - [{finding.severity}] {_format_cli_finding(finding)}")
 
         console.print(Panel.fit(f"[green]OK[/green] Valid: {project}", title="validate"))
     except ValidationError as e:
