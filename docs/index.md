@@ -1,9 +1,11 @@
 # ARForge Documentation
 
+This documentation is organized around the current implementation in the repository.
+
 - [Overview](./overview.md)
 - [Architecture](./architecture.md)
-- [YAML Model](./yaml_model.md)
-- [Types](./types.md)
+- [Modeling Concepts](./modeling-concepts.md)
+- [Project Structure](./project-structure.md)
 - [Validation](./validation.md)
-- [Export](./export.md)
+- [CLI](./cli.md)
 - [Roadmap](./roadmap.md)

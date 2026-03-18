@@ -1,37 +1,166 @@
 # Roadmap
 
-This roadmap reflects areas that are visible in the current repository direction and constraints.
+This roadmap describes the current capabilities of ARForge and the planned evolution of the project.
+It is intended to communicate direction rather than strict release commitments.
 
-## Near-term consolidation
+# Current Feature Set
 
-- keep schemas, model, and semantic validation aligned as new modeling features are added
-- maintain deterministic validation behavior and stable finding codes
-- extend fixture coverage under `examples/invalid/*.yaml`
+ARForge currently provides a working modeling subset for AUTOSAR Classic 4.2.x based on YAML inputs and ARXML export.
 
-## Type-system evolution
+## Project and CLI
 
-Already implemented:
+* project scaffolding (`arforge init`)
+* YAML-based AUTOSAR modeling
+* schema validation via JSON Schema
+* semantic validation engine with rule IDs
+* validation severity levels (error / warning / info)
+* deterministic validation behavior
+* CLI commands
+  * `validate`
+  * `export`
+  * `init`
+  * `inspect`
 
-- split base/implementation/application types
-- implementation structs
-- units + linear compu methods
-- textTable compu methods (enumeration-style value-label mapping)
+## AUTOSAR Modeling
 
-Likely next increments (not yet implemented in current code):
+### Software Components
+- SWC type definitions
+- SWC categories
+  - `application`
+  - `service`
+  - `complexDeviceDriver`
+- ports
+  - provides
+  - requires
+- runnable definitions
+- runnable access definitions
+  - reads
+  - writes
+  - calls
 
-- richer compu method categories beyond `linear` and `textTable`
-- additional unit metadata/dimensions
-- deeper ARXML details for data type internals
+### Runnable Events
 
-## Tooling and authoring UX
+Supported runnable triggers:
+- `TimingEvent`
+- `InitEvent`
+- `OperationInvokedEvent`
+- `DataReceiveEvent`
 
-Current repo already includes:
+### Interfaces
 
-- VS Code schema mapping
-- VS Code tasks and debug launch profiles
-- fixture-driven pytest setup
+Sender-Receiver Interfaces
+- multiple data elements
+- runnable read/write definitions
+- communication specification
+  - implicit
+  - explicit
+  - queued
+- queue length validation
 
-Potential continuation:
+Client-Server Interfaces
+- multiple operations
+- operation arguments (`in`, `out`, `inout`)
+- return types
+- possible errors
+- raised error declarations
+- synchronous and asynchronous communication modes
+- timeout configuration
 
-- improve editor completions and diagnostics
-- broaden CLI diagnostics/report output
+### System Composition
+- component prototypes (instances)
+- SWC type references
+- assembly connectors
+- SR and C/S connections
+- deterministic connector export
+
+### Data Types
+- base types
+- implementation data types
+- application data types
+
+Supported constructs:
+- scalar types
+- array types
+- struct types
+- nested struct validation
+
+Additional features:
+- units
+- compu methods
+  - linear
+  - textTable (enumerations)
+- application type constraints
+
+### Validation Framework
+Validation includes:
+- schema validation
+- semantic validation rulesets
+- stable rule IDs
+- verbose diagnostics (-v, -vv)
+- connectivity validation
+- port usage validation
+- timing mismatch analysis
+- deterministic validation execution
+
+### Export
+- Jinja2-based ARXML export
+- deterministic export ordering
+- per-SWC export
+- shared type export
+- system export
+
+### Developer Tooling
+- pytest test coverage
+- example projects
+- invalid model fixtures
+- VS Code schema support
+- scaffolded example project
+
+# Upcoming Features
+
+These are the next planned improvements based on the current architecture.
+
+## Connectivity and Integration Analysis
+- deeper validation of component connectivity
+- detection of unused ports and connectors
+- detection of inconsistent runnable access patterns
+
+## Authoring Experience
+- improved scaffold templates
+- clearer example projects
+- enhanced JSON schema metadata
+- improved editor autocompletion and diagnostics
+
+## Visualization
+- PlantUML architecture diagram generation
+- system topology visualization
+- runnable interaction views
+
+## AUTOSAR Feature Expansion
+Incrementally expand supported AUTOSAR Classic constructs:
+- ModeDeclarationGroup
+- ModeSwitchEvent
+- mode ports and mode interfaces
+
+## Data Type Enhancements
+- richer compu method categories
+- improved physical unit metadata
+- extended constraint support
+
+## Export Improvements
+- additional ARXML details for interfaces and types
+- improved template coverage
+- broader AUTOSAR Classic version compatibility
+
+# Long-Term Direction
+
+The long-term goal of ARForge is to provide a lightweight, developer-friendly alternative for AUTOSAR Classic modeling workflows.
+
+Focus areas include:
+- text-based AUTOSAR modeling
+- CI/CD friendly validation
+- deterministic ARXML generation
+- modular and extensible validation rules
+- strong developer tooling
+
+ARForge aims to support practical AUTOSAR engineering workflows without requiring heavyweight proprietary modeling environments.
