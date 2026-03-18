@@ -1,156 +1,118 @@
 # Validation
 
-Validation is layered:
+Validation in ARForge has two layers:
 
-1. JSON Schema validation (file shape, required keys, enums, primitive constraints)
-2. Semantic validation (cross-file/cross-reference correctness)
+1. JSON Schema validation for file structure
+2. semantic validation for model correctness across files and references
 
-## JSON Schema layer
+## Schema Validation
 
-Implemented in `arforge/validate.py` with `jsonschema`.
+Schema validation is implemented in `arforge/validate.py` using the JSON schema files in `schemas/`.
 
-Schemas are in `schemas/`:
+Current schema coverage includes:
 
-- aggregator, interfaces, swcs, system
-- base/implementation/application types
-- units and compu methods
+- aggregator project manifests
+- interfaces
+- SWCs
+- system files
+- base, implementation, and application data types
+- units
+- compu methods
 
-## Semantic layer
+## Semantic Validation
 
-Implemented via `ValidationCase` classes in `arforge/validation_cases.py`.
+Semantic validation is implemented as separate `ValidationCase` units in `arforge/validation_cases.py`.
 
-Semantic findings are severity-aware. Each finding carries:
+Each finding carries:
 
 - `code`
 - `message`
 - `severity`
 
-Severity values are:
+Supported severity values are:
 
-- `error`: hard semantic/modeling failure
-- `warning`: design-quality or connectivity concern that does not fail validation
-- `info`: informational diagnostic that does not fail validation
+- `error`
+- `warning`
+- `info`
 
-Existing code paths remain backward compatible because findings default to `error` when severity is not specified explicitly.
+`arforge validate` fails only when at least one `error` finding is present.
 
-Current core rules include:
+## Deterministic Behavior
 
-- uniqueness checks (types, interfaces, SWCs, units, compu methods, instances)
-- base type checks:
-  - per-base-type name uniqueness
-  - metadata completeness and validity (`bitLength`, `signedness`)
-- type graph checks (base/impl/app refs)
-- struct checks (field rules, no app fields, cycle detection)
-- compu method checks:
-  - category must be supported (`linear` or `textTable`)
-  - `linear`: known `unitRef`, non-zero `factor`, valid `physMin`/`physMax` ordering
-  - `textTable`: at least one entry, unique `value`, non-empty `label` after trim
-- application type + compu method checks:
-  - unknown `compuMethodRef` is rejected
-  - `linear` compu method requires `unitRef` on application type and exact unit match
-  - `textTable` compu method allows optional `unitRef` with no unit-match enforcement
-- application constraint checks:
-  - integer constrained ranges are computed from base type metadata
-  - if metadata is missing, explicit fallback is currently supported only for `uint8` and `uint16`
-  - otherwise constrained integer range validation fails deterministically
-- interface checks (SR data elements, CS operations/args/returns)
-- runnable checks (reads/writes/calls)
-- operation-invoked event checks
-- runnable trigger policy checks
-- port ComSpec checks:
-  - senderReceiver: `mode` required, queued requires `queueLength >= 1`, non-queued must not define `queueLength`, CS fields not allowed
-  - clientServer: `callMode` required (`synchronous | asynchronous`), `timeoutMs >= 0`, timeout only allowed for synchronous, SR fields not allowed
-- system connector compatibility checks
-- instantiated-port connectivity and runnable usage checks:
-  - errors for runnable reads/writes/calls/events that reference unconnected instantiated ports
-  - warnings for instantiated SR/CS ports with no connector
-  - warnings for connected SR/CS ports that no runnable in the SWC type actually uses
-  - warnings for cyclic sender-receiver producer/consumer timing mismatches on connected ports
+Validation behavior is designed to be deterministic:
 
-Findings are deterministic:
+- validation cases run in sorted order
+- findings are sorted deterministically
+- example fixtures are used to lock expected behavior
 
-- case execution sorted by case id
-- findings sorted by severity, code, message, location
+This supports stable diffs, reliable tests, and predictable CI output.
 
-`arforge validate` fails only when at least one `error` finding exists. Warning-only and info-only runs return exit code `0`.
+## Current Rule Coverage
 
-Validation summaries include counts by severity:
+The current `core` ruleset covers:
 
-- errors
-- warnings
-- infos
-
-ComSpec validation is implemented in dedicated case `CORE-025` to keep the rule isolated and maintainable.
-
-Runtime output from `arforge validate -v` shows each case code, name, result, timing, and finding count. `arforge validate -vv` also prints the matching one-line description shown below.
-
-Normal `arforge validate` output stays concise but prints each emitted finding with its severity, followed by a summary.
-
-Example:
-
-```text
-WARNING CORE-050 Consumer runnable 'Runnable_UseSpeed' in SWC 'SpeedConsumer' (5 ms) reads from port 'Rp_VehicleSpeed' faster than producer 'Runnable_ReadSpeed' in SWC 'SpeedSensor' (20 ms). Data may be stale.
-ERROR CORE-021 Port 'Rp_X' references unknown interface 'If_Missing'.
-summary:
- - errors: 1
- - warnings: 1
- - infos: 0
-```
+- global and local uniqueness checks
+- base type metadata checks
+- datatype reference and type graph checks
+- implementation struct and array checks
+- application constraint checks
+- compu method and unit consistency checks
+- sender-receiver and client-server interface checks
+- runnable access checks for reads, writes, calls, and raised errors
+- event binding checks
+- trigger policy checks
+- ComSpec validation
+- system component instance type checks
+- connector compatibility checks
+- instantiated-port connectivity and usage checks
+- cyclic sender-receiver timing mismatch warnings
 
 ## Core Validation Cases
 
-| Code | Name | Description |
-|------|------|-------------|
-| CORE-001 | GlobalUniqueness | Checks that globally named model elements remain unique. |
-| CORE-002 | BaseTypeMetadata | Checks base type uniqueness and required metadata consistency. |
-| CORE-010 | InterfaceSemantics | Checks interface structure and datatype references. |
-| CORE-011 | ApplicationConstraints | Checks application datatype constraints against implementation types and compu methods. |
-| CORE-020 | SwcStructure | Checks SWC-local uniqueness for runnables and ports. |
-| CORE-021 | PortInterfaceReferences | Checks that each SWC port references an existing interface and uses the expected kind. |
-| CORE-022 | RunnableAccessSemantics | Checks runnable reads, writes, and calls against SWC port and interface semantics. |
-| CORE-023 | OperationInvokedEvents | Checks operation-invoked event bindings for provided client-server operations. |
-| CORE-024 | RunnableTriggerPolicy | Checks that each runnable uses exactly one trigger style. |
-| CORE-025 | PortComSpecSemantics | Checks sender-receiver and client-server ComSpec on SWC ports. |
-| CORE-026 | RunnableRaisedErrors | Checks runnable raisesErrors declarations for provided client-server operations. |
-| CORE-027 | DataReceiveEvents | Checks dataReceiveEvents bindings for required sender-receiver ports. |
-| CORE-030 | SystemInstanceTypes | Checks that composition component prototypes reference known SWC types. |
-| CORE-040 | ConnectionSemantics | Checks system connections and connector-level sender-receiver and client-server semantics. |
-| CORE-041 | SenderReceiverConnectivity | Checks sender-receiver port connectivity against instantiated components and runnable behavior. |
-| CORE-042 | SenderReceiverUsage | Checks whether connected sender-receiver ports are actually used by runnable behavior. |
-| CORE-043 | ClientServerConnectivity | Checks client-server port connectivity against instantiated components and runnable behavior. |
-| CORE-044 | ClientServerUsage | Checks whether connected client-server ports are actually used by runnable behavior. |
-| CORE-050 | SRConsumerFasterThanProducer | Warns when a cyclic sender-receiver consumer runs faster than its cyclic producer, which may lead to stale reads. |
-| CORE-051 | SRProducerFasterThanConsumer | Warns when a cyclic sender-receiver producer runs faster than its cyclic consumer, which may overwrite intermediate values before they are consumed. |
+| ID | Name | Description | Severity |
+|----|------|-------------|----------|
+| CORE-001 | GlobalUniqueness | Checks that globally named model elements remain unique. | Error |
+| CORE-002 | BaseTypeMetadata | Checks base type uniqueness and required metadata consistency. | Error |
+| CORE-010 | InterfaceSemantics | Checks interface structure and datatype references, including implementation datatype structures and arrays. | Error |
+| CORE-011 | ApplicationConstraints | Checks application datatype constraints against implementation types, units, and compu methods. | Error |
+| CORE-020 | SwcStructure | Checks SWC-local uniqueness for runnables and ports. | Error |
+| CORE-021 | PortInterfaceReferences | Checks that each SWC port references an existing interface and uses the expected kind. | Error |
+| CORE-022 | RunnableAccessSemantics | Checks runnable reads, writes, and calls against SWC port and interface semantics. | Error |
+| CORE-023 | OperationInvokedEvents | Checks operation-invoked event bindings for provided client-server operations. | Error |
+| CORE-024 | RunnableTriggerPolicy | Checks that each runnable uses exactly one trigger style. | Error |
+| CORE-025 | PortComSpecSemantics | Checks sender-receiver and client-server ComSpec on SWC ports. | Error |
+| CORE-026 | RunnableRaisedErrors | Checks runnable `raisesErrors` declarations for provided client-server operations. | Error |
+| CORE-027 | DataReceiveEvents | Checks `dataReceiveEvents` bindings for required sender-receiver ports. | Error |
+| CORE-030 | SystemInstanceTypes | Checks that composition component prototypes reference known SWC types. | Error |
+| CORE-040 | ConnectionSemantics | Checks system connections and connector-level sender-receiver and client-server semantics. | Error |
+| CORE-041 | SenderReceiverConnectivity | Checks sender-receiver instantiated-port connectivity against connectors and runnable behavior. | Error or warning, depending on finding |
+| CORE-042 | SenderReceiverUsage | Checks whether connected sender-receiver ports are actually used by runnable behavior. | Warning |
+| CORE-043 | ClientServerConnectivity | Checks client-server instantiated-port connectivity against connectors and runnable behavior. | Error |
+| CORE-044 | ClientServerUsage | Checks whether connected or unconnected client-server ports are actually used by runnable behavior. | Warning |
+| CORE-050 | SRConsumerFasterThanProducer | Warns when a cyclic sender-receiver consumer runs faster than its cyclic producer. | Warning |
+| CORE-051 | SRProducerFasterThanConsumer | Warns when a cyclic sender-receiver producer runs faster than its cyclic consumer. | Warning |
 
-## Sender-Receiver Timing Analysis
+Severity in the table reflects the normal outcome pattern of each rule. Some cases, such as `CORE-041`, can emit both hard errors and design-quality warnings under different conditions.
 
-`CORE-050` and `CORE-051` are design-quality analysis rules, not AUTOSAR validity errors.
+## Timing Analysis Rules
 
-They inspect connected sender-receiver communication chains and compare cyclic runnable periods when both sides use `timingEventMs`:
+`CORE-050` and `CORE-051` are design-quality rules, not structural validity errors.
 
-- `CORE-050 SRConsumerFasterThanProducer`: consumer period is smaller than producer period, so the consumer may read stale data multiple times.
-- `CORE-051 SRProducerFasterThanConsumer`: producer period is smaller than consumer period, so intermediate values may be overwritten before consumption.
+They compare cyclic runnable periods when both sides of a connected sender-receiver flow use `timingEventMs`:
 
-Equal timing does not produce a finding. Runnables without `timingEventMs`, or runnables triggered by `operationInvokedEvents`, `dataReceiveEvents`, or `initEvent`, are skipped by this analysis to avoid false positives.
+- `CORE-050`: consumer runs faster than producer and may read stale data
+- `CORE-051`: producer runs faster than consumer and may overwrite intermediate values before consumption
 
-## Severity-aware Core Rules
+Equal timing does not produce a finding.
 
-Hard semantic failures remain `error` findings, including unknown references, invalid type references, incompatible connector directions, duplicate connectors, invalid runnable accesses, cyclic struct references, and invalid sender-receiver or client-server semantics.
+## CLI Output
 
-Quality-analysis rules currently migrated away from hard failure are:
+Normal `validate` output prints findings and a severity summary.
 
-- `CORE-041` connector-missing port findings:
-  - `CORE-041-SR-PROVIDES-NO-OUTGOING`
-  - `CORE-041-SR-REQUIRES-NO-INCOMING`
-- `CORE-042` connected sender-receiver but unused port findings
-- `CORE-044` client-server connectivity/usage quality findings for unused or unconnected instantiated ports
-- `CORE-050` cyclic sender-receiver consumer-faster-than-producer timing mismatch
-- `CORE-051` cyclic sender-receiver producer-faster-than-consumer timing mismatch
+`-v` adds per-case execution information.
 
-## Fixture-driven testing
+`-vv` also includes case descriptions and more detailed execution output.
 
-`tests/test_examples.py`:
+## Tests and Fixtures
 
-- validates main example must pass
-- discovers all invalid project fixtures under `examples/invalid/*.yaml` (top-level `autosar` + `inputs`)
-- each invalid fixture is a separate parametrized test id
+`tests/test_examples.py` uses the checked-in example project plus invalid fixtures under `examples/invalid/` to verify deterministic validation behavior and expected finding codes.

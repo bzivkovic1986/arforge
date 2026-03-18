@@ -1,46 +1,76 @@
 # Architecture
 
-## Module layout
+ARForge follows a straightforward pipeline:
+
+`YAML -> schema validation -> semantic validation -> internal model -> ARXML export`
+
+## Processing Pipeline
+
+1. Load the aggregator project file (`*.project.yaml`).
+2. Expand file patterns for interfaces, SWCs, units, and compu methods.
+3. Validate each input file against JSON schema.
+4. Merge the parsed data into the internal project model.
+5. Run semantic validation cases from the `core` ruleset.
+6. Render ARXML through Jinja2 templates and write outputs.
+
+## Module Responsibilities
 
 - `arforge/cli.py`
-  - CLI commands and user-facing output.
+  - user-facing CLI commands and console output
 - `arforge/validate.py`
-  - file loading, glob expansion, schema validation, aggregator merge.
+  - project loading, glob expansion, schema validation, and aggregation
 - `arforge/model.py`
-  - immutable project IR dataclasses.
+  - internal data model used after parsing
 - `arforge/semantic_validation.py`
-  - validation runner, findings model, context indexes.
+  - validation runner, finding model, and validation context/indexes
 - `arforge/validation_cases.py`
-  - concrete semantic rules (`CORE-*`).
+  - individual semantic validation cases (`CORE-*`)
 - `arforge/exporter.py`
-  - render orchestration and output writing.
+  - export orchestration, rendering, and file writing
+- `arforge/scaffold.py`
+  - project scaffold generation used by `arforge init`
 - `templates/*.j2`
-  - ARXML rendering templates.
+  - ARXML rendering templates
 - `schemas/*.json`
-  - authoring-time JSON schema constraints.
+  - schema constraints for YAML inputs
 
-## Data flow
+## Internal Responsibilities
 
-`project.yaml` -> `validate.load_aggregator_with_report()` -> merged dict -> `model.from_dict()` -> `Project` -> semantic validation -> exporter render/write.
+- The loader is responsible for finding files, parsing YAML, and enforcing schema shape.
+- The model layer is responsible for turning merged input into a consistent internal representation.
+- The semantic validation layer is responsible for cross-file and cross-reference rules that JSON Schema cannot express cleanly.
+- The exporter is responsible for deterministic rendering and writing of ARXML artifacts.
 
-The project loader supports:
+## Data Flow
 
-- split type inputs (`baseTypes`, `implementationDataTypes`, `applicationDataTypes`)
-- optional physical type inputs (`units`, `compuMethods`)
+`project.yaml` -> `load_aggregator_with_report()` -> merged input -> model build -> semantic validation -> exporter render/write
 
-## Validation architecture
+The loader currently supports:
 
-- Rules are class-based `ValidationCase` units.
-- Rules are grouped into a ruleset (`core`) in `validation_registry.py`.
-- `ValidationRunner` executes cases sorted by case id and returns deterministic sorted findings.
+- `baseTypes`
+- `implementationDataTypes`
+- `applicationDataTypes`
+- `units`
+- `compuMethods`
+- `interfaces`
+- `swcs`
+- `system`
 
-## Export architecture
+## Validation Architecture
 
-- Shared artifacts:
-  - `<RootPackage>_SharedTypes.arxml` (types + interfaces)
-- Per-component artifacts:
-  - `<SWC>.arxml`
-- System artifact:
-  - `<System>.arxml`
+- Each semantic rule is implemented as a separate validation case.
+- Cases are grouped into the `core` ruleset in `arforge/validation_registry.py`.
+- Findings are sorted deterministically by severity, code, message, and location.
 
-Or a monolithic output (`all_42.arxml.j2`) when split mode is disabled.
+## Export Architecture
+
+ARForge currently supports two export layouts:
+
+- split export:
+  - `<RootPackage>_SharedTypes.arxml`
+  - one `<SWC>.arxml` per SWC type
+  - one `<System>.arxml` for the composition
+- monolithic export:
+  - one combined ARXML file
+
+Objects are ordered deterministically where needed so repeated exports produce stable output.

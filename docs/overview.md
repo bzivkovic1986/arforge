@@ -1,31 +1,38 @@
 # Overview
 
-ARForge is a YAML-first AUTOSAR Classic 4.2 modeling tool.
+ARForge is a lightweight AUTOSAR Classic modeling tool that uses YAML as the primary authoring format and ARXML as the export target.
 
-Current pipeline:
+It is intended for repository-based workflows where developers want readable inputs, deterministic validation, stable diffs, and automation-friendly export.
 
-1. Load `*.project.yaml` aggregator input.
-2. Expand input globs for interfaces, SWCs, units, and compu methods.
-3. Run JSON Schema validation for each input file.
-4. Build internal Python model (`arforge/model.py`).
-5. Run semantic validation rules (`core` ruleset).
-6. Render ARXML via Jinja2 templates.
+## What Problem It Solves
 
-Main CLI entry points:
+Traditional AUTOSAR authoring workflows can be difficult to review and automate in normal software development pipelines. ARForge keeps the source model in plain YAML, validates it before export, and produces predictable outputs that fit well into CI/CD and version control.
 
+## Current Scope
+
+The current repository supports a focused AUTOSAR Classic 4.2 subset, including:
+
+- aggregator project manifests (`*.project.yaml`)
+- split type inputs for base, implementation, and application data types
+- units and compu methods
+- sender-receiver and client-server interfaces
+- SWC types with ports, runnables, events, and ComSpec
+- system composition instances and port-level connectors
+- semantic validation with stable finding codes
+- Jinja2-based ARXML export
+
+The project is intentionally incremental. The current implementation is aimed at a practical, maintainable subset rather than full AUTOSAR coverage.
+
+## Main Entry Points
+
+- `python -m arforge.cli init <path>`
 - `python -m arforge.cli validate <project.yaml>`
 - `python -m arforge.cli export <project.yaml> --out <path> [--split-by-swc]`
 
-Primary focus of the current implementation:
+## Project Characteristics
 
-- deterministic validation findings and stable rule codes
-- version-specific templates (AUTOSAR Classic 4.2)
-- examples-driven development under `examples/`
-- fixture-based pytest coverage under `tests/test_examples.py`
-- sender-receiver port ComSpec support (`implicit`, `explicit`, `queued`)
-
-Supported SWC categories:
-
-- `application` (default)
-- `service`
-- `complexDeviceDriver`
+- YAML-first authoring
+- deterministic validation behavior
+- deterministic export ordering
+- examples-driven tests under `examples/` and `tests/`
+- validation split into schema and semantic stages
