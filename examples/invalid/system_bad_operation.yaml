@@ -2,9 +2,9 @@
 # Domain: project-level validation.
 # Tests validation failure for bad operation.
 system:
-  name: "BadSystem_LegacyCsConnectorOperation"
+  name: "BadSystem_CsConnectorOperation"
   composition:
-    name: "Composition_BadSystem_LegacyCsConnectorOperation"
+    name: "Composition_BadSystem_CsConnectorOperation"
     components:
       - name: "SpeedSensor_1"
         typeRef: "SpeedSensor"

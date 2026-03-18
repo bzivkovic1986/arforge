@@ -18,7 +18,7 @@ def project_yaml(system_name: str) -> str:
   rootPackage: "{system_name.upper()}"
 
 inputs:
-  baseTypes: "platform/base_types.yaml"
+  baseTypes: "types/base_types.yaml"
   implementationDataTypes: "types/implementation_types.yaml"
   applicationDataTypes: "types/application_types.yaml"
   units:
@@ -34,10 +34,45 @@ inputs:
     )
 
 
+def readme_md(system_name: str, *, no_example: bool = False) -> str:
+    example_note = (
+        "This scaffold includes a small runnable sender-receiver example:\n\n"
+        "- `types/` defines reusable data types.\n"
+        "- `interfaces/If_VehicleSpeed.yaml` defines the interface used by ports.\n"
+        "- `swcs/SpeedSensor.yaml` and `swcs/SpeedDisplay.yaml` define SWC types.\n"
+        "- `system.yaml` instantiates those SWC types as component prototypes and connects them.\n"
+    )
+    if no_example:
+        example_note = (
+            "This scaffold creates the project structure without example interfaces or SWCs.\n\n"
+            "- Add reusable data types under `types/`.\n"
+            "- Add interface definitions under `interfaces/`.\n"
+            "- Add SWC type definitions under `swcs/`.\n"
+            "- Define component instances and connectors in `system.yaml`.\n"
+        )
+    return f"""# {system_name}
+
+ARForge project scaffold for AUTOSAR Classic modeling.
+
+{example_note}
+Validate the project:
+
+```bash
+python -m arforge.cli validate autosar.project.yaml
+```
+
+Export ARXML:
+
+```bash
+python -m arforge.cli export autosar.project.yaml --out build/out --split-by-swc
+```
+"""
+
+
 def base_types_yaml() -> str:
     return _with_header(
         "ARForge: Base type definitions",
-        "Platform-specific primitive and raw types.",
+        "Defines low-level platform types used by implementation data types.",
 body="""baseTypes:
   - name: "uint8"
     description: "Unsigned 8-bit platform integer."
@@ -56,13 +91,10 @@ body="""baseTypes:
 def implementation_types_yaml() -> str:
     return _with_header(
         "ARForge: Implementation data types",
-        "Maps AUTOSAR implementation types onto platform base types.",
+        "Defines type-level implementation data types backed by platform base types.",
 body="""implementationDataTypes:
-  - name: "UInt8"
-    description: "Implementation type for small counters and flags."
-    baseTypeRef: "uint8"
-  - name: "UInt16"
-    description: "Implementation type for raw system values."
+  - name: "Impl_VehicleSpeed_U16"
+    description: "Raw implementation type for a vehicle speed sample."
     baseTypeRef: "uint16"
 """,
     )
@@ -71,16 +103,16 @@ body="""implementationDataTypes:
 def application_types_yaml() -> str:
     return _with_header(
         "ARForge: Application data types",
-        "Project-facing types with optional units and compu methods.",
+        "Defines project-level application types used by interfaces.",
 body="""applicationDataTypes:
-  - name: "App_SystemValue"
-    description: "Project-level value shared between the demo components."
-    implementationTypeRef: "UInt16"
+  - name: "App_VehicleSpeed"
+    description: "Vehicle speed value shared between the demo SWC types."
+    implementationTypeRef: "Impl_VehicleSpeed_U16"
     constraint:
       min: 0
-      max: 1000
-    unitRef: "raw_count"
-    compuMethodRef: "CM_SystemValue_Identity"
+      max: 250
+    unitRef: "km_per_h"
+    compuMethodRef: "CM_VehicleSpeed_Kph"
 """,
     )
 
@@ -90,9 +122,9 @@ def units_yaml() -> str:
         "ARForge: Units",
         "Physical units referenced by application data types and compu methods.",
 body="""units:
-  - name: "raw_count"
-    description: "Generic engineering count unit for demo values."
-    displayName: "count"
+  - name: "km_per_h"
+    description: "Vehicle speed unit used by the scaffolded example."
+    displayName: "km/h"
 """,
     )
 
@@ -102,84 +134,76 @@ def compu_methods_yaml() -> str:
         "ARForge: Compu methods",
         "Simple physical scaling definitions for application data types.",
 body="""compuMethods:
-  - name: "CM_SystemValue_Identity"
-    description: "Identity scaling for the demo system value."
+  - name: "CM_VehicleSpeed_Kph"
+    description: "Identity scaling for the demo vehicle speed value."
     category: "linear"
-    unitRef: "raw_count"
+    unitRef: "km_per_h"
     factor: 1.0
     offset: 0.0
     physMin: 0
-    physMax: 1000
+    physMax: 250
 """,
     )
 
 
-def interface_system_value_yaml() -> str:
+def interface_vehicle_speed_yaml() -> str:
     return _with_header(
         "ARForge: Interface definition",
-        "Defines a Sender-Receiver or Client-Server AUTOSAR interface.",
+        "Defines a Sender-Receiver or Client-Server interface used by SWC ports.",
 body="""interface:
-  name: "If_SystemValue"
-  description: "Publishes the current demo system value."
+  name: "If_VehicleSpeed"
+  description: "Sender-receiver interface for the current vehicle speed."
   type: "senderReceiver"
   dataElements:
-    - name: "SystemValue"
-      description: "Latest produced system value sample."
-      typeRef: "App_SystemValue"
+    - name: "VehicleSpeed"
+      description: "Latest measured vehicle speed sample."
+      typeRef: "App_VehicleSpeed"
 """,
     )
 
 
-def swc_provider_yaml() -> str:
+def swc_speed_sensor_yaml() -> str:
     return _with_header(
         "ARForge: Software Component Type",
-        "Defines ports, runnables, and internal behavior.",
+        "Defines ports, runnables, and internal behavior for one AUTOSAR SWC type.",
 body="""swc:
-  name: "SystemValueProvider"
-  description: "Produces the demo system value on a periodic runnable."
+  name: "SpeedSensor"
+  description: "SWC type that publishes the current vehicle speed."
   runnables:
-    - name: "Runnable_WriteSystemValue"
-      description: "Writes the current system value to the provided port."
+    - name: "Runnable_PublishVehicleSpeed"
+      description: "Writes the latest vehicle speed sample to the provided port."
       timingEventMs: 10
       writes:
-        - port: "Pp_SystemValue"
-          dataElement: "SystemValue"
+        - port: "Pp_VehicleSpeed"
+          dataElement: "VehicleSpeed"
   ports:
-    - name: "Pp_SystemValue"
-      description: "Provided sender-receiver port for downstream consumers."
+    - name: "Pp_VehicleSpeed"
+      description: "Provided sender-receiver port for publishing speed."
       direction: "provides"
-      interfaceRef: "If_SystemValue"
+      interfaceRef: "If_VehicleSpeed"
 """,
     )
 
 
-def swc_consumer_yaml() -> str:
+def swc_speed_display_yaml() -> str:
     return _with_header(
         "ARForge: Software Component Type",
-        "Defines ports, runnables, and internal behavior.",
+        "Defines ports, runnables, and internal behavior for one AUTOSAR SWC type.",
 body="""swc:
-  name: "SystemValueConsumer"
-  description: "Consumes the demo system value through queued reception."
+  name: "SpeedDisplay"
+  description: "SWC type that reads vehicle speed and could display it to a user."
   runnables:
-    - name: "Runnable_ReadSystemValue"
-      description: "Polls the latest queued system value."
+    - name: "Runnable_ReadVehicleSpeed"
+      description: "Reads the latest vehicle speed sample from the required port."
       timingEventMs: 10
       reads:
-        - port: "Rp_SystemValue"
-          dataElement: "SystemValue"
-    - name: "Runnable_OnSystemValue"
-      description: "Runs whenever a new system value arrives."
-      dataReceiveEvents:
-        - port: "Rp_SystemValue"
-          dataElement: "SystemValue"
+        - port: "Rp_VehicleSpeed"
+          dataElement: "VehicleSpeed"
   ports:
-    - name: "Rp_SystemValue"
-      description: "Required sender-receiver port for incoming values."
+    - name: "Rp_VehicleSpeed"
+      description: "Required sender-receiver port for receiving speed."
       direction: "requires"
-      interfaceRef: "If_SystemValue"
-      comSpec:
-        mode: "queued"
-        queueLength: 1
+      interfaceRef: "If_VehicleSpeed"
 """,
     )
 
@@ -187,24 +211,27 @@ body="""swc:
 def system_yaml(system_name: str) -> str:
     return _with_header(
         "ARForge: System composition",
-        "Defines component prototypes and connectors between ports.",
+        "Defines component prototypes (instances) and connectors between their ports.",
 body=f"""system:
   name: "{system_name}"
-  description: "Demo AUTOSAR system composed of one provider and one consumer."
+  description: "Demo AUTOSAR system wiring one speed sender to one speed receiver."
   composition:
     name: "Composition_{system_name}"
-    description: "Top-level composition wiring the scaffolded demo SWCs."
+    description: "Top-level composition for the scaffolded sender-receiver example."
+    # These are component prototypes (instances in the system).
+    # typeRef points to the SWC type defined in swcs/*.yaml.
     components:
-      - name: "SystemValueProvider_1"
-        description: "Provider instance in the scaffolded demo system."
-        typeRef: "SystemValueProvider"
-      - name: "SystemValueConsumer_1"
-        description: "Consumer instance in the scaffolded demo system."
-        typeRef: "SystemValueConsumer"
+      - name: "SpeedSensor_1"
+        description: "Instance of the SpeedSensor SWC type."
+        typeRef: "SpeedSensor"
+      - name: "SpeedDisplay_1"
+        description: "Instance of the SpeedDisplay SWC type."
+        typeRef: "SpeedDisplay"
+    # Connect the sender port on the producer instance to the receiver port on the consumer instance.
     connectors:
-      - from: "SystemValueProvider_1.Pp_SystemValue"
-        description: "Connects the provider output to the consumer input."
-        to: "SystemValueConsumer_1.Rp_SystemValue"
+      - from: "SpeedSensor_1.Pp_VehicleSpeed"
+        description: "Connects the published speed sample to the display instance."
+        to: "SpeedDisplay_1.Rp_VehicleSpeed"
 """,
     )
 
@@ -230,8 +257,9 @@ def structure_only_system_yaml(system_name: str) -> str:
 
 def scaffold_files(system_name: str, *, no_example: bool = False) -> Dict[Path, str]:
     files: Dict[Path, str] = {
+        Path("README.md"): readme_md(system_name, no_example=no_example),
         Path("autosar.project.yaml"): project_yaml(system_name),
-        Path("platform/base_types.yaml"): base_types_yaml(),
+        Path("types/base_types.yaml"): base_types_yaml(),
         Path("types/implementation_types.yaml"): implementation_types_yaml(),
         Path("types/application_types.yaml"): application_types_yaml(),
         Path("units/units.yaml"): units_yaml(),
@@ -242,9 +270,9 @@ def scaffold_files(system_name: str, *, no_example: bool = False) -> Dict[Path, 
         files[Path("system.yaml")] = structure_only_system_yaml(system_name)
         return files
 
-    files[Path("interfaces/If_SystemValue.yaml")] = interface_system_value_yaml()
-    files[Path("swcs/SystemValueProvider.yaml")] = swc_provider_yaml()
-    files[Path("swcs/SystemValueConsumer.yaml")] = swc_consumer_yaml()
+    files[Path("interfaces/If_VehicleSpeed.yaml")] = interface_vehicle_speed_yaml()
+    files[Path("swcs/SpeedSensor.yaml")] = swc_speed_sensor_yaml()
+    files[Path("swcs/SpeedDisplay.yaml")] = swc_speed_display_yaml()
     files[Path("system.yaml")] = system_yaml(system_name)
     return files
 
@@ -259,7 +287,6 @@ def scaffold_project(path: Path, *, name: str = "DemoSystem", force: bool = Fals
     for rel_dir in [
         Path("interfaces"),
         Path("swcs"),
-        Path("platform"),
         Path("types"),
         Path("units"),
         Path("compu_methods"),

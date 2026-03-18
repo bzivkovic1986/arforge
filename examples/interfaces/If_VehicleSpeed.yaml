@@ -1,17 +1,10 @@
-﻿# ARForge: Interface definition
-# Defines a Sender-Receiver or Client-Server AUTOSAR interface.
+# ARForge: Interface definition
+# Defines a Sender-Receiver or Client-Server interface used by SWC ports.
 interface:
   name: "If_VehicleSpeed"
-  description: "Provides vehicle speed related sender-receiver data."
+  description: "Sender-receiver interface for the current vehicle speed."
   type: "senderReceiver"
   dataElements:
     - name: "VehicleSpeed"
-      description: "Current vehicle speed in km/h."
+      description: "Latest measured vehicle speed sample."
       typeRef: "App_VehicleSpeed"
-    - name: "WheelSpeeds"
-      typeRef: "Impl_WheelSpeeds"
-    - name: "VehicleSnapshot"
-      typeRef: "Impl_Outer"
-    - name: "WheelSpeed"
-      typeRef: "SpeedPair_T"
-

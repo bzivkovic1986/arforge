@@ -30,6 +30,14 @@ Export (split):
 python -m arforge.cli export examples/autosar.project.yaml --out build/out --split-by-swc
 ```
 
+The checked-in example is intentionally small:
+
+- `types/` defines reusable data types.
+- `types/base_types.yaml` keeps base types with the rest of the type definitions.
+- `interfaces/If_VehicleSpeed.yaml` defines the sender-receiver interface.
+- `swcs/SpeedSensor.yaml` and `swcs/SpeedDisplay.yaml` define SWC types.
+- `system.yaml` instantiates those SWC types and connects them.
+
 Projects use `system.yaml` for composition instances and connectors.
 
 Run tests:

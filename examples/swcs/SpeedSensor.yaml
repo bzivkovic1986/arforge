@@ -1,32 +1,17 @@
-﻿# ARForge: Software Component Type
-# Defines ports, runnables, and internal behavior.
+# ARForge: Software Component Type
+# Defines ports, runnables, and internal behavior for one AUTOSAR SWC type.
 swc:
   name: "SpeedSensor"
-  category: "service"
+  description: "SWC type that publishes the current vehicle speed."
   runnables:
-    - name: "Runnable_Init"
-      initEvent: true
-    - name: "Runnable_ReadSpeed"
+    - name: "Runnable_PublishVehicleSpeed"
+      description: "Writes the latest vehicle speed sample to the provided port."
       timingEventMs: 10
       writes:
         - port: "Pp_VehicleSpeed"
           dataElement: "VehicleSpeed"
-    - name: "Runnable_DiagServer"
-      operationInvokedEvents:
-        - port: "Pp_Diag"
-          operation: "ReadDTC"
-        - port: "Pp_Diag"
-          operation: "ClearDTC"
-        - port: "Pp_Diag"
-          operation: "LogEvent"
-      raisesErrors:
-        - operation: "ReadDTC"
-          error: "DTC_NOT_FOUND"
   ports:
     - name: "Pp_VehicleSpeed"
+      description: "Provided sender-receiver port for publishing speed."
       direction: "provides"
       interfaceRef: "If_VehicleSpeed"
-    - name: "Pp_Diag"
-      direction: "provides"
-      interfaceRef: "If_Diagnostics"
-

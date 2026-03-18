@@ -1,30 +1,22 @@
-﻿# ARForge: System composition
-# Defines component prototypes and connectors between ports.
+# ARForge: System composition
+# Defines component prototypes (instances) and connectors between their ports.
 system:
   name: "DemoSystem"
-  description: "Example system with paired sensor and consumer instances."
+  description: "Demo AUTOSAR system wiring one speed sender to one speed receiver."
   composition:
     name: "Composition_DemoSystem"
+    description: "Top-level composition for the scaffolded sender-receiver example."
+    # These are component prototypes (instances in the system).
+    # typeRef points to the SWC type defined in swcs/*.yaml.
     components:
       - name: "SpeedSensor_1"
+        description: "Instance of the SpeedSensor SWC type."
         typeRef: "SpeedSensor"
-      - name: "SpeedSensor_2"
-        typeRef: "SpeedSensor"
-      - name: "SpeedConsumer_1"
-        typeRef: "SpeedConsumer"
-      - name: "SpeedConsumer_2"
-        typeRef: "SpeedConsumer"
+      - name: "SpeedDisplay_1"
+        description: "Instance of the SpeedDisplay SWC type."
+        typeRef: "SpeedDisplay"
+    # Connect the sender port on the producer instance to the receiver port on the consumer instance.
     connectors:
       - from: "SpeedSensor_1.Pp_VehicleSpeed"
-        to: "SpeedConsumer_1.Rp_VehicleSpeed"
-      - from: "SpeedSensor_2.Pp_VehicleSpeed"
-        to: "SpeedConsumer_2.Rp_VehicleSpeed"
-      - from: "SpeedSensor_1.Pp_Diag"
-        to: "SpeedConsumer_1.Rp_Diag"
-      - from: "SpeedSensor_1.Pp_Diag"
-        to: "SpeedConsumer_1.Rp_DiagAsync"
-      - from: "SpeedSensor_2.Pp_Diag"
-        to: "SpeedConsumer_2.Rp_Diag"
-      - from: "SpeedSensor_2.Pp_Diag"
-        to: "SpeedConsumer_2.Rp_DiagAsync"
-
+        description: "Connects the published speed sample to the display instance."
+        to: "SpeedDisplay_1.Rp_VehicleSpeed"

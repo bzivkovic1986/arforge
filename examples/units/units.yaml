@@ -1,7 +1,6 @@
-﻿# ARForge: Units
+# ARForge: Units
 # Physical units referenced by application data types and compu methods.
 units:
-  - name: "km_h"
-    description: "Kilometers per hour for road-speed related signals."
+  - name: "km_per_h"
+    description: "Vehicle speed unit used by the scaffolded example."
     displayName: "km/h"
-

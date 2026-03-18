@@ -1,5 +1,5 @@
-﻿# ARForge: Base type definitions
-# Platform-specific primitive and raw types.
+# ARForge: Base type definitions
+# Support types for invalid fixtures that exercise client-server examples.
 baseTypes:
   - name: "uint8"
     bitLength: 8
@@ -9,4 +9,3 @@ baseTypes:
     bitLength: 16
     signedness: "unsigned"
     nativeDeclaration: "uint16"
-

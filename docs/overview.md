@@ -23,3 +23,9 @@ Primary focus of the current implementation:
 - examples-driven development under `examples/`
 - fixture-based pytest coverage under `tests/test_examples.py`
 - sender-receiver port ComSpec support (`implicit`, `explicit`, `queued`)
+
+Supported SWC categories:
+
+- `application` (default)
+- `service`
+- `complexDeviceDriver`

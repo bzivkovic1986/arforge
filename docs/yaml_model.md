@@ -10,17 +10,18 @@ autosar:
   rootPackage: "DEMO"
 
 inputs:
-  baseTypes: "platform/base_types.yaml"
+  baseTypes: "types/base_types.yaml"
   implementationDataTypes: "types/implementation_types.yaml"
   applicationDataTypes: "types/application_types.yaml"
   units:
-    - "units/*.yaml"
+    - "units/units.yaml"
   compuMethods:
-    - "compu_methods/*.yaml"
+    - "compu_methods/compu_methods.yaml"
   interfaces:
-    - "interfaces/*.yaml"
+    - "interfaces/If_VehicleSpeed.yaml"
   swcs:
-    - "swcs/*.yaml"
+    - "swcs/SpeedSensor.yaml"
+    - "swcs/SpeedDisplay.yaml"
   system: "system.yaml"
 ```
 
@@ -30,13 +31,13 @@ Linear:
 
 ```yaml
 compuMethods:
-  - name: "CM_Speed_Kmh_Linear"
+  - name: "CM_VehicleSpeed_Kph"
     category: "linear"
-    unitRef: "km_h"
-    factor: 0.1
+    unitRef: "km_per_h"
+    factor: 1.0
     offset: 0.0
     physMin: 0
-    physMax: 300
+    physMax: 250
 ```
 
 Text table:
@@ -59,10 +60,10 @@ compuMethods:
 ```yaml
 applicationDataTypes:
   - name: "App_VehicleSpeed"
-    implementationTypeRef: "UInt16"
+    implementationTypeRef: "Impl_VehicleSpeed_U16"
     constraint:
       min: 0
-      max: 300
+      max: 250
 ```
 
 Constraint range validation for integer base types uses base type metadata:
@@ -120,32 +121,28 @@ Runnables can also declare optional access definitions:
 - `calls`: list of `{ port, operation, timeoutMs? }` for client-server requires ports
 - `ports[*].comSpec`: optional communication specification (sender-receiver or client-server)
 
+Supported SWC categories:
+
+- `application` -> exported as `APPLICATION-SW-COMPONENT-TYPE`
+- `service` -> exported as `SERVICE-SW-COMPONENT-TYPE`
+- `complexDeviceDriver` -> exported as `COMPLEX-DEVICE-DRIVER-SW-COMPONENT-TYPE`
+
+If `category` is omitted, ARForge defaults to `application`.
+
 ```yaml
 swc:
-  name: "SpeedConsumer"
+  name: "SpeedDisplay"
+  category: "application"
   runnables:
-    - name: "Runnable_UseSpeed"
+    - name: "Runnable_ReadVehicleSpeed"
       timingEventMs: 10
       reads:
         - port: "Rp_VehicleSpeed"
           dataElement: "VehicleSpeed"
-      calls:
-        - port: "Rp_Diag"
-          operation: "ReadDTC"
-          timeoutMs: 100         # optional, call-level timeout override metadata
   ports:
     - name: "Rp_VehicleSpeed"
       direction: "requires"
       interfaceRef: "If_VehicleSpeed"
-      comSpec:
-        mode: "queued"      # implicit | explicit | queued
-        queueLength: 8      # required only for queued
-    - name: "Rp_Diag"
-      direction: "requires"
-      interfaceRef: "If_Diagnostics"
-      comSpec:
-        callMode: "synchronous"  # synchronous | asynchronous
-        timeoutMs: 50            # optional, only with synchronous
 ```
 
 ComSpec rules:
@@ -177,17 +174,11 @@ system:
     components:
       - name: "SpeedSensor_1"
         typeRef: "SpeedSensor"
-      - name: "SpeedSensor_2"
-        typeRef: "SpeedSensor"
-      - name: "SpeedConsumer_1"
-        typeRef: "SpeedConsumer"
+      - name: "SpeedDisplay_1"
+        typeRef: "SpeedDisplay"
     connectors:
       - from: "SpeedSensor_1.Pp_VehicleSpeed"
-        to: "SpeedConsumer_1.Rp_VehicleSpeed"
-      - from: "SpeedSensor_2.Pp_VehicleSpeed"
-        to: "SpeedConsumer_1.Rp_VehicleSpeed"
-      - from: "SpeedSensor_1.Pp_Diag"
-        to: "SpeedConsumer_1.Rp_Diag"
+        to: "SpeedDisplay_1.Rp_VehicleSpeed"
 ```
 
 System connectors are port-level only. SenderReceiver data-element usage belongs in runnable `reads`, `writes`, and `dataReceiveEvents`. ClientServer operation usage belongs in runnable `calls`, `operationInvokedEvents`, and `raisesErrors`; connector-level `operation` is not supported.

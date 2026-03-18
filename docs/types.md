@@ -35,7 +35,7 @@ Scalar:
 
 ```yaml
 implementationDataTypes:
-  - name: "UInt16"
+  - name: "Impl_VehicleSpeed_U16"
     baseTypeRef: "uint16"
 ```
 
@@ -82,15 +82,12 @@ Array policy:
 ```yaml
 applicationDataTypes:
   - name: "App_VehicleSpeed"
-    implementationTypeRef: "UInt16"
+    implementationTypeRef: "Impl_VehicleSpeed_U16"
     constraint:
       min: 0
-      max: 300
-    unitRef: "km_h"
-    compuMethodRef: "CM_Speed_Kmh_Linear"
-  - name: "App_DtcStatus"
-    implementationTypeRef: "UInt8"
-    compuMethodRef: "CM_DtcStatus"
+      max: 250
+    unitRef: "km_per_h"
+    compuMethodRef: "CM_VehicleSpeed_Kph"
 ```
 
 Constraint policy (v0):
@@ -117,7 +114,7 @@ Compu method linkage policy:
 
 ```yaml
 units:
-  - name: "km_h"
+  - name: "km_per_h"
     displayName: "km/h"
 ```
 
@@ -125,13 +122,13 @@ Linear:
 
 ```yaml
 compuMethods:
-  - name: "CM_Speed_Kmh_Linear"
+  - name: "CM_VehicleSpeed_Kph"
     category: "linear"
-    unitRef: "km_h"
-    factor: 0.1
+    unitRef: "km_per_h"
+    factor: 1.0
     offset: 0.0
     physMin: 0
-    physMax: 300
+    physMax: 250
 ```
 
 Enumeration-style `textTable`:
