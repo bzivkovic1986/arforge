@@ -1,0 +1,5 @@
+# ARForge: Units
+# Support units for invalid fixtures that exercise client-server examples.
+units:
+  - name: "km_h"
+    displayName: "km/h"

@@ -1,0 +1,7 @@
+# ARForge: Implementation data types
+# Support types for invalid fixtures that exercise client-server examples.
+implementationDataTypes:
+  - name: "UInt8"
+    baseTypeRef: "uint8"
+  - name: "UInt16"
+    baseTypeRef: "uint16"

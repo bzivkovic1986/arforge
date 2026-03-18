@@ -1,0 +1,17 @@
+# ARForge: Software Component Type
+# Defines ports, runnables, and internal behavior for one AUTOSAR SWC type.
+swc:
+  name: "SpeedDisplay"
+  description: "SWC type that reads vehicle speed and could display it to a user."
+  runnables:
+    - name: "Runnable_ReadVehicleSpeed"
+      description: "Reads the latest vehicle speed sample from the required port."
+      timingEventMs: 10
+      reads:
+        - port: "Rp_VehicleSpeed"
+          dataElement: "VehicleSpeed"
+  ports:
+    - name: "Rp_VehicleSpeed"
+      description: "Required sender-receiver port for receiving speed."
+      direction: "requires"
+      interfaceRef: "If_VehicleSpeed"

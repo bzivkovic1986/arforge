@@ -6,7 +6,7 @@ autosar:
   rootPackage: "DEMO"
 
 inputs:
-  baseTypes: "../platform/base_types.yaml"
+  baseTypes: "../types/base_types.yaml"
   implementationDataTypes: "types/implementation_types_array_application_ref.yaml"
   applicationDataTypes: "../types/application_types.yaml"
   units:

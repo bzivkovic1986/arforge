@@ -22,47 +22,82 @@ def _run_init(project_dir: Path, *extra_args: str) -> subprocess.CompletedProces
     )
 
 
+def _run_cli(*args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, "-m", "arforge.cli", *args],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
 def test_init_default_creates_valid_project(tmp_path: Path) -> None:
     project_dir = tmp_path / "demo"
     result = _run_init(project_dir, "--name", "DemoSystem")
     assert result.returncode == 0, result.stdout + result.stderr
 
     expected_files = [
+        "README.md",
         "autosar.project.yaml",
-        "platform/base_types.yaml",
+        "types/base_types.yaml",
         "types/implementation_types.yaml",
         "types/application_types.yaml",
         "units/units.yaml",
         "compu_methods/compu_methods.yaml",
-        "interfaces/If_SystemValue.yaml",
-        "swcs/SystemValueProvider.yaml",
-        "swcs/SystemValueConsumer.yaml",
+        "interfaces/If_VehicleSpeed.yaml",
+        "swcs/SpeedSensor.yaml",
+        "swcs/SpeedDisplay.yaml",
         "system.yaml",
     ]
     for rel in expected_files:
         assert (project_dir / rel).is_file(), f"Missing scaffold file: {rel}"
 
     project = load_and_validate_aggregator(project_dir / "autosar.project.yaml")
+    readme = (project_dir / "README.md").read_text(encoding="utf-8")
     project_yaml = (project_dir / "autosar.project.yaml").read_text(encoding="utf-8")
     system_yaml = (project_dir / "system.yaml").read_text(encoding="utf-8")
-    interface_yaml = (project_dir / "interfaces" / "If_SystemValue.yaml").read_text(encoding="utf-8")
-    consumer_yaml = (project_dir / "swcs" / "SystemValueConsumer.yaml").read_text(encoding="utf-8")
+    interface_yaml = (project_dir / "interfaces" / "If_VehicleSpeed.yaml").read_text(encoding="utf-8")
+    producer_yaml = (project_dir / "swcs" / "SpeedSensor.yaml").read_text(encoding="utf-8")
+    consumer_yaml = (project_dir / "swcs" / "SpeedDisplay.yaml").read_text(encoding="utf-8")
     application_types_yaml = (project_dir / "types" / "application_types.yaml").read_text(encoding="utf-8")
+    implementation_types_yaml = (project_dir / "types" / "implementation_types.yaml").read_text(encoding="utf-8")
     assert project_yaml.startswith("# ARForge: Project input manifest")
     assert system_yaml.startswith("# ARForge: System composition")
     assert interface_yaml.startswith("# ARForge: Interface definition")
-    assert 'dataElement: "SystemValue"' not in system_yaml
-    assert 'dataReceiveEvents:' in consumer_yaml
-    assert 'description: "Publishes the current demo system value."' in interface_yaml
-    assert 'description: "Consumes the demo system value through queued reception."' in consumer_yaml
-    assert 'description: "Project-level value shared between the demo components."' in application_types_yaml
+    assert producer_yaml.startswith("# ARForge: Software Component Type")
+    assert consumer_yaml.startswith("# ARForge: Software Component Type")
+    assert "instantiates those SWC types as component prototypes" in readme
+    assert "python -m arforge.cli validate autosar.project.yaml" in readme
+    assert "python -m arforge.cli export autosar.project.yaml --out build/out --split-by-swc" in readme
+    assert 'typeRef points to the SWC type defined in swcs/*.yaml.' in system_yaml
+    assert 'name: "SpeedSensor_1"' in system_yaml
+    assert 'typeRef: "SpeedSensor"' in system_yaml
+    assert 'name: "SpeedDisplay_1"' in system_yaml
+    assert 'description: "Sender-receiver interface for the current vehicle speed."' in interface_yaml
+    assert 'description: "SWC type that publishes the current vehicle speed."' in producer_yaml
+    assert 'description: "SWC type that reads vehicle speed and could display it to a user."' in consumer_yaml
+    assert 'description: "Vehicle speed value shared between the demo SWC types."' in application_types_yaml
+    assert 'description: "Raw implementation type for a vehicle speed sample."' in implementation_types_yaml
+
+    validate_result = _run_cli("validate", str(project_dir / "autosar.project.yaml"))
+    assert validate_result.returncode == 0, validate_result.stdout + validate_result.stderr
+
+    export_result = _run_cli(
+        "export",
+        str(project_dir / "autosar.project.yaml"),
+        "--out",
+        str(tmp_path / "out_cli"),
+        "--split-by-swc",
+    )
+    assert export_result.returncode == 0, export_result.stdout + export_result.stderr
 
     out_dir = tmp_path / "out"
     written = write_outputs(project, template_dir=TEMPLATE_DIR, out=out_dir, split_by_swc=True)
     assert [path.name for path in written] == [
         "DEMOSYSTEM_SharedTypes.arxml",
-        "SystemValueConsumer.arxml",
-        "SystemValueProvider.arxml",
+        "SpeedDisplay.arxml",
+        "SpeedSensor.arxml",
         "DemoSystem.arxml",
     ]
 
@@ -73,8 +108,9 @@ def test_init_no_example_creates_structure_only_project(tmp_path: Path) -> None:
     assert result.returncode == 0, result.stdout + result.stderr
 
     expected_files = [
+        "README.md",
         "autosar.project.yaml",
-        "platform/base_types.yaml",
+        "types/base_types.yaml",
         "types/implementation_types.yaml",
         "types/application_types.yaml",
         "units/units.yaml",
@@ -88,7 +124,9 @@ def test_init_no_example_creates_structure_only_project(tmp_path: Path) -> None:
     assert (project_dir / "swcs").is_dir()
     assert list((project_dir / "interfaces").glob("*.yaml")) == []
     assert list((project_dir / "swcs").glob("*.yaml")) == []
+    readme = (project_dir / "README.md").read_text(encoding="utf-8")
     system_yaml = (project_dir / "system.yaml").read_text(encoding="utf-8")
+    assert "without example interfaces or SWCs" in readme
     assert system_yaml.startswith("# ARForge: System composition")
     assert "Example shape:" in system_yaml
 

@@ -14,6 +14,7 @@ from .validate import (
     build_semantic_report,
     format_finding,
     load_aggregator,
+    load_and_validate_aggregator,
     load_aggregator_with_report,
 )
 

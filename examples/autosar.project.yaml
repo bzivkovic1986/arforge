@@ -1,20 +1,20 @@
-﻿# ARForge: Project input manifest
+# ARForge: Project input manifest
 # Lists the YAML files that make up this AUTOSAR project.
 autosar:
   version: "4.2"
   rootPackage: "DEMO"
 
 inputs:
-  baseTypes: "platform/base_types.yaml"
+  baseTypes: "types/base_types.yaml"
   implementationDataTypes: "types/implementation_types.yaml"
   applicationDataTypes: "types/application_types.yaml"
   units:
-    - "units/*.yaml"
+    - "units/units.yaml"
   compuMethods:
-    - "compu_methods/*.yaml"
+    - "compu_methods/compu_methods.yaml"
   interfaces:
-    - "interfaces/*.yaml"
+    - "interfaces/If_VehicleSpeed.yaml"
   swcs:
-    - "swcs/*.yaml"
+    - "swcs/SpeedSensor.yaml"
+    - "swcs/SpeedDisplay.yaml"
   system: "system.yaml"
-

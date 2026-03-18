@@ -6,16 +6,16 @@ autosar:
   rootPackage: "DEMO"
 
 inputs:
-  baseTypes: "../platform/base_types.yaml"
-  implementationDataTypes: "../types/implementation_types.yaml"
-  applicationDataTypes: "../types/application_types.yaml"
+  baseTypes: "support/base_types.yaml"
+  implementationDataTypes: "support/implementation_types.yaml"
+  applicationDataTypes: "support/application_types.yaml"
   units:
-    - "../units/*.yaml"
+    - "support/units.yaml"
   compuMethods:
-    - "../compu_methods/*.yaml"
+    - "support/compu_methods.yaml"
   interfaces:
     - "../interfaces/*.yaml"
   swcs:
-    - "../swcs/SpeedSensor.yaml"
+    - "support/SpeedSensor.yaml"
     - "../swcs/SpeedConsumer.yaml"
   system: "system_cs_call_unconnected.yaml"

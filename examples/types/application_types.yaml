@@ -1,16 +1,11 @@
-﻿# ARForge: Application data types
-# Project-facing types with optional units and compu methods.
+# ARForge: Application data types
+# Defines project-level application types used by interfaces.
 applicationDataTypes:
   - name: "App_VehicleSpeed"
-    description: "Vehicle speed value interpreted in kilometers per hour."
-    implementationTypeRef: "UInt16"
+    description: "Vehicle speed value shared between the demo SWC types."
+    implementationTypeRef: "Impl_VehicleSpeed_U16"
     constraint:
       min: 0
-      max: 300
-    unitRef: "km_h"
-    compuMethodRef: "CM_Speed_Kmh_Linear"
-  - name: "App_DtcStatus"
-    description: "Application-visible diagnostic trouble code status."
-    implementationTypeRef: "UInt8"
-    compuMethodRef: "CM_DtcStatus"
-
+      max: 250
+    unitRef: "km_per_h"
+    compuMethodRef: "CM_VehicleSpeed_Kph"
