@@ -28,7 +28,12 @@ def _is_project_fixture(path: Path) -> bool:
 
 
 def _invalid_project_fixtures() -> list[Path]:
-    warning_only = {"project_connected_sr_port_unused.yaml"}
+    warning_only = {
+        "project_connected_sr_port_unused.yaml",
+        "project_sr_consumer_faster.yaml",
+        "project_sr_producer_faster.yaml",
+        "project_sr_timing_equal.yaml",
+    }
     fixtures = [
         p
         for p in sorted(INVALID_DIR.glob("*.yaml"))
@@ -112,6 +117,20 @@ def test_cli_validate_extra_verbose_includes_case_description() -> None:
     assert "CORE-021 PortInterfaceReferences" in result.stdout
     assert "Checks that each SWC port references an existing interface and uses the" in result.stdout
     assert "expected kind." in result.stdout
+
+
+def test_cli_validate_extra_verbose_shows_sr_timing_warning() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "arforge.cli", "validate", str(VALID_PROJECT), "-vv"],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "CORE-050 SRConsumerFasterThanProducer" in result.stdout
+    assert "Runnable_UseSpeed" in result.stdout
+    assert "Data may be stale." in result.stdout
 
 
 def test_split_export_includes_sr_comspec_blocks(tmp_path: Path) -> None:
@@ -478,6 +497,28 @@ def test_data_receive_event_invalid_fixtures_emit_expected_codes(fixture_name: s
     ],
 )
 def test_invalid_project_fixtures_emit_expected_warnings(fixture_name: str, expected_warning: str) -> None:
+    project = load_aggregator(INVALID_DIR / fixture_name)
+    report = build_semantic_report(project, ruleset="core")
+    warning_codes = {finding.code for finding in report.findings if finding.severity == "warning"}
+    assert expected_warning in warning_codes
+
+
+def test_sr_timing_equal_fixture_has_no_timing_mismatch_findings() -> None:
+    project = load_aggregator(INVALID_DIR / "project_sr_timing_equal.yaml")
+    report = build_semantic_report(project, ruleset="core")
+    warning_codes = {finding.code for finding in report.findings if finding.severity == "warning"}
+    assert "CORE-050" not in warning_codes
+    assert "CORE-051" not in warning_codes
+
+
+@pytest.mark.parametrize(
+    ("fixture_name", "expected_warning"),
+    [
+        ("project_sr_consumer_faster.yaml", "CORE-050"),
+        ("project_sr_producer_faster.yaml", "CORE-051"),
+    ],
+)
+def test_sr_timing_warning_fixtures_emit_expected_codes(fixture_name: str, expected_warning: str) -> None:
     project = load_aggregator(INVALID_DIR / fixture_name)
     report = build_semantic_report(project, ruleset="core")
     warning_codes = {finding.code for finding in report.findings if finding.severity == "warning"}

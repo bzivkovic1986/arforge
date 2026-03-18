@@ -1,12 +1,13 @@
-﻿# ARForge: Software Component Type
-# Defines ports, runnables, and internal behavior.
+# ARForge: Invalid example fixture
+# Domain: software component validation.
+# Provides an equal-timing SR consumer for timing analysis tests.
 swc:
   name: "SpeedConsumer"
-  description: "Consumes speed data and calls diagnostic services."
+  description: "Consumes speed data with a 10 ms cyclic runnable."
   category: "application"
   runnables:
     - name: "Runnable_UseSpeed"
-      timingEventMs: 5
+      timingEventMs: 10
       reads:
         - port: "Rp_VehicleSpeed"
           dataElement: "VehicleSpeed"
@@ -24,7 +25,6 @@ swc:
           dataElement: "VehicleSpeed"
   ports:
     - name: "Rp_VehicleSpeed"
-      description: "Required SR port for incoming vehicle speed."
       direction: "requires"
       interfaceRef: "If_VehicleSpeed"
       comSpec:
@@ -41,4 +41,3 @@ swc:
       interfaceRef: "If_Diagnostics"
       comSpec:
         callMode: "asynchronous"
-

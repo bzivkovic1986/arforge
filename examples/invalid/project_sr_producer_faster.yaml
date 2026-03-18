@@ -1,0 +1,21 @@
+# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Exercises SR timing mismatch where the producer runs faster than the consumer.
+autosar:
+  version: "4.2"
+  rootPackage: "DEMO"
+
+inputs:
+  baseTypes: "../platform/base_types.yaml"
+  implementationDataTypes: "../types/implementation_types.yaml"
+  applicationDataTypes: "../types/application_types.yaml"
+  units:
+    - "../units/*.yaml"
+  compuMethods:
+    - "../compu_methods/*.yaml"
+  interfaces:
+    - "../interfaces/*.yaml"
+  swcs:
+    - "swcs/SpeedSensor_timing_5ms.yaml"
+    - "swcs/SpeedConsumer_timing_20ms.yaml"
+  system: "../system.yaml"
