@@ -51,6 +51,7 @@ Current core rules include:
   - errors for runnable reads/writes/calls/events that reference unconnected instantiated ports
   - warnings for instantiated SR/CS ports with no connector
   - warnings for connected SR/CS ports that no runnable in the SWC type actually uses
+  - warnings for cyclic sender-receiver producer/consumer timing mismatches on connected ports
 
 Findings are deterministic:
 
@@ -83,6 +84,19 @@ Runtime output from `arforge validate -v` shows each case code, name, result, ti
 | CORE-042 | SenderReceiverUsage | Checks whether connected sender-receiver ports are actually used by runnable behavior. |
 | CORE-043 | ClientServerConnectivity | Checks client-server port connectivity against instantiated components and runnable behavior. |
 | CORE-044 | ClientServerUsage | Checks whether connected client-server ports are actually used by runnable behavior. |
+| CORE-050 | SRConsumerFasterThanProducer | Warns when a cyclic sender-receiver consumer runs faster than its cyclic producer, which may lead to stale reads. |
+| CORE-051 | SRProducerFasterThanConsumer | Warns when a cyclic sender-receiver producer runs faster than its cyclic consumer, which may overwrite intermediate values before they are consumed. |
+
+## Sender-Receiver Timing Analysis
+
+`CORE-050` and `CORE-051` are design-quality analysis rules, not AUTOSAR validity errors.
+
+They inspect connected sender-receiver communication chains and compare cyclic runnable periods when both sides use `timingEventMs`:
+
+- `CORE-050 SRConsumerFasterThanProducer`: consumer period is smaller than producer period, so the consumer may read stale data multiple times.
+- `CORE-051 SRProducerFasterThanConsumer`: producer period is smaller than consumer period, so intermediate values may be overwritten before consumption.
+
+Equal timing does not produce a finding. Runnables without `timingEventMs`, or runnables triggered by `operationInvokedEvents`, `dataReceiveEvents`, or `initEvent`, are skipped by this analysis to avoid false positives.
 
 ## Fixture-driven testing
 

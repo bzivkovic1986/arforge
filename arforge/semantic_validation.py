@@ -100,6 +100,19 @@ class SwcPortUsage:
     raises_errors: Tuple[Tuple[str, str, str], ...] = ()
 
 
+@dataclass(frozen=True)
+class SrTimingCommunication:
+    provider_swc_name: str
+    provider_port_name: str
+    provider_runnable_name: str
+    consumer_swc_name: str
+    consumer_port_name: str
+    consumer_runnable_name: str
+    data_element: str
+    producer_period_ms: int
+    consumer_period_ms: int
+
+
 class ValidationContext:
     def __init__(self, project: Project):
         self.project = project
@@ -118,6 +131,10 @@ class ValidationContext:
 
         self.ports_by_swc: Dict[str, Dict[str, Port]] = {
             swc.name: {p.name: p for p in swc.ports} for swc in project.swcs
+        }
+        self.runnable_by_swc: Dict[str, Dict[str, object]] = {
+            swc.name: {runnable.name: runnable for runnable in swc.runnables}
+            for swc in project.swcs
         }
         self.sr_data_elements_by_iface: Dict[str, set[str]] = {
             itf.name: {de.name for de in (itf.dataElements or [])}
@@ -207,6 +224,7 @@ class ValidationContext:
                 operation_invoked_events=tuple(usage.get("operation_invoked_events", [])),
                 raises_errors=tuple(usage.get("raises_errors", [])),
             )
+        self.sr_timing_communications = tuple(self._build_sr_timing_communications())
 
     def find_swc_port(self, swc_name: str, port_name: str) -> Optional[Port]:
         return self.ports_by_swc.get(swc_name, {}).get(port_name)
@@ -225,6 +243,99 @@ class ValidationContext:
             (swc_name, port_name),
             SwcPortUsage(swc_name=swc_name, port_name=port_name),
         )
+
+    def _build_sr_timing_communications(self) -> List[SrTimingCommunication]:
+        communications: List[SrTimingCommunication] = []
+        seen: set[tuple[str, str, str, str, str, str, str, int, int]] = set()
+
+        for connector in sorted(self.project.system.composition.connectors, key=_connection_sort_key):
+            provider_swc = self.find_instance_swc(connector.from_instance)
+            consumer_swc = self.find_instance_swc(connector.to_instance)
+            if provider_swc is None or consumer_swc is None:
+                continue
+
+            provider_port = self.find_swc_port(provider_swc.name, connector.from_port)
+            consumer_port = self.find_swc_port(consumer_swc.name, connector.to_port)
+            if provider_port is None or consumer_port is None:
+                continue
+            if provider_port.interfaceType != "senderReceiver" or consumer_port.interfaceType != "senderReceiver":
+                continue
+
+            provider_accesses = []
+            for runnable in sorted(provider_swc.runnables, key=lambda r: r.name):
+                if not _is_pure_cyclic_runnable(runnable):
+                    continue
+                for access in sorted(runnable.writes, key=lambda a: (a.port, a.dataElement)):
+                    if access.port == connector.from_port:
+                        provider_accesses.append((runnable, access.dataElement))
+
+            consumer_accesses = []
+            for runnable in sorted(consumer_swc.runnables, key=lambda r: r.name):
+                if not _is_pure_cyclic_runnable(runnable):
+                    continue
+                for access in sorted(runnable.reads, key=lambda a: (a.port, a.dataElement)):
+                    if access.port == connector.to_port:
+                        consumer_accesses.append((runnable, access.dataElement))
+
+            for provider_runnable, data_element in provider_accesses:
+                for consumer_runnable, consumer_data_element in consumer_accesses:
+                    if consumer_data_element != data_element:
+                        continue
+
+                    producer_period_ms = provider_runnable.timingEventMs
+                    consumer_period_ms = consumer_runnable.timingEventMs
+                    if producer_period_ms is None or consumer_period_ms is None:
+                        continue
+
+                    identity = (
+                        provider_swc.name,
+                        connector.from_port,
+                        provider_runnable.name,
+                        consumer_swc.name,
+                        connector.to_port,
+                        consumer_runnable.name,
+                        data_element,
+                        producer_period_ms,
+                        consumer_period_ms,
+                    )
+                    if identity in seen:
+                        continue
+                    seen.add(identity)
+                    communications.append(
+                        SrTimingCommunication(
+                            provider_swc_name=provider_swc.name,
+                            provider_port_name=connector.from_port,
+                            provider_runnable_name=provider_runnable.name,
+                            consumer_swc_name=consumer_swc.name,
+                            consumer_port_name=connector.to_port,
+                            consumer_runnable_name=consumer_runnable.name,
+                            data_element=data_element,
+                            producer_period_ms=producer_period_ms,
+                            consumer_period_ms=consumer_period_ms,
+                        )
+                    )
+
+        return communications
+
+
+def _connection_sort_key(connector: Connection) -> tuple[str, str, str, str, str, str]:
+    return (
+        connector.from_instance,
+        connector.from_port,
+        connector.to_instance,
+        connector.to_port,
+        connector.dataElement or "",
+        connector.operation or "",
+    )
+
+
+def _is_pure_cyclic_runnable(runnable) -> bool:
+    return (
+        runnable.timingEventMs is not None
+        and not runnable.operationInvokedEvents
+        and not runnable.dataReceiveEvents
+        and not runnable.initEvent
+    )
 
 
 class ValidationCase(ABC):

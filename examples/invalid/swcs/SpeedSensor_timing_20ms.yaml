@@ -1,0 +1,32 @@
+# ARForge: Invalid example fixture
+# Domain: software component validation.
+# Provides a slow SR producer for timing analysis tests.
+swc:
+  name: "SpeedSensor"
+  category: "service"
+  runnables:
+    - name: "Runnable_Init"
+      initEvent: true
+    - name: "Runnable_ReadSpeed"
+      timingEventMs: 20
+      writes:
+        - port: "Pp_VehicleSpeed"
+          dataElement: "VehicleSpeed"
+    - name: "Runnable_DiagServer"
+      operationInvokedEvents:
+        - port: "Pp_Diag"
+          operation: "ReadDTC"
+        - port: "Pp_Diag"
+          operation: "ClearDTC"
+        - port: "Pp_Diag"
+          operation: "LogEvent"
+      raisesErrors:
+        - operation: "ReadDTC"
+          error: "DTC_NOT_FOUND"
+  ports:
+    - name: "Pp_VehicleSpeed"
+      direction: "provides"
+      interfaceRef: "If_VehicleSpeed"
+    - name: "Pp_Diag"
+      direction: "provides"
+      interfaceRef: "If_Diagnostics"
