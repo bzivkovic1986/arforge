@@ -2,10 +2,17 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from enum import StrEnum
 from time import perf_counter
 from typing import Dict, List, Literal, Optional, Sequence, Tuple
 
 from .model import ComponentPrototype, Connection, Port, Project, Swc
+
+class FindingSeverity(StrEnum):
+    ERROR = "error"
+    WARNING = "warning"
+    INFO = "info"
+
 
 Severity = Literal["error", "warning", "info"]
 CaseStatus = Literal["run", "skip"]
@@ -15,9 +22,12 @@ CaseOutcome = Literal["ok", "fail"]
 @dataclass(frozen=True)
 class Finding:
     code: str
-    severity: Severity
     message: str
+    severity: FindingSeverity | Severity = FindingSeverity.ERROR
     location: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "severity", FindingSeverity(self.severity))
 
 
 @dataclass(frozen=True)
@@ -27,12 +37,24 @@ class ValidationReport:
     findings: List[Finding]
 
     def error_findings(self) -> List[Finding]:
-        return [f for f in self.findings if f.severity == "error"]
+        return [f for f in self.findings if f.severity == FindingSeverity.ERROR]
+
+    def findings_with_severity(self, severity: FindingSeverity | Severity) -> List[Finding]:
+        normalized = FindingSeverity(severity)
+        return [f for f in self.findings if f.severity == normalized]
+
+    def severity_counts(self) -> Dict[str, int]:
+        return {
+            FindingSeverity.ERROR.value: len(self.findings_with_severity(FindingSeverity.ERROR)),
+            FindingSeverity.WARNING.value: len(self.findings_with_severity(FindingSeverity.WARNING)),
+            FindingSeverity.INFO.value: len(self.findings_with_severity(FindingSeverity.INFO)),
+        }
 
     def as_dict(self) -> Dict[str, object]:
         # This keeps a machine-readable report shape ready for future CLI output.
         return {
             "ruleset": self.ruleset,
+            "summary": self.severity_counts(),
             "cases": [
                 {
                     "case_id": c.case_id,
@@ -49,7 +71,7 @@ class ValidationReport:
             "findings": [
                 {
                     "code": f.code,
-                    "severity": f.severity,
+                    "severity": f.severity.value,
                     "message": f.message,
                     "location": f.location,
                 }
@@ -397,7 +419,7 @@ class ValidationRunner:
             findings = sorted(case.run(ctx), key=_finding_sort_key)
             duration_ms = (perf_counter() - started) * 1000.0
             all_findings.extend(findings)
-            has_errors = any(f.severity == "error" for f in findings)
+            has_errors = any(f.severity == FindingSeverity.ERROR for f in findings)
             case_results.append(
                 CaseResult(
                     case_id=case.case_id,
@@ -423,9 +445,10 @@ class ValidationRunner:
 
 
 def _severity_rank(severity: Severity) -> int:
-    if severity == "error":
+    normalized = FindingSeverity(severity)
+    if normalized == FindingSeverity.ERROR:
         return 0
-    if severity == "warning":
+    if normalized == FindingSeverity.WARNING:
         return 1
     return 2
 

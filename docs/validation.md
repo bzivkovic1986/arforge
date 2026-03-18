@@ -19,6 +19,20 @@ Schemas are in `schemas/`:
 
 Implemented via `ValidationCase` classes in `arforge/validation_cases.py`.
 
+Semantic findings are severity-aware. Each finding carries:
+
+- `code`
+- `message`
+- `severity`
+
+Severity values are:
+
+- `error`: hard semantic/modeling failure
+- `warning`: design-quality or connectivity concern that does not fail validation
+- `info`: informational diagnostic that does not fail validation
+
+Existing code paths remain backward compatible because findings default to `error` when severity is not specified explicitly.
+
 Current core rules include:
 
 - uniqueness checks (types, interfaces, SWCs, units, compu methods, instances)
@@ -58,9 +72,30 @@ Findings are deterministic:
 - case execution sorted by case id
 - findings sorted by severity, code, message, location
 
+`arforge validate` fails only when at least one `error` finding exists. Warning-only and info-only runs return exit code `0`.
+
+Validation summaries include counts by severity:
+
+- errors
+- warnings
+- infos
+
 ComSpec validation is implemented in dedicated case `CORE-025` to keep the rule isolated and maintainable.
 
 Runtime output from `arforge validate -v` shows each case code, name, result, timing, and finding count. `arforge validate -vv` also prints the matching one-line description shown below.
+
+Normal `arforge validate` output stays concise but prints each emitted finding with its severity, followed by a summary.
+
+Example:
+
+```text
+WARNING CORE-050 Consumer runnable 'Runnable_UseSpeed' in SWC 'SpeedConsumer' (5 ms) reads from port 'Rp_VehicleSpeed' faster than producer 'Runnable_ReadSpeed' in SWC 'SpeedSensor' (20 ms). Data may be stale.
+ERROR CORE-021 Port 'Rp_X' references unknown interface 'If_Missing'.
+summary:
+ - errors: 1
+ - warnings: 1
+ - infos: 0
+```
 
 ## Core Validation Cases
 
@@ -97,6 +132,20 @@ They inspect connected sender-receiver communication chains and compare cyclic r
 - `CORE-051 SRProducerFasterThanConsumer`: producer period is smaller than consumer period, so intermediate values may be overwritten before consumption.
 
 Equal timing does not produce a finding. Runnables without `timingEventMs`, or runnables triggered by `operationInvokedEvents`, `dataReceiveEvents`, or `initEvent`, are skipped by this analysis to avoid false positives.
+
+## Severity-aware Core Rules
+
+Hard semantic failures remain `error` findings, including unknown references, invalid type references, incompatible connector directions, duplicate connectors, invalid runnable accesses, cyclic struct references, and invalid sender-receiver or client-server semantics.
+
+Quality-analysis rules currently migrated away from hard failure are:
+
+- `CORE-041` connector-missing port findings:
+  - `CORE-041-SR-PROVIDES-NO-OUTGOING`
+  - `CORE-041-SR-REQUIRES-NO-INCOMING`
+- `CORE-042` connected sender-receiver but unused port findings
+- `CORE-044` client-server connectivity/usage quality findings for unused or unconnected instantiated ports
+- `CORE-050` cyclic sender-receiver consumer-faster-than-producer timing mismatch
+- `CORE-051` cyclic sender-receiver producer-faster-than-consumer timing mismatch
 
 ## Fixture-driven testing
 

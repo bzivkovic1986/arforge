@@ -10,7 +10,14 @@ import yaml
 from jsonschema import Draft202012Validator
 
 from .model import Project, from_dict
-from .semantic_validation import Finding, ValidationContext, ValidationReport, ValidationRunner, format_finding
+from .semantic_validation import (
+    Finding,
+    FindingSeverity,
+    ValidationContext,
+    ValidationReport,
+    ValidationRunner,
+    format_finding,
+)
 from .validation_registry import get_ruleset
 
 
@@ -263,4 +270,4 @@ def build_semantic_report(
 def validate_semantic(project: Project) -> List[str]:
     # Compatibility shim for existing CLI output.
     findings = run_semantic_validation(project, None, ruleset="core")
-    return [format_finding(f) for f in findings if f.severity == "error"]
+    return [format_finding(f) for f in findings if f.severity == FindingSeverity.ERROR]

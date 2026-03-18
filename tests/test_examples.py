@@ -11,6 +11,7 @@ import pytest
 import yaml
 
 from arforge.exporter import write_outputs, write_outputs_with_report
+from arforge.semantic_validation import Finding, FindingSeverity
 from arforge.validate import ValidationError, build_semantic_report, load_aggregator, load_and_validate_aggregator
 
 
@@ -19,6 +20,9 @@ VALID_PROJECT = REPO_ROOT / "examples" / "autosar.project.yaml"
 INVALID_DIR = REPO_ROOT / "examples" / "invalid"
 SHARED_EXAMPLE_OUTPUT = "DEMO_SharedTypes.arxml"
 SYSTEM_EXAMPLE_OUTPUT = "DemoSystem.arxml"
+WARNING_ONLY_PROJECT = INVALID_DIR / "project_connected_sr_port_unused.yaml"
+ERROR_PROJECT = INVALID_DIR / "project_bad_runnable_access.yaml"
+MIXED_PROJECT = INVALID_DIR / "project_sr_read_unconnected.yaml"
 
 
 def _is_project_fixture(path: Path) -> bool:
@@ -44,6 +48,12 @@ def _invalid_project_fixtures() -> list[Path]:
 
 def test_validate_main_example_passes() -> None:
     load_and_validate_aggregator(VALID_PROJECT)
+
+
+def test_finding_defaults_to_error_severity() -> None:
+    finding = Finding(code="CORE-999", message="Compatibility default.")
+
+    assert finding.severity == FindingSeverity.ERROR
 
 
 def test_descriptions_are_loaded_into_model_ir() -> None:
@@ -93,6 +103,30 @@ def test_cli_validate_smoke() -> None:
     assert result.returncode == 0, result.stdout + result.stderr
 
 
+def test_warning_only_project_passes_validation_and_preserves_warning_report() -> None:
+    project = load_and_validate_aggregator(WARNING_ONLY_PROJECT)
+    report = build_semantic_report(project, ruleset="core")
+
+    assert report.error_findings() == []
+    assert any(finding.severity == FindingSeverity.WARNING for finding in report.findings)
+
+
+def test_error_project_fails_validation() -> None:
+    with pytest.raises(ValidationError):
+        load_and_validate_aggregator(ERROR_PROJECT)
+
+
+def test_mixed_warning_and_error_project_fails_and_reports_both_severities() -> None:
+    project = load_aggregator(MIXED_PROJECT)
+    report = build_semantic_report(project, ruleset="core")
+
+    assert report.error_findings()
+    assert any(finding.severity == FindingSeverity.WARNING for finding in report.findings)
+
+    with pytest.raises(ValidationError):
+        load_and_validate_aggregator(MIXED_PROJECT)
+
+
 def test_cli_validate_verbose_includes_case_name() -> None:
     result = subprocess.run(
         [sys.executable, "-m", "arforge.cli", "validate", str(VALID_PROJECT), "-v"],
@@ -131,6 +165,53 @@ def test_cli_validate_extra_verbose_shows_sr_timing_warning() -> None:
     assert "CORE-050 SRConsumerFasterThanProducer" in result.stdout
     assert "Runnable_UseSpeed" in result.stdout
     assert "Data may be stale." in result.stdout
+
+
+def test_cli_validate_warning_only_project_shows_warning_and_succeeds() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "arforge.cli", "validate", str(WARNING_ONLY_PROJECT)],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "WARNING CORE-042-SR-CONNECTED-REQUIRES-UNUSED" in result.stdout
+    assert "errors: 0" in result.stdout
+    assert "warnings: 2" in result.stdout
+
+
+def test_cli_validate_error_project_shows_error_and_fails() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "arforge.cli", "validate", str(ERROR_PROJECT)],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 2, result.stdout + result.stderr
+    assert "ERROR" in result.stdout
+    assert "errors: " in result.stdout
+
+
+def test_cli_validate_mixed_project_shows_both_severities_and_fails() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "arforge.cli", "validate", str(MIXED_PROJECT)],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 2, result.stdout + result.stderr
+    assert "ERROR CORE-041-SR-READ-UNCONNECTED" in result.stdout
+    assert "WARNING CORE-041-SR-REQUIRES-NO-INCOMING" in result.stdout
+
+
+def test_validation_report_summary_counts_are_grouped_by_severity() -> None:
+    project = load_aggregator(MIXED_PROJECT)
+    report = build_semantic_report(project, ruleset="core")
+
+    assert report.severity_counts() == {"error": 3, "warning": 2, "info": 0}
 
 
 def test_split_export_includes_sr_comspec_blocks(tmp_path: Path) -> None:
