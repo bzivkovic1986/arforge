@@ -210,6 +210,10 @@ def export(
                 InputPatternExpansion(pattern=p.pattern, matched_files=p.matched_files)
                 for p in load_report.compu_method_patterns
             ],
+            mode_declaration_group_patterns=[
+                InputPatternExpansion(pattern=p.pattern, matched_files=p.matched_files)
+                for p in load_report.mode_declaration_group_patterns
+            ],
             interface_patterns=[
                 InputPatternExpansion(pattern=p.pattern, matched_files=p.matched_files)
                 for p in load_report.interface_patterns
@@ -247,6 +251,8 @@ def export(
                 _print_pattern_summary("units", export_report.input_summary.unit_patterns)
             if export_report.input_summary.compu_method_patterns:
                 _print_pattern_summary("compuMethods", export_report.input_summary.compu_method_patterns)
+            if export_report.input_summary.mode_declaration_group_patterns:
+                _print_pattern_summary("modeDeclarationGroups", export_report.input_summary.mode_declaration_group_patterns)
             _print_pattern_summary("interfaces", export_report.input_summary.interface_patterns)
             _print_pattern_summary("swcs", export_report.input_summary.swc_patterns)
             if export_report.input_summary.system_file:
@@ -273,6 +279,7 @@ def export(
             console.print(
                 "model: "
                 f"datatypes={ms.datatypes_count} "
+                f"modeDeclarationGroups={ms.mode_declaration_groups_count} "
                 f"interfaces={ms.interfaces_count} (SR={ms.sr_interfaces_count}, CS={ms.cs_interfaces_count}) "
                 f"swcs={ms.swcs_count} "
                 f"instances={ms.instances_count} connectors={ms.connectors_count}"

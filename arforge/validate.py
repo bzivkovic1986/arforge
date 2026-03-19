@@ -36,6 +36,7 @@ class AggregatorLoadReport:
     application_types_file: Optional[Path]
     unit_patterns: List[InputPatternReport]
     compu_method_patterns: List[InputPatternReport]
+    mode_declaration_group_patterns: List[InputPatternReport]
     interface_patterns: List[InputPatternReport]
     swc_patterns: List[InputPatternReport]
     system_file: Optional[Path]
@@ -116,6 +117,7 @@ def load_aggregator_with_report(agg_path: Path, schema_path: Optional[Path] = No
         "applicationDataTypes": [],
         "units": [],
         "compuMethods": [],
+        "modeDeclarationGroups": [],
         "interfaces": [],
         "swcs": [],
         "system": None,
@@ -126,6 +128,7 @@ def load_aggregator_with_report(agg_path: Path, schema_path: Optional[Path] = No
     application_types_file: Optional[Path] = None
     unit_patterns: List[InputPatternReport] = []
     compu_method_patterns: List[InputPatternReport] = []
+    mode_declaration_group_patterns: List[InputPatternReport] = []
 
     uses_split = all(k in inputs for k in ["baseTypes", "implementationDataTypes", "applicationDataTypes"])
     if not uses_split:
@@ -180,6 +183,16 @@ def load_aggregator_with_report(agg_path: Path, schema_path: Optional[Path] = No
                 raise ValidationError(errs)
             merged["compuMethods"].extend(data.get("compuMethods", []))
 
+    if "modeDeclarationGroups" in inputs:
+        mode_schema = _load_json(_schema_dir() / "mode_declaration_groups.schema.json")
+        mode_files, mode_declaration_group_patterns = _expand_patterns_with_details(base_dir, inputs["modeDeclarationGroups"])
+        for p in mode_files:
+            data = _load_yaml(p)
+            errs = _validate_with_schema(data, mode_schema, str(p))
+            if errs:
+                raise ValidationError(errs)
+            merged["modeDeclarationGroups"].extend(data.get("modeDeclarationGroups", []))
+
     itf_schema = _load_json(_schema_dir() / "interface.schema.json")
     interface_files, interface_patterns = _expand_patterns_with_details(base_dir, inputs["interfaces"])
     if not interface_files:
@@ -225,6 +238,7 @@ def load_aggregator_with_report(agg_path: Path, schema_path: Optional[Path] = No
         application_types_file=application_types_file,
         unit_patterns=unit_patterns,
         compu_method_patterns=compu_method_patterns,
+        mode_declaration_group_patterns=mode_declaration_group_patterns,
         interface_patterns=interface_patterns,
         swc_patterns=swc_patterns,
         system_file=system_file,

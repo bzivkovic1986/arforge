@@ -1,0 +1,23 @@
+# ARForge: Invalid example fixture
+# Domain: mode declaration groups.
+# Tests validation failure for initialMode that is not declared in the group.
+autosar:
+  version: "4.2"
+  rootPackage: "DEMO"
+
+inputs:
+  baseTypes: "../types/base_types.yaml"
+  implementationDataTypes: "../types/implementation_types.yaml"
+  applicationDataTypes: "../types/application_types.yaml"
+  units:
+    - "../units/*.yaml"
+  compuMethods:
+    - "../compu_methods/*.yaml"
+  modeDeclarationGroups:
+    - "modes/mode_groups_bad_initial_mode.yaml"
+  interfaces:
+    - "../interfaces/If_VehicleSpeed.yaml"
+  swcs:
+    - "../swcs/SpeedSensor.yaml"
+    - "../swcs/SpeedDisplay.yaml"
+  system: "../system.yaml"

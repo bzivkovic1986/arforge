@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ARForge Mode Declaration Groups",
+  "description": "Schema for AUTOSAR ModeDeclarationGroup definitions.",
+  "type": "object",
+  "$defs": {
+    "descriptionProperty": {
+      "type": "string",
+      "description": "Optional human-readable documentation for this modeled object."
+    },
+    "modeName": {
+      "type": "string",
+      "description": "Mode short name inside a mode declaration group.",
+      "minLength": 1,
+      "examples": [
+        "OFF"
+      ]
+    },
+    "modeDeclarationGroup": {
+      "type": "object",
+      "description": "AUTOSAR mode declaration group definition.",
+      "required": [
+        "name",
+        "initialMode",
+        "modes"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Mode declaration group short name.",
+          "minLength": 1,
+          "examples": [
+            "Mdg_PowerState"
+          ]
+        },
+        "description": {
+          "$ref": "#/$defs/descriptionProperty"
+        },
+        "initialMode": {
+          "$ref": "#/$defs/modeName"
+        },
+        "modes": {
+          "type": "array",
+          "description": "Ordered list of mode names declared by this group.",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/modeName"
+          },
+          "examples": [
+            [
+              "OFF",
+              "ON",
+              "SLEEP"
+            ]
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "name": "Mdg_PowerState",
+          "description": "Power state modes for the ECU.",
+          "initialMode": "OFF",
+          "modes": [
+            "OFF",
+            "ON",
+            "SLEEP"
+          ]
+        }
+      ]
+    }
+  },
+  "required": [
+    "modeDeclarationGroups"
+  ],
+  "properties": {
+    "modeDeclarationGroups": {
+      "type": "array",
+      "description": "List of AUTOSAR mode declaration groups.",
+      "items": {
+        "$ref": "#/$defs/modeDeclarationGroup"
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -143,6 +143,7 @@ class ValidationContext:
         self.application_type_by_name = {d.name: d for d in project.applicationDataTypes}
         self.unit_by_name = {u.name: u for u in project.units}
         self.compu_method_by_name = {c.name: c for c in project.compuMethods}
+        self.mode_declaration_group_by_name = {g.name: g for g in project.modeDeclarationGroups}
         self.datatype_by_name = {**self.base_type_by_name, **self.implementation_type_by_name, **self.application_type_by_name}
         self.iface_by_name = {i.name: i for i in project.interfaces}
         self.swc_by_name = {s.name: s for s in project.swcs}

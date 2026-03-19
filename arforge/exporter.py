@@ -8,7 +8,7 @@ from typing import Dict, List, Optional
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from .model import CompuMethod, Connection, Interface, Operation, Project, Runnable, Swc
+from .model import CompuMethod, Connection, Interface, ModeDeclarationGroup, Operation, Project, Runnable, Swc
 
 SHARED_TEMPLATE = "shared_42.arxml.j2"
 SWC_TEMPLATE = "swc_42.arxml.j2"
@@ -29,6 +29,7 @@ class ExportInputSummary:
     application_types_file: Optional[Path]
     unit_patterns: List[InputPatternExpansion]
     compu_method_patterns: List[InputPatternExpansion]
+    mode_declaration_group_patterns: List[InputPatternExpansion]
     interface_patterns: List[InputPatternExpansion]
     swc_patterns: List[InputPatternExpansion]
     system_file: Optional[Path]
@@ -37,6 +38,7 @@ class ExportInputSummary:
 @dataclass(frozen=True)
 class ExportModelSummary:
     datatypes_count: int
+    mode_declaration_groups_count: int
     interfaces_count: int
     sr_interfaces_count: int
     cs_interfaces_count: int
@@ -121,6 +123,11 @@ def _sort_interface(interface: Interface) -> Interface:
 
     operations = sorted((interface.operations or []), key=lambda operation: operation.name)
     return replace(interface, operations=[_sort_operation(operation) for operation in operations])
+
+
+def _sort_mode_declaration_group(group: ModeDeclarationGroup) -> ModeDeclarationGroup:
+    # Preserve authored mode order because MODE-DECLARATION-GROUP uses explicit ordering.
+    return replace(group, modes=list(group.modes))
 
 
 def _collect_interface_errors(interface: Interface) -> list[object]:
@@ -213,6 +220,10 @@ def _sort_project_for_export(project: Project) -> Project:
             (_sort_compu_method(compu_method) for compu_method in project.compuMethods),
             key=lambda compu_method: compu_method.name,
         ),
+        modeDeclarationGroups=sorted(
+            (_sort_mode_declaration_group(group) for group in project.modeDeclarationGroups),
+            key=lambda group: group.name,
+        ),
         interfaces=sorted((_sort_interface(interface) for interface in project.interfaces), key=lambda interface: interface.name),
         swcs=sorted((_sort_swc(swc) for swc in project.swcs), key=lambda swc: swc.name),
         system=replace(
@@ -236,6 +247,7 @@ def _model_summary(project: Project) -> ExportModelSummary:
             + len(project.units)
             + len(project.compuMethods)
         ),
+        mode_declaration_groups_count=len(project.modeDeclarationGroups),
         interfaces_count=len(project.interfaces),
         sr_interfaces_count=len(sr),
         cs_interfaces_count=len(cs),
@@ -297,6 +309,7 @@ def render_shared(project: Project, template_dir: Path, template_name: str = SHA
     application_types = project.applicationDataTypes
     units = project.units
     compu_methods = project.compuMethods
+    mode_declaration_groups = project.modeDeclarationGroups
     type_trefs: Dict[str, Dict[str, str]] = {
         d.name: {"package": "BaseTypes", "dest": "SW-BASE-TYPE"} for d in base_types
     }
@@ -314,6 +327,7 @@ def render_shared(project: Project, template_dir: Path, template_name: str = SHA
         application_types=application_types,
         units=units,
         compu_methods=compu_methods,
+        mode_declaration_groups=mode_declaration_groups,
         type_trefs=type_trefs,
         sr_interfaces=sr,
         cs_interfaces=cs,
@@ -368,6 +382,7 @@ def write_outputs_with_report(
         application_types = project.applicationDataTypes
         units = project.units
         compu_methods = project.compuMethods
+        mode_declaration_groups = project.modeDeclarationGroups
         type_trefs: Dict[str, Dict[str, str]] = {
             d.name: {"package": "BaseTypes", "dest": "SW-BASE-TYPE"} for d in base_types
         }
@@ -389,6 +404,7 @@ def write_outputs_with_report(
                 application_types=application_types,
                 units=units,
                 compu_methods=compu_methods,
+                mode_declaration_groups=mode_declaration_groups,
                 type_trefs=type_trefs,
                 sr_interfaces=sr,
                 cs_interfaces=cs,

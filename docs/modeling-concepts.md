@@ -27,6 +27,18 @@ Sender-receiver interfaces define `dataElements`. They are used for data flow be
 
 Client-server interfaces define `operations`, including arguments, optional possible errors, and optional return types. They are used for runnable `calls`, `operationInvokedEvents`, and `raisesErrors`.
 
+## Mode Declaration Groups
+
+ARForge now supports AUTOSAR `ModeDeclarationGroup` definitions as a first-class shared model artifact.
+
+Mode declaration groups are defined in `modes/*.yaml` and currently include:
+
+- the group `name`
+- `initialMode`
+- an ordered list of `modes`
+
+This foundational support is intentionally limited to defining, validating, and exporting the groups themselves. Mode switch interfaces, mode ports, and mode-related runnable events are not yet modeled.
+
 ## Runnables and Events
 
 Runnables are defined inside an SWC and capture the executable behavior relevant to validation and export.

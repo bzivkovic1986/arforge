@@ -111,6 +111,19 @@
             ]
           ]
         },
+        "modeDeclarationGroups": {
+          "type": "array",
+          "description": "Optional mode declaration group definition files. Each entry may be a concrete file or a glob pattern.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "examples": [
+            [
+              "modes/*.yaml"
+            ]
+          ]
+        },
         "interfaces": {
           "type": "array",
           "description": "Sender-receiver and client-server interface files to include in the project.",
@@ -160,6 +173,9 @@
           "compuMethods": [
             "compu_methods/*.yaml"
           ],
+          "modeDeclarationGroups": [
+            "modes/*.yaml"
+          ],
           "interfaces": [
             "interfaces/*.yaml"
           ],
@@ -187,6 +203,9 @@
         ],
         "compuMethods": [
           "compu_methods/*.yaml"
+        ],
+        "modeDeclarationGroups": [
+          "modes/*.yaml"
         ],
         "interfaces": [
           "interfaces/*.yaml"

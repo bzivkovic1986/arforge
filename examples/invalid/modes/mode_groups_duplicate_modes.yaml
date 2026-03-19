@@ -1,0 +1,7 @@
+modeDeclarationGroups:
+  - name: Mdg_PowerState
+    initialMode: "OFF"
+    modes:
+      - "OFF"
+      - "ON"
+      - "OFF"
