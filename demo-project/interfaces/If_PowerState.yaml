@@ -1,0 +1,7 @@
+# ARForge: Interface definition
+# Defines a Sender-Receiver, Client-Server, or Mode-Switch interface used by SWC ports.
+interface:
+  name: "If_PowerState"
+  description: "Mode switch interface for ECU power state."
+  type: "modeSwitch"
+  modeGroupRef: "Mdg_PowerState"

@@ -1,0 +1,13 @@
+# ARForge: Base type definitions
+# Defines low-level platform types used by implementation data types.
+baseTypes:
+  - name: "uint8"
+    description: "Unsigned 8-bit platform integer."
+    bitLength: 8
+    signedness: "unsigned"
+    nativeDeclaration: "uint8"
+  - name: "uint16"
+    description: "Unsigned 16-bit platform integer."
+    bitLength: 16
+    signedness: "unsigned"
+    nativeDeclaration: "uint16"

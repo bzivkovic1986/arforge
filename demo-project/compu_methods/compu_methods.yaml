@@ -1,0 +1,11 @@
+# ARForge: Compu methods
+# Simple physical scaling definitions for application data types.
+compuMethods:
+  - name: "CM_VehicleSpeed_Kph"
+    description: "Identity scaling for the demo vehicle speed value."
+    category: "linear"
+    unitRef: "km_per_h"
+    factor: 1.0
+    offset: 0.0
+    physMin: 0
+    physMax: 250

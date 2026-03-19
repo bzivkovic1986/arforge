@@ -1,0 +1,10 @@
+# ARForge: Interface definition
+# Defines a Sender-Receiver, Client-Server, or Mode-Switch interface used by SWC ports.
+interface:
+  name: "If_VehicleSpeed"
+  description: "Sender-receiver interface for the current vehicle speed."
+  type: "senderReceiver"
+  dataElements:
+    - name: "VehicleSpeed"
+      description: "Latest measured vehicle speed sample."
+      typeRef: "App_VehicleSpeed"

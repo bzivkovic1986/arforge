@@ -1,0 +1,6 @@
+# ARForge: Implementation data types
+# Defines type-level implementation data types backed by platform base types.
+implementationDataTypes:
+  - name: "Impl_VehicleSpeed_U16"
+    description: "Raw implementation type for a vehicle speed sample."
+    baseTypeRef: "uint16"
