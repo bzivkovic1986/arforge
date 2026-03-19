@@ -1,0 +1,25 @@
+# ARForge: System composition
+# Defines component prototypes (instances) and connectors between their ports.
+system:
+  name: "DemoSystem"
+  description: "Demo AUTOSAR system wiring one speed flow and one mode-switch flow."
+  composition:
+    name: "Composition_DemoSystem"
+    description: "Top-level composition for the scaffolded sender-receiver and mode-switch example."
+    # These are component prototypes (instances in the system).
+    # typeRef points to the SWC type defined in swcs/*.yaml.
+    components:
+      - name: "SpeedSensor_1"
+        description: "Instance of the SpeedSensor SWC type."
+        typeRef: "SpeedSensor"
+      - name: "SpeedDisplay_1"
+        description: "Instance of the SpeedDisplay SWC type."
+        typeRef: "SpeedDisplay"
+    # Connect the provider ports on the producer instance to the receiver ports on the consumer instance.
+    connectors:
+      - from: "SpeedSensor_1.Pp_VehicleSpeed"
+        description: "Connects the published speed sample to the display instance."
+        to: "SpeedDisplay_1.Rp_VehicleSpeed"
+      - from: "SpeedSensor_1.Pp_PowerState"
+        description: "Connects the ECU power-state mode to the display instance."
+        to: "SpeedDisplay_1.Rp_PowerState"

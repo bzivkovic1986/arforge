@@ -3,7 +3,7 @@
   "yaml.hover": true,
   "yaml.completion": true,
 
-  "arforge.projectFile": "examples/autosar.project.yaml",
+  "arforge.projectFile": "demo-project/autosar.project.yaml",
 
   "yaml.schemas": {
     "./schemas/aggregator.schema.json": [

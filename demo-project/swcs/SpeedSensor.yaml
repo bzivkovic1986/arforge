@@ -1,0 +1,21 @@
+# ARForge: Software Component Type
+# Defines ports, runnables, and internal behavior for one AUTOSAR SWC type.
+swc:
+  name: "SpeedSensor"
+  description: "SWC type that publishes the current vehicle speed."
+  runnables:
+    - name: "Runnable_PublishVehicleSpeed"
+      description: "Writes the latest vehicle speed sample to the provided port."
+      timingEventMs: 10
+      writes:
+        - port: "Pp_VehicleSpeed"
+          dataElement: "VehicleSpeed"
+  ports:
+    - name: "Pp_VehicleSpeed"
+      description: "Provided sender-receiver port for publishing speed."
+      direction: "provides"
+      interfaceRef: "If_VehicleSpeed"
+    - name: "Pp_PowerState"
+      description: "Provided mode switch port for ECU power state."
+      direction: "provides"
+      interfaceRef: "If_PowerState"

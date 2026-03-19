@@ -1,0 +1,10 @@
+# ARForge: Mode declaration groups
+# Defines AUTOSAR mode declaration groups used by mode-switch interfaces.
+modeDeclarationGroups:
+  - name: "Mdg_PowerState"
+    description: "Power state modes used by the scaffolded mode-switch interface."
+    initialMode: "OFF"
+    modes:
+      - "OFF"
+      - "ON"
+      - "SLEEP"

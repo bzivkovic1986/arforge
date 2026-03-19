@@ -1,0 +1,11 @@
+# ARForge: Application data types
+# Defines project-level application types used by interfaces.
+applicationDataTypes:
+  - name: "App_VehicleSpeed"
+    description: "Vehicle speed value shared between the demo SWC types."
+    implementationTypeRef: "Impl_VehicleSpeed_U16"
+    constraint:
+      min: 0
+      max: 250
+    unitRef: "km_per_h"
+    compuMethodRef: "CM_VehicleSpeed_Kph"
