@@ -253,6 +253,16 @@
             </CLIENT-SERVER-INTERFACE>
             {% endfor %}
 
+            {% for itf in ms_interfaces %}
+            <MODE-SWITCH-INTERFACE>
+              <SHORT-NAME>{{ itf.name }}</SHORT-NAME>
+              <MODE-GROUP>
+                <SHORT-NAME>{{ itf.name }}_ModeGroup</SHORT-NAME>
+                <TYPE-TREF DEST="MODE-DECLARATION-GROUP">/{{ root_pkg }}/Modes/{{ itf.modeGroupRef }}</TYPE-TREF>
+              </MODE-GROUP>
+            </MODE-SWITCH-INTERFACE>
+            {% endfor %}
+
           </ELEMENTS>
         </AR-PACKAGE>
 

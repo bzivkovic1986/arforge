@@ -13,6 +13,8 @@ inputs:
     - "support/units.yaml"
   compuMethods:
     - "support/compu_methods.yaml"
+  modeDeclarationGroups:
+    - "../modes/*.yaml"
   interfaces:
     - "../interfaces/*.yaml"
   swcs:

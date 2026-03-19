@@ -42,6 +42,7 @@ class ExportModelSummary:
     interfaces_count: int
     sr_interfaces_count: int
     cs_interfaces_count: int
+    ms_interfaces_count: int
     swcs_count: int
     instances_count: int
     connectors_count: int
@@ -78,9 +79,11 @@ def _env(template_dir: Path) -> Environment:
 def _split_interfaces(project: Project):
     sr = [i for i in project.interfaces if i.type == "senderReceiver"]
     cs = [i for i in project.interfaces if i.type == "clientServer"]
+    ms = [i for i in project.interfaces if i.type == "modeSwitch"]
     sr = sorted(sr, key=lambda x: x.name)
     cs = sorted(cs, key=lambda x: x.name)
-    return sr, cs
+    ms = sorted(ms, key=lambda x: x.name)
+    return sr, cs, ms
 
 
 def _connection_sort_key(conn: Connection) -> tuple[str, str, str, str]:
@@ -238,7 +241,7 @@ def _sort_project_for_export(project: Project) -> Project:
 
 
 def _model_summary(project: Project) -> ExportModelSummary:
-    sr, cs = _split_interfaces(project)
+    sr, cs, ms = _split_interfaces(project)
     return ExportModelSummary(
         datatypes_count=(
             len(project.baseTypes)
@@ -251,6 +254,7 @@ def _model_summary(project: Project) -> ExportModelSummary:
         interfaces_count=len(project.interfaces),
         sr_interfaces_count=len(sr),
         cs_interfaces_count=len(cs),
+        ms_interfaces_count=len(ms),
         swcs_count=len(project.swcs),
         instances_count=len(project.system.composition.components),
         connectors_count=len(project.system.composition.connectors),
@@ -319,7 +323,7 @@ def render_shared(project: Project, template_dir: Path, template_name: str = SHA
     type_trefs.update(
         {d.name: {"package": "ApplicationDataTypes", "dest": "APPLICATION-PRIMITIVE-DATA-TYPE"} for d in application_types}
     )
-    sr, cs = _split_interfaces(project)
+    sr, cs, ms = _split_interfaces(project)
     return tpl.render(
         root_pkg=project.rootPackage,
         base_types=base_types,
@@ -331,6 +335,7 @@ def render_shared(project: Project, template_dir: Path, template_name: str = SHA
         type_trefs=type_trefs,
         sr_interfaces=sr,
         cs_interfaces=cs,
+        ms_interfaces=ms,
         cs_interface_errors={interface.name: _collect_interface_errors(interface) for interface in cs},
     )
 
@@ -393,7 +398,7 @@ def write_outputs_with_report(
             {d.name: {"package": "ApplicationDataTypes", "dest": "APPLICATION-PRIMITIVE-DATA-TYPE"} for d in application_types}
         )
         swcs = project.swcs
-        sr, cs = _split_interfaces(project)
+        sr, cs, ms = _split_interfaces(project)
         connections = _build_connections(project)
         swc_type_dests = _swc_type_dests(project)
         rendered = {
@@ -408,6 +413,7 @@ def write_outputs_with_report(
                 type_trefs=type_trefs,
                 sr_interfaces=sr,
                 cs_interfaces=cs,
+                ms_interfaces=ms,
                 cs_interface_errors={interface.name: _collect_interface_errors(interface) for interface in cs},
                 swcs=swcs,
                 system_name=project.system.name,

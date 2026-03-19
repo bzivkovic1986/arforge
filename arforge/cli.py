@@ -280,7 +280,7 @@ def export(
                 "model: "
                 f"datatypes={ms.datatypes_count} "
                 f"modeDeclarationGroups={ms.mode_declaration_groups_count} "
-                f"interfaces={ms.interfaces_count} (SR={ms.sr_interfaces_count}, CS={ms.cs_interfaces_count}) "
+                f"interfaces={ms.interfaces_count} (SR={ms.sr_interfaces_count}, CS={ms.cs_interfaces_count}, MS={ms.ms_interfaces_count}) "
                 f"swcs={ms.swcs_count} "
                 f"instances={ms.instances_count} connectors={ms.connectors_count}"
             )

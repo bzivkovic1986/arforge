@@ -1,0 +1,16 @@
+# ARForge: Invalid example fixture
+# Domain: system validation.
+# Tests warning-only behavior for unconnected mode-switch ports.
+system:
+  name: "DemoSystem"
+  composition:
+    name: "Composition_DemoSystem"
+    components:
+      - name: "SpeedSensor_1"
+        typeRef: "SpeedSensor"
+      - name: "SpeedDisplay_1"
+        typeRef: "SpeedDisplay"
+    connectors:
+      - from: "SpeedSensor_1.Pp_VehicleSpeed"
+        to: "SpeedDisplay_1.Rp_VehicleSpeed"
+

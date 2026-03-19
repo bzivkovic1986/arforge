@@ -253,6 +253,16 @@
             </CLIENT-SERVER-INTERFACE>
             {% endfor %}
 
+            {% for itf in ms_interfaces %}
+            <MODE-SWITCH-INTERFACE>
+              <SHORT-NAME>{{ itf.name }}</SHORT-NAME>
+              <MODE-GROUP>
+                <SHORT-NAME>{{ itf.name }}_ModeGroup</SHORT-NAME>
+                <TYPE-TREF DEST="MODE-DECLARATION-GROUP">/{{ root_pkg }}/Modes/{{ itf.modeGroupRef }}</TYPE-TREF>
+              </MODE-GROUP>
+            </MODE-SWITCH-INTERFACE>
+            {% endfor %}
+
           </ELEMENTS>
         </AR-PACKAGE>
 
@@ -282,7 +292,7 @@
                     {% endif %}
                   </PROVIDED-COM-SPECS>
                   {% endif %}
-                  {% else %}
+                  {% elif p.interfaceType == "clientServer" %}
                   <PROVIDED-INTERFACE-TREF DEST="CLIENT-SERVER-INTERFACE">/{{ root_pkg }}/Interfaces/{{ p.interfaceRef }}</PROVIDED-INTERFACE-TREF>
                   {% if p.comSpec and p.comSpec.callMode %}
                   <PROVIDED-COM-SPECS>
@@ -294,6 +304,8 @@
                     </SERVER-COM-SPEC>
                   </PROVIDED-COM-SPECS>
                   {% endif %}
+                  {% elif p.interfaceType == "modeSwitch" %}
+                  <PROVIDED-INTERFACE-TREF DEST="MODE-SWITCH-INTERFACE">/{{ root_pkg }}/Interfaces/{{ p.interfaceRef }}</PROVIDED-INTERFACE-TREF>
                   {% endif %}
                 </P-PORT-PROTOTYPE>
                   {% else %}
@@ -313,7 +325,7 @@
                     {% endif %}
                   </REQUIRED-COM-SPECS>
                   {% endif %}
-                  {% else %}
+                  {% elif p.interfaceType == "clientServer" %}
                   <REQUIRED-INTERFACE-TREF DEST="CLIENT-SERVER-INTERFACE">/{{ root_pkg }}/Interfaces/{{ p.interfaceRef }}</REQUIRED-INTERFACE-TREF>
                   {% if p.comSpec and p.comSpec.callMode %}
                   <REQUIRED-COM-SPECS>
@@ -325,6 +337,8 @@
                     </CLIENT-COM-SPEC>
                   </REQUIRED-COM-SPECS>
                   {% endif %}
+                  {% elif p.interfaceType == "modeSwitch" %}
+                  <REQUIRED-INTERFACE-TREF DEST="MODE-SWITCH-INTERFACE">/{{ root_pkg }}/Interfaces/{{ p.interfaceRef }}</REQUIRED-INTERFACE-TREF>
                   {% endif %}
                 </R-PORT-PROTOTYPE>
                   {% endif %}

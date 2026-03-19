@@ -376,6 +376,13 @@ class InterfaceSemanticCase(ValidationCase):
 
         for itf in sorted(ctx.project.interfaces, key=lambda i: i.name):
             if itf.type == "senderReceiver":
+                if itf.modeGroupRef is not None:
+                    findings.append(
+                        self.finding(
+                            f"SenderReceiver interface '{itf.name}' must not define modeGroupRef.",
+                            code="CORE-010-SR-MODE-GROUP-REF",
+                        )
+                    )
                 if not itf.dataElements:
                     findings.append(
                         self.finding(
@@ -490,8 +497,45 @@ class InterfaceSemanticCase(ValidationCase):
                                         f"Interface '{itf.name}' operation '{op.name}' has duplicate possibleErrors code '{possible_error.code}'.",
                                         code="CORE-010-CS-POSSIBLE-ERROR-DUPLICATE-CODE",
                                     )
-                                )
+                            )
                             seen_error_codes.add(possible_error.code)
+                if itf.modeGroupRef is not None:
+                    findings.append(
+                        self.finding(
+                            f"ClientServer interface '{itf.name}' must not define modeGroupRef.",
+                            code="CORE-010-CS-MODE-GROUP-REF",
+                        )
+                    )
+            elif itf.type == "modeSwitch":
+                if itf.dataElements:
+                    findings.append(
+                        self.finding(
+                            f"ModeSwitch interface '{itf.name}' must not define dataElements.",
+                            code="CORE-010-MS-DATAELEMENTS",
+                        )
+                    )
+                if itf.operations:
+                    findings.append(
+                        self.finding(
+                            f"ModeSwitch interface '{itf.name}' must not define operations.",
+                            code="CORE-010-MS-OPERATIONS",
+                        )
+                    )
+                if not itf.modeGroupRef:
+                    findings.append(
+                        self.finding(
+                            f"ModeSwitch interface '{itf.name}' must define modeGroupRef.",
+                            code="CORE-010-MS-MISSING-MODE-GROUP-REF",
+                        )
+                    )
+                    continue
+                if itf.modeGroupRef not in ctx.mode_declaration_group_by_name:
+                    findings.append(
+                        self.finding(
+                            f"ModeSwitch interface '{itf.name}' references unknown ModeDeclarationGroup '{itf.modeGroupRef}'.",
+                            code="CORE-010-MS-UNKNOWN-MODE-GROUP-REF",
+                        )
+                    )
             else:
                 findings.append(
                     self.finding(
@@ -1128,6 +1172,15 @@ class ComSpecSemanticCase(ValidationCase):
                         )
                     continue
 
+                if itf.type == "modeSwitch":
+                    findings.append(
+                        self.finding(
+                            f"SWC '{swc.name}' port '{port.name}' modeSwitch interfaces do not support comSpec.",
+                            code="CORE-025-MS-COMSPEC-UNSUPPORTED",
+                        )
+                    )
+                    continue
+
                 if itf.type != "clientServer":
                     findings.append(
                         self.finding(
@@ -1422,7 +1475,7 @@ def _connection_sort_key(conn) -> tuple[str, str, str, str, str, str]:
 class ConnectionSemanticCase(ValidationCase):
     case_id = "CORE-040"
     name = "ConnectionSemantics"
-    description = "Checks system connections and connector-level sender-receiver and client-server semantics."
+    description = "Checks system connections and connector-level sender-receiver, client-server, and mode-switch semantics."
     tags = ("core", "system", "connections")
 
     def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
@@ -1434,6 +1487,7 @@ class ConnectionSemanticCase(ValidationCase):
         findings: List[Finding] = []
         seen_sr_port_pairs: set[tuple[str, str, str, str]] = set()
         seen_cs_port_pairs: set[tuple[str, str, str, str]] = set()
+        seen_ms_port_pairs: set[tuple[str, str, str, str]] = set()
         connectors = sorted(ctx.project.system.composition.connectors, key=_connection_sort_key)
         for conn in connectors:
             from_inst = ctx.instance_by_name.get(conn.from_instance)
@@ -1539,7 +1593,7 @@ class ConnectionSemanticCase(ValidationCase):
                     )
                 else:
                     seen_sr_port_pairs.add(conn.port_pair_key)
-            else:
+            elif itf.type == "clientServer":
                 if from_port.interfaceType != "clientServer" or to_port.interfaceType != "clientServer":
                     findings.append(
                         self.finding(
@@ -1573,6 +1627,46 @@ class ConnectionSemanticCase(ValidationCase):
                             code="CORE-040-CS-INVALID-OPERATION",
                         )
                     )
+            elif itf.type == "modeSwitch":
+                if from_port.interfaceType != "modeSwitch" or to_port.interfaceType != "modeSwitch":
+                    findings.append(
+                        self.finding(
+                            f"ModeSwitch connector {conn.from_instance}.{conn.from_port} -> {conn.to_instance}.{conn.to_port} "
+                            "must connect ports typed by modeSwitch interfaces.",
+                            code="CORE-040-MS-INTERFACE-TYPE",
+                        )
+                    )
+                if conn.dataElement:
+                    findings.append(
+                        self.finding(
+                            f"ModeSwitch connection {conn.from_instance}.{conn.from_port} -> {conn.to_instance}.{conn.to_port} cannot set dataElement.",
+                            code="CORE-040-MS-INVALID-DATAELEMENT",
+                        )
+                    )
+                if conn.port_pair_key in seen_ms_port_pairs:
+                    findings.append(
+                        self.finding(
+                            f"Duplicate modeSwitch connector '{conn.from_instance}.{conn.from_port}' -> "
+                            f"'{conn.to_instance}.{conn.to_port}' is not allowed; mode-switch connectors are unique per port pair.",
+                            code="CORE-040-MS-DUPLICATE-PORT-PAIR",
+                        )
+                    )
+                else:
+                    seen_ms_port_pairs.add(conn.port_pair_key)
+                if conn.operation:
+                    findings.append(
+                        self.finding(
+                            f"ModeSwitch connector {conn.from_instance}.{conn.from_port} -> {conn.to_instance}.{conn.to_port} must not set operation.",
+                            code="CORE-040-MS-INVALID-OPERATION",
+                        )
+                    )
+            else:
+                findings.append(
+                    self.finding(
+                        f"Connection {conn.from_instance}.{conn.from_port} -> {conn.to_instance}.{conn.to_port} uses unsupported interface type '{itf.type}'.",
+                        code="CORE-040-UNKNOWN-INTERFACE-TYPE",
+                    )
+                )
 
         return findings
 
@@ -1711,6 +1805,60 @@ class CsPortUsageCase(ValidationCase):
                         self.finding(
                             f"Connected clientServer requires port '{instance.name}.{port.name}' is never used by any runnable call.",
                             code="CORE-044-CS-CONNECTED-REQUIRES-UNUSED",
+                        )
+                    )
+
+        return findings
+
+
+class ModeSwitchConnectivityCase(ValidationCase):
+    case_id = "CORE-045"
+    name = "ModeSwitchConnectivity"
+    description = "Checks mode-switch instantiated-port connectivity against connectors."
+    tags = ("core", "system", "connections", "mode-switch")
+    default_severity = "warning"
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.system.composition.components:
+            return False, "no system component prototypes defined"
+        has_mode_switch_ports = any(
+            port.interfaceType == "modeSwitch"
+            for swc in ctx.project.swcs
+            for port in swc.ports
+        )
+        if not has_mode_switch_ports:
+            return False, "no modeSwitch ports defined"
+        return True, None
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        findings: List[Finding] = []
+
+        for instance in sorted(ctx.project.system.composition.components, key=lambda c: c.name):
+            swc = ctx.swc_by_name.get(instance.typeRef)
+            if swc is None:
+                continue
+
+            for port in sorted(swc.ports, key=lambda p: p.name):
+                if port.interfaceType != "modeSwitch":
+                    continue
+
+                port_ref = f"{instance.name}.{port.name}"
+                connectivity = ctx.find_instance_port_connectivity(instance.name, port.name)
+                if connectivity is None:
+                    continue
+
+                if port.direction == "provides" and not connectivity.outgoing_connectors:
+                    findings.append(
+                        self.finding(
+                            f"ModeSwitch provides port '{port_ref}' has no outgoing connector.",
+                            code="CORE-045-MS-PROVIDES-NO-OUTGOING",
+                        )
+                    )
+                if port.direction == "requires" and not connectivity.incoming_connectors:
+                    findings.append(
+                        self.finding(
+                            f"ModeSwitch requires port '{port_ref}' has no incoming connector.",
+                            code="CORE-045-MS-REQUIRES-NO-INCOMING",
                         )
                     )
 
@@ -1948,4 +2096,5 @@ def core_validation_cases() -> List[ValidationCase]:
         SrProducerFasterThanConsumerCase(),
         CsPortConnectivityCase(),
         CsPortUsageCase(),
+        ModeSwitchConnectivityCase(),
     ]

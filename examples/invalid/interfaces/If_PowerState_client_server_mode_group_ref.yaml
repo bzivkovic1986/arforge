@@ -1,0 +1,15 @@
+# ARForge: Invalid example fixture
+# Domain: interface validation.
+# Tests validation failure for clientServer interface incorrectly using modeGroupRef.
+interface:
+  name: "If_Diagnostics"
+  type: "clientServer"
+  modeGroupRef: "Mdg_PowerState"
+  operations:
+    - name: "ReadDTC"
+      arguments:
+        - name: "DtcId"
+          direction: "in"
+          typeRef: "uint16"
+      returnType: "uint8"
+

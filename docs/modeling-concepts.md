@@ -18,14 +18,17 @@ This distinction matters because connectors are created between instantiated por
 
 ## Sender-Receiver vs Client-Server Interfaces
 
-ARForge currently supports two interface kinds:
+ARForge currently supports three interface kinds:
 
 - `senderReceiver`
 - `clientServer`
+- `modeSwitch`
 
 Sender-receiver interfaces define `dataElements`. They are used for data flow between ports and for runnable `reads` and `writes`.
 
 Client-server interfaces define `operations`, including arguments, optional possible errors, and optional return types. They are used for runnable `calls`, `operationInvokedEvents`, and `raisesErrors`.
+
+Mode-switch interfaces define `modeGroupRef`. They are used by provides/requires ports to reference a shared `ModeDeclarationGroup`.
 
 ## Mode Declaration Groups
 
@@ -37,7 +40,9 @@ Mode declaration groups are defined in `modes/*.yaml` and currently include:
 - `initialMode`
 - an ordered list of `modes`
 
-This foundational support is intentionally limited to defining, validating, and exporting the groups themselves. Mode switch interfaces, mode ports, and mode-related runnable events are not yet modeled.
+Mode declaration groups are now also referenced by `modeSwitch` interfaces and the ports bound to those interfaces.
+
+Mode-related runnable events such as `ModeSwitchEvent` are not yet modeled.
 
 ## Runnables and Events
 

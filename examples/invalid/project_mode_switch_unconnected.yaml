@@ -1,6 +1,6 @@
 # ARForge: Invalid example fixture
-# Domain: mode declaration groups.
-# Tests validation failure for duplicate mode names inside one group.
+# Domain: mode-switch connectivity.
+# Tests warning-only behavior for open mode-switch connections.
 autosar:
   version: "4.2"
   rootPackage: "DEMO"
@@ -14,11 +14,11 @@ inputs:
   compuMethods:
     - "../compu_methods/*.yaml"
   modeDeclarationGroups:
-    - "modes/mode_groups_duplicate_modes.yaml"
+    - "../modes/*.yaml"
   interfaces:
     - "../interfaces/If_VehicleSpeed.yaml"
     - "../interfaces/If_PowerState.yaml"
   swcs:
     - "../swcs/SpeedSensor.yaml"
     - "../swcs/SpeedDisplay.yaml"
-  system: "../system.yaml"
+  system: "system_mode_switch_unconnected.yaml"
