@@ -98,6 +98,15 @@ def test_main_example_descriptions_are_loaded_into_model_ir() -> None:
     )
     assert power_state_port.description == "Required mode switch port for ECU power state."
     assert power_state_port.interfaceType == "modeSwitch"
+    assert power_state_port.modeGroupRef == "Mdg_PowerState"
+    on_power_on = next(
+        runnable
+        for swc in project.swcs
+        if swc.name == "SpeedDisplay"
+        for runnable in swc.runnables
+        if runnable.name == "Runnable_OnPowerOn"
+    )
+    assert [(event.port, event.mode) for event in on_power_on.modeSwitchEvents] == [("Rp_PowerState", "ON")]
     assert next(data_type for data_type in project.applicationDataTypes if data_type.name == "App_VehicleSpeed").description == (
         "Vehicle speed value shared between the demo SWC types."
     )
@@ -336,9 +345,13 @@ def test_split_export_swc_files_contain_aligned_runnables_and_ports(tmp_path: Pa
     assert "<SHORT-NAME>Pp_PowerState</SHORT-NAME>" in speed_sensor_xml
     assert "<PROVIDED-INTERFACE-TREF DEST=\"MODE-SWITCH-INTERFACE\">/DEMO/Interfaces/If_PowerState</PROVIDED-INTERFACE-TREF>" in speed_sensor_xml
     assert "<SHORT-NAME>Runnable_ReadVehicleSpeed</SHORT-NAME>" in speed_display_xml
+    assert "<SHORT-NAME>Runnable_OnPowerOn</SHORT-NAME>" in speed_display_xml
     assert "<SHORT-NAME>Rp_VehicleSpeed</SHORT-NAME>" in speed_display_xml
     assert "<SHORT-NAME>Rp_PowerState</SHORT-NAME>" in speed_display_xml
     assert "<REQUIRED-INTERFACE-TREF DEST=\"MODE-SWITCH-INTERFACE\">/DEMO/Interfaces/If_PowerState</REQUIRED-INTERFACE-TREF>" in speed_display_xml
+    assert "<MODE-SWITCH-EVENT>" in speed_display_xml
+    assert "<SHORT-NAME>MSE_Runnable_OnPowerOn_Rp_PowerState_ON</SHORT-NAME>" in speed_display_xml
+    assert "<TARGET-MODE-DECLARATION-REF DEST=\"MODE-DECLARATION\">/DEMO/Modes/Mdg_PowerState/ON</TARGET-MODE-DECLARATION-REF>" in speed_display_xml
 
 
 def test_main_example_omitted_swc_category_defaults_to_application() -> None:
@@ -410,6 +423,10 @@ def test_split_export_orders_outputs_deterministically(tmp_path: Path) -> None:
         ("project_mode_group_duplicate_modes.yaml", "CORE-012-MDG-DUPLICATE-MODE"),
         ("project_mode_group_bad_initial_mode.yaml", "CORE-013-MDG-INITIAL-MODE"),
         ("project_mode_switch_interface_unknown_mode_group.yaml", "CORE-010-MS-UNKNOWN-MODE-GROUP-REF"),
+        ("project_mode_switch_event_unknown_port.yaml", "CORE-028-MSE-UNKNOWN-PORT"),
+        ("project_mode_switch_event_on_provides_port.yaml", "CORE-028-MSE-DIRECTION"),
+        ("project_mode_switch_event_on_non_mode_switch_port.yaml", "CORE-028-MSE-INTERFACE-TYPE"),
+        ("project_mode_switch_event_unknown_mode.yaml", "CORE-028-MSE-UNKNOWN-MODE"),
     ],
 )
 def test_data_receive_event_invalid_fixtures_emit_expected_codes(fixture_name: str, expected_code: str) -> None:

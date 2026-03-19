@@ -467,6 +467,20 @@
                       </DATA-IREF>
                     </DATA-RECEIVE-EVENT>
                     {% endfor %}
+                    {% for mse in r.modeSwitchEvents %}
+                    {% set mse_port = (swc.ports | selectattr("name", "equalto", mse.port) | list | first) %}
+                    <MODE-SWITCH-EVENT>
+                      <SHORT-NAME>MSE_{{ r.name }}_{{ mse.port }}_{{ mse.mode }}</SHORT-NAME>
+                      <START-ON-EVENT-REF DEST="RUNNABLE-ENTITY">/{{ root_pkg }}/Components/{{ swc.name }}/IB_{{ swc.name }}/{{ r.name }}</START-ON-EVENT-REF>
+                      <MODE-IREFS>
+                        <MODE-IREF>
+                          <CONTEXT-PORT-REF DEST="R-PORT-PROTOTYPE">/{{ root_pkg }}/Components/{{ swc.name }}/{{ mse.port }}</CONTEXT-PORT-REF>
+                          <CONTEXT-MODE-DECLARATION-GROUP-PROTOTYPE-REF DEST="MODE-DECLARATION-GROUP-PROTOTYPE">/{{ root_pkg }}/Interfaces/{{ mse_port.interfaceRef if mse_port else '' }}/{{ mse_port.interfaceRef if mse_port else '' }}_ModeGroup</CONTEXT-MODE-DECLARATION-GROUP-PROTOTYPE-REF>
+                          <TARGET-MODE-DECLARATION-REF DEST="MODE-DECLARATION">/{{ root_pkg }}/Modes/{{ mse_port.modeGroupRef if mse_port else '' }}/{{ mse.mode }}</TARGET-MODE-DECLARATION-REF>
+                        </MODE-IREF>
+                      </MODE-IREFS>
+                    </MODE-SWITCH-EVENT>
+                    {% endfor %}
                     {% endfor %}
                   </EVENTS>
 

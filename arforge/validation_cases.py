@@ -1061,19 +1061,20 @@ class RunnableTriggerPolicyCase(ValidationCase):
                 has_timing = runnable.timingEventMs is not None
                 has_oie = bool(runnable.operationInvokedEvents)
                 has_dre = bool(runnable.dataReceiveEvents)
+                has_mse = bool(runnable.modeSwitchEvents)
                 has_init = runnable.initEvent
-                trigger_count = sum([has_timing, has_oie, has_dre, has_init])
+                trigger_count = sum([has_timing, has_oie, has_dre, has_mse, has_init])
                 if trigger_count > 1:
                     findings.append(
                         self.finding(
-                            f"Runnable '{runnable.name}' must define exactly one trigger style among timingEventMs, operationInvokedEvents, dataReceiveEvents, and initEvent.",
+                            f"Runnable '{runnable.name}' must define exactly one trigger style among timingEventMs, operationInvokedEvents, dataReceiveEvents, modeSwitchEvents, and initEvent.",
                             code="CORE-024-MULTIPLE-TRIGGERS",
                         )
                     )
                 if trigger_count == 0:
                     findings.append(
                         self.finding(
-                            f"SWC '{swc.name}' runnable '{runnable.name}' must define at least one trigger: timingEventMs, operationInvokedEvents, dataReceiveEvents, or initEvent.",
+                            f"SWC '{swc.name}' runnable '{runnable.name}' must define at least one trigger: timingEventMs, operationInvokedEvents, dataReceiveEvents, modeSwitchEvents, or initEvent.",
                             code="CORE-024-MISSING-TRIGGER",
                         )
                     )
@@ -1431,6 +1432,90 @@ class DataReceiveEventCase(ValidationCase):
                             self.finding(
                                 f"{location_base} dataReceiveEvents references unknown dataElement '{event.dataElement}' on interface '{itf.name}'.",
                                 code="CORE-027-DRE-UNKNOWN-DATAELEMENT",
+                            )
+                        )
+
+        return findings
+
+
+class ModeSwitchEventCase(ValidationCase):
+    case_id = "CORE-028"
+    name = "ModeSwitchEvents"
+    description = "Checks modeSwitchEvents bindings for required mode-switch ports and declared modes."
+    tags = ("core", "swc", "runnables", "interfaces", "mode-switch")
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.swcs:
+            return False, "no SWCs defined"
+        has_events = any(
+            runnable.modeSwitchEvents
+            for swc in ctx.project.swcs
+            for runnable in swc.runnables
+        )
+        if not has_events:
+            return False, "no modeSwitchEvents declarations"
+        return True, None
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        findings: List[Finding] = []
+
+        for swc in sorted(ctx.project.swcs, key=lambda s: s.name):
+            for runnable in sorted(swc.runnables, key=lambda r: r.name):
+                if not runnable.modeSwitchEvents:
+                    continue
+
+                location_base = f"SWC '{swc.name}' runnable '{runnable.name}'"
+                for event in sorted(runnable.modeSwitchEvents, key=lambda e: (e.port, e.mode)):
+                    port = ctx.find_swc_port(swc.name, event.port)
+                    if port is None:
+                        findings.append(
+                            self.finding(
+                                f"{location_base} modeSwitchEvents references unknown port '{event.port}'.",
+                                code="CORE-028-MSE-UNKNOWN-PORT",
+                            )
+                        )
+                        continue
+                    if port.direction != "requires":
+                        findings.append(
+                            self.finding(
+                                f"{location_base} modeSwitchEvents on port '{event.port}' requires direction 'requires', found '{port.direction}'.",
+                                code="CORE-028-MSE-DIRECTION",
+                            )
+                        )
+                    itf = ctx.iface_by_name.get(port.interfaceRef)
+                    if itf is None:
+                        continue
+                    if itf.type != "modeSwitch":
+                        findings.append(
+                            self.finding(
+                                f"{location_base} modeSwitchEvents on port '{event.port}' requires modeSwitch interface, found '{itf.type}'.",
+                                code="CORE-028-MSE-INTERFACE-TYPE",
+                            )
+                        )
+                        continue
+                    if not itf.modeGroupRef:
+                        findings.append(
+                            self.finding(
+                                f"{location_base} modeSwitchEvents on interface '{itf.name}' requires modeGroupRef.",
+                                code="CORE-028-MSE-MISSING-MODE-GROUP",
+                            )
+                        )
+                        continue
+                    group = ctx.mode_declaration_group_by_name.get(itf.modeGroupRef)
+                    if group is None:
+                        findings.append(
+                            self.finding(
+                                f"{location_base} modeSwitchEvents interface '{itf.name}' references unknown ModeDeclarationGroup '{itf.modeGroupRef}'.",
+                                code="CORE-028-MSE-UNKNOWN-MODE-GROUP",
+                            )
+                        )
+                        continue
+                    mode_names = {mode.name for mode in group.modes}
+                    if event.mode not in mode_names:
+                        findings.append(
+                            self.finding(
+                                f"{location_base} modeSwitchEvents references unknown mode '{event.mode}' on ModeDeclarationGroup '{group.name}'.",
+                                code="CORE-028-MSE-UNKNOWN-MODE",
                             )
                         )
 
@@ -2088,6 +2173,7 @@ def core_validation_cases() -> List[ValidationCase]:
         ComSpecSemanticCase(),
         RunnableRaisedErrorCase(),
         DataReceiveEventCase(),
+        ModeSwitchEventCase(),
         SystemInstanceTypeCase(),
         ConnectionSemanticCase(),
         SrPortConnectivityCase(),

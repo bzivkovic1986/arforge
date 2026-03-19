@@ -96,6 +96,31 @@
         }
       ]
     },
+    "modeSwitchEvent": {
+      "type": "object",
+      "description": "Mode-switch event binding for a runnable that reacts to an incoming mode change.",
+      "required": [
+        "port",
+        "mode"
+      ],
+      "properties": {
+        "port": {
+          "$ref": "#/$defs/namedRef",
+          "description": "Requires port that receives the mode-switch notification."
+        },
+        "mode": {
+          "$ref": "#/$defs/namedRef",
+          "description": "Mode declared by the referenced ModeDeclarationGroup that triggers the runnable."
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "port": "Rp_PowerState",
+          "mode": "ON"
+        }
+      ]
+    },
     "raisesError": {
       "type": "object",
       "description": "Error raised by a runnable while serving a specific client-server operation.",
@@ -225,6 +250,21 @@
               {
                 "port": "Rp_VehicleSpeed",
                 "dataElement": "VehicleSpeed"
+              }
+            ]
+          ]
+        },
+        "modeSwitchEvents": {
+          "type": "array",
+          "description": "Mode-switch events that trigger this runnable when a required mode-switch port enters a selected mode.",
+          "items": {
+            "$ref": "#/$defs/modeSwitchEvent"
+          },
+          "examples": [
+            [
+              {
+                "port": "Rp_PowerState",
+                "mode": "ON"
               }
             ]
           ]

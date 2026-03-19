@@ -45,6 +45,7 @@ Supported runnable triggers:
 - `InitEvent`
 - `OperationInvokedEvent`
 - `DataReceiveEvent`
+- `ModeSwitchEvent`
 
 ### Interfaces
 
@@ -138,9 +139,7 @@ These are the next planned improvements based on the current architecture.
 
 ## AUTOSAR Feature Expansion
 Incrementally expand supported AUTOSAR Classic constructs:
-- ModeDeclarationGroup
-- ModeSwitchEvent
-- mode ports and mode interfaces
+- additional mode-related AUTOSAR Classic constructs beyond the current ModeDeclarationGroup and ModeSwitchEvent support
 
 ## Data Type Enhancements
 - richer compu method categories

@@ -42,7 +42,7 @@ def readme_md(system_name: str, *, no_example: bool = False) -> str:
         "- `types/` defines reusable data types.\n"
         "- `modes/power_state.yaml` defines a simple mode declaration group.\n"
         "- `interfaces/If_VehicleSpeed.yaml` and `interfaces/If_PowerState.yaml` define the example interfaces used by ports.\n"
-        "- `swcs/SpeedSensor.yaml` and `swcs/SpeedDisplay.yaml` define SWC types with both data and mode ports.\n"
+        "- `swcs/SpeedSensor.yaml` and `swcs/SpeedDisplay.yaml` define SWC types with both data and mode ports, including a runnable mode-switch trigger.\n"
         "- `system.yaml` instantiates those SWC types as component prototypes and connects both flows.\n"
     )
     if no_example:
@@ -236,6 +236,11 @@ body="""swc:
       reads:
         - port: "Rp_VehicleSpeed"
           dataElement: "VehicleSpeed"
+    - name: "Runnable_OnPowerOn"
+      description: "React to the ECU entering the ON power mode."
+      modeSwitchEvents:
+        - port: "Rp_PowerState"
+          mode: "ON"
   ports:
     - name: "Rp_VehicleSpeed"
       description: "Required sender-receiver port for receiving speed."

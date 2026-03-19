@@ -153,6 +153,7 @@ class Runnable:
     calls: List["OperationCall"] = field(default_factory=list)
     operationInvokedEvents: List["OperationInvokedEvent"] = field(default_factory=list)
     dataReceiveEvents: List["DataReceiveEvent"] = field(default_factory=list)
+    modeSwitchEvents: List["ModeSwitchEvent"] = field(default_factory=list)
     raisesErrors: List["OperationErrorRaise"] = field(default_factory=list)
 
 
@@ -184,6 +185,13 @@ class DataReceiveEvent:
 
 
 @dataclass(frozen=True)
+class ModeSwitchEvent:
+    port: str
+    mode: str
+    description: str | None = None
+
+
+@dataclass(frozen=True)
 class OperationErrorRaise:
     operation: str
     error: str
@@ -206,6 +214,7 @@ class Port:
     direction: str  # provides | requires
     interfaceRef: str
     interfaceType: str  # senderReceiver | clientServer | modeSwitch
+    modeGroupRef: str | None = None
     description: str | None = None
     comSpec: ComSpec | None = None
 
@@ -472,6 +481,10 @@ def from_dict(d: Dict[str, Any]) -> Project:
                     [DataReceiveEvent(**e) for e in r.get("dataReceiveEvents", [])],
                     key=lambda e: (e.port, e.dataElement),
                 ),
+                modeSwitchEvents=sorted(
+                    [ModeSwitchEvent(**e) for e in r.get("modeSwitchEvents", [])],
+                    key=lambda e: (e.port, e.mode),
+                ),
                 raisesErrors=sorted(
                     [OperationErrorRaise(**e) for e in r.get("raisesErrors", [])],
                     key=lambda e: (e.operation, e.error),
@@ -493,6 +506,7 @@ def from_dict(d: Dict[str, Any]) -> Project:
                     direction=p["direction"],
                     interfaceRef=it_name,
                     interfaceType=interfaceType,
+                    modeGroupRef=it.modeGroupRef if it and it.type == "modeSwitch" else None,
                     description=p.get("description"),
                     comSpec=com_spec,
                 )

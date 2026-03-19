@@ -62,6 +62,7 @@ The current `core` ruleset covers:
 - sender-receiver, client-server, and mode-switch interface checks
 - runnable access checks for reads, writes, calls, and raised errors
 - event binding checks
+- mode-switch event binding checks
 - trigger policy checks
 - ComSpec validation
 - system component instance type checks
@@ -87,6 +88,7 @@ The current `core` ruleset covers:
 | CORE-025 | PortComSpecSemantics | Checks sender-receiver and client-server ComSpec on SWC ports. | Error |
 | CORE-026 | RunnableRaisedErrors | Checks runnable `raisesErrors` declarations for provided client-server operations. | Error |
 | CORE-027 | DataReceiveEvents | Checks `dataReceiveEvents` bindings for required sender-receiver ports. | Error |
+| CORE-028 | ModeSwitchEvents | Checks `modeSwitchEvents` bindings for required mode-switch ports and declared modes. | Error |
 | CORE-030 | SystemInstanceTypes | Checks that composition component prototypes reference known SWC types. | Error |
 | CORE-040 | ConnectionSemantics | Checks system connections and connector-level sender-receiver and client-server semantics. | Error |
 | CORE-041 | SenderReceiverConnectivity | Checks sender-receiver instantiated-port connectivity against connectors and runnable behavior. | Error or warning, depending on finding |
