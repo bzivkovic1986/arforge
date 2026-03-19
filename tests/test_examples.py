@@ -34,6 +34,7 @@ def _is_project_fixture(path: Path) -> bool:
 def _invalid_project_fixtures() -> list[Path]:
     warning_only = {
         "project_connected_sr_port_unused.yaml",
+        "project_mode_switch_unconnected.yaml",
         "project_sr_consumer_faster.yaml",
         "project_sr_producer_faster.yaml",
         "project_sr_timing_equal.yaml",
@@ -62,12 +63,24 @@ def test_main_example_descriptions_are_loaded_into_model_ir() -> None:
     assert next(interface for interface in project.interfaces if interface.name == "If_VehicleSpeed").description == (
         "Sender-receiver interface for the current vehicle speed."
     )
+    power_state_interface = next(interface for interface in project.interfaces if interface.name == "If_PowerState")
+    assert power_state_interface.description == "Mode switch interface for ECU power state."
+    assert power_state_interface.modeGroupRef == "Mdg_PowerState"
     assert next(swc for swc in project.swcs if swc.name == "SpeedSensor").description == (
         "SWC type that publishes the current vehicle speed."
     )
     assert next(swc for swc in project.swcs if swc.name == "SpeedDisplay").description == (
         "SWC type that reads vehicle speed and could display it to a user."
     )
+    provided_mode_port = next(
+        port
+        for swc in project.swcs
+        if swc.name == "SpeedSensor"
+        for port in swc.ports
+        if port.name == "Pp_PowerState"
+    )
+    assert provided_mode_port.description == "Provided mode switch port for ECU power state."
+    assert provided_mode_port.interfaceType == "modeSwitch"
     speed_port = next(
         port
         for swc in project.swcs
@@ -76,6 +89,15 @@ def test_main_example_descriptions_are_loaded_into_model_ir() -> None:
         if port.name == "Rp_VehicleSpeed"
     )
     assert speed_port.description == "Required sender-receiver port for receiving speed."
+    power_state_port = next(
+        port
+        for swc in project.swcs
+        if swc.name == "SpeedDisplay"
+        for port in swc.ports
+        if port.name == "Rp_PowerState"
+    )
+    assert power_state_port.description == "Required mode switch port for ECU power state."
+    assert power_state_port.interfaceType == "modeSwitch"
     assert next(data_type for data_type in project.applicationDataTypes if data_type.name == "App_VehicleSpeed").description == (
         "Vehicle speed value shared between the demo SWC types."
     )
@@ -85,7 +107,7 @@ def test_main_example_descriptions_are_loaded_into_model_ir() -> None:
     assert next(compu for compu in project.compuMethods if compu.name == "CM_VehicleSpeed_Kph").description == (
         "Identity scaling for the demo vehicle speed value."
     )
-    assert project.system.description == "Demo AUTOSAR system wiring one speed sender to one speed receiver."
+    assert project.system.description == "Demo AUTOSAR system wiring one speed flow and one mode-switch flow."
 
 
 def test_main_example_mode_declaration_group_is_loaded_into_model_ir() -> None:
@@ -268,11 +290,13 @@ def test_split_export_system_contains_one_clear_end_to_end_connection(tmp_path: 
     assert "<SHORT-NAME>SpeedSensor_1</SHORT-NAME>" in system_xml
     assert "<SHORT-NAME>SpeedDisplay_1</SHORT-NAME>" in system_xml
     assert system_xml.count("<SW-COMPONENT-PROTOTYPE>") == 2
-    assert system_xml.count("<ASSEMBLY-SW-CONNECTOR>") == 1
+    assert system_xml.count("<ASSEMBLY-SW-CONNECTOR>") == 2
     assert "<TYPE-TREF DEST=\"APPLICATION-SW-COMPONENT-TYPE\">/DEMO/Components/SpeedSensor</TYPE-TREF>" in system_xml
     assert "<TYPE-TREF DEST=\"APPLICATION-SW-COMPONENT-TYPE\">/DEMO/Components/SpeedDisplay</TYPE-TREF>" in system_xml
     assert "/DEMO/System/Composition_DemoSystem/SpeedSensor_1/Pp_VehicleSpeed</TARGET-P-PORT-REF>" in system_xml
     assert "/DEMO/System/Composition_DemoSystem/SpeedDisplay_1/Rp_VehicleSpeed</TARGET-R-PORT-REF>" in system_xml
+    assert "/DEMO/System/Composition_DemoSystem/SpeedSensor_1/Pp_PowerState</TARGET-P-PORT-REF>" in system_xml
+    assert "/DEMO/System/Composition_DemoSystem/SpeedDisplay_1/Rp_PowerState</TARGET-R-PORT-REF>" in system_xml
 
 
 def test_split_export_shared_types_match_simple_example_model(tmp_path: Path) -> None:
@@ -284,6 +308,7 @@ def test_split_export_shared_types_match_simple_example_model(tmp_path: Path) ->
     shared_xml = (out_dir / SHARED_EXAMPLE_OUTPUT).read_text(encoding="utf-8")
 
     assert "<SHORT-NAME>If_VehicleSpeed</SHORT-NAME>" in shared_xml
+    assert "<SHORT-NAME>If_PowerState</SHORT-NAME>" in shared_xml
     assert "<SHORT-NAME>VehicleSpeed</SHORT-NAME>" in shared_xml
     assert "<TYPE-TREF DEST=\"APPLICATION-PRIMITIVE-DATA-TYPE\">/DEMO/ApplicationDataTypes/App_VehicleSpeed</TYPE-TREF>" in shared_xml
     assert "<SHORT-NAME>App_VehicleSpeed</SHORT-NAME>" in shared_xml
@@ -293,6 +318,8 @@ def test_split_export_shared_types_match_simple_example_model(tmp_path: Path) ->
     assert "<SHORT-NAME>Mdg_PowerState</SHORT-NAME>" in shared_xml
     assert "<INITIAL-MODE-REF DEST=\"MODE-DECLARATION\">/DEMO/Modes/Mdg_PowerState/OFF</INITIAL-MODE-REF>" in shared_xml
     assert "<SHORT-NAME>SLEEP</SHORT-NAME>" in shared_xml
+    assert "<MODE-SWITCH-INTERFACE>" in shared_xml
+    assert "<TYPE-TREF DEST=\"MODE-DECLARATION-GROUP\">/DEMO/Modes/Mdg_PowerState</TYPE-TREF>" in shared_xml
 
 
 def test_split_export_swc_files_contain_aligned_runnables_and_ports(tmp_path: Path) -> None:
@@ -306,8 +333,12 @@ def test_split_export_swc_files_contain_aligned_runnables_and_ports(tmp_path: Pa
 
     assert "<SHORT-NAME>Runnable_PublishVehicleSpeed</SHORT-NAME>" in speed_sensor_xml
     assert "<SHORT-NAME>Pp_VehicleSpeed</SHORT-NAME>" in speed_sensor_xml
+    assert "<SHORT-NAME>Pp_PowerState</SHORT-NAME>" in speed_sensor_xml
+    assert "<PROVIDED-INTERFACE-TREF DEST=\"MODE-SWITCH-INTERFACE\">/DEMO/Interfaces/If_PowerState</PROVIDED-INTERFACE-TREF>" in speed_sensor_xml
     assert "<SHORT-NAME>Runnable_ReadVehicleSpeed</SHORT-NAME>" in speed_display_xml
     assert "<SHORT-NAME>Rp_VehicleSpeed</SHORT-NAME>" in speed_display_xml
+    assert "<SHORT-NAME>Rp_PowerState</SHORT-NAME>" in speed_display_xml
+    assert "<REQUIRED-INTERFACE-TREF DEST=\"MODE-SWITCH-INTERFACE\">/DEMO/Interfaces/If_PowerState</REQUIRED-INTERFACE-TREF>" in speed_display_xml
 
 
 def test_main_example_omitted_swc_category_defaults_to_application() -> None:
@@ -378,6 +409,7 @@ def test_split_export_orders_outputs_deterministically(tmp_path: Path) -> None:
         ("project_sr_write_unconnected.yaml", "CORE-041-SR-WRITE-UNCONNECTED"),
         ("project_mode_group_duplicate_modes.yaml", "CORE-012-MDG-DUPLICATE-MODE"),
         ("project_mode_group_bad_initial_mode.yaml", "CORE-013-MDG-INITIAL-MODE"),
+        ("project_mode_switch_interface_unknown_mode_group.yaml", "CORE-010-MS-UNKNOWN-MODE-GROUP-REF"),
     ],
 )
 def test_data_receive_event_invalid_fixtures_emit_expected_codes(fixture_name: str, expected_code: str) -> None:
@@ -401,6 +433,15 @@ def test_invalid_project_fixtures_emit_expected_warnings(fixture_name: str, expe
     report = build_semantic_report(project, ruleset="core")
     warning_codes = {finding.code for finding in report.findings if finding.severity == "warning"}
     assert expected_warning in warning_codes
+
+
+def test_open_mode_switch_ports_emit_connectivity_warnings() -> None:
+    project = load_aggregator(INVALID_DIR / "project_mode_switch_unconnected.yaml")
+    report = build_semantic_report(project, ruleset="core")
+    warning_codes = {finding.code for finding in report.findings if finding.severity == "warning"}
+
+    assert "CORE-045-MS-PROVIDES-NO-OUTGOING" in warning_codes
+    assert "CORE-045-MS-REQUIRES-NO-INCOMING" in warning_codes
 
 
 def test_sr_timing_equal_fixture_has_no_timing_mismatch_findings() -> None:

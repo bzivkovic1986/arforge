@@ -15,3 +15,7 @@ swc:
       description: "Required sender-receiver port for receiving speed."
       direction: "requires"
       interfaceRef: "If_VehicleSpeed"
+    - name: "Rp_PowerState"
+      description: "Required mode switch port for ECU power state."
+      direction: "requires"
+      interfaceRef: "If_PowerState"

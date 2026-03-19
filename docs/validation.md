@@ -59,7 +59,7 @@ The current `core` ruleset covers:
 - application constraint checks
 - mode declaration group checks
 - compu method and unit consistency checks
-- sender-receiver and client-server interface checks
+- sender-receiver, client-server, and mode-switch interface checks
 - runnable access checks for reads, writes, calls, and raised errors
 - event binding checks
 - trigger policy checks
@@ -75,7 +75,7 @@ The current `core` ruleset covers:
 |----|------|-------------|----------|
 | CORE-001 | GlobalUniqueness | Checks that globally named model elements remain unique. | Error |
 | CORE-002 | BaseTypeMetadata | Checks base type uniqueness and required metadata consistency. | Error |
-| CORE-010 | InterfaceSemantics | Checks interface structure and datatype references, including implementation datatype structures and arrays. | Error |
+| CORE-010 | InterfaceSemantics | Checks interface structure and datatype references, including implementation datatype structures and arrays, plus mode-switch `modeGroupRef` rules. | Error |
 | CORE-011 | ApplicationConstraints | Checks application datatype constraints against implementation types, units, and compu methods. | Error |
 | CORE-012 | ModeDeclarationGroupStructure | Checks mode declaration group uniqueness and local mode naming rules. | Error |
 | CORE-013 | ModeDeclarationGroupInitialMode | Checks that each mode declaration group `initialMode` references one of its declared modes. | Error |
@@ -93,6 +93,7 @@ The current `core` ruleset covers:
 | CORE-042 | SenderReceiverUsage | Checks whether connected sender-receiver ports are actually used by runnable behavior. | Warning |
 | CORE-043 | ClientServerConnectivity | Checks client-server instantiated-port connectivity against connectors and runnable behavior. | Error |
 | CORE-044 | ClientServerUsage | Checks whether connected or unconnected client-server ports are actually used by runnable behavior. | Warning |
+| CORE-045 | ModeSwitchConnectivity | Checks mode-switch instantiated-port connectivity against connectors. | Warning |
 | CORE-050 | SRConsumerFasterThanProducer | Warns when a cyclic sender-receiver consumer runs faster than its cyclic producer. | Warning |
 | CORE-051 | SRProducerFasterThanConsumer | Warns when a cyclic sender-receiver producer runs faster than its cyclic consumer. | Warning |
 

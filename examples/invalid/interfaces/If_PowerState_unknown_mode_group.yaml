@@ -1,0 +1,8 @@
+# ARForge: Invalid example fixture
+# Domain: interface validation.
+# Tests validation failure for modeSwitch interface referencing an unknown mode declaration group.
+interface:
+  name: "If_PowerState"
+  type: "modeSwitch"
+  modeGroupRef: "Mdg_UnknownPowerState"
+

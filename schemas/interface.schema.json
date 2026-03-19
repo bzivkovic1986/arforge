@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "ARForge Interface",
-  "description": "Schema for sender-receiver and client-server interface definitions.",
+  "description": "Schema for sender-receiver, client-server, and mode-switch interface definitions.",
   "type": "object",
   "$defs": {
     "refName": {
@@ -220,7 +220,7 @@
   "properties": {
     "interface": {
       "type": "object",
-      "description": "Single sender-receiver or client-server interface.",
+      "description": "Single sender-receiver, client-server, or mode-switch interface.",
       "required": [
         "name",
         "type"
@@ -241,10 +241,18 @@
           "description": "Interface kind supported by ARForge.",
           "enum": [
             "senderReceiver",
-            "clientServer"
+            "clientServer",
+            "modeSwitch"
           ],
           "examples": [
             "clientServer"
+          ]
+        },
+        "modeGroupRef": {
+          "$ref": "#/$defs/refName",
+          "description": "Referenced ModeDeclarationGroup for a mode-switch interface.",
+          "examples": [
+            "Mdg_PowerState"
           ]
         },
         "dataElements": {
@@ -278,8 +286,17 @@
               "dataElements"
             ],
             "not": {
-              "required": [
-                "operations"
+              "anyOf": [
+                {
+                  "required": [
+                    "operations"
+                  ]
+                },
+                {
+                  "required": [
+                    "modeGroupRef"
+                  ]
+                }
               ]
             }
           }
@@ -297,8 +314,45 @@
               "operations"
             ],
             "not": {
-              "required": [
-                "dataElements"
+              "anyOf": [
+                {
+                  "required": [
+                    "dataElements"
+                  ]
+                },
+                {
+                  "required": [
+                    "modeGroupRef"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "modeSwitch"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "modeGroupRef"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "dataElements"
+                  ]
+                },
+                {
+                  "required": [
+                    "operations"
+                  ]
+                }
               ]
             }
           }
@@ -338,6 +392,12 @@
               ]
             }
           ]
+        },
+        {
+          "name": "If_PowerState",
+          "type": "modeSwitch",
+          "modeGroupRef": "Mdg_PowerState",
+          "description": "Mode switch interface for ECU power state."
         }
       ]
     }

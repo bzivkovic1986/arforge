@@ -16,6 +16,7 @@ inputs:
     - "modes/*.yaml"
   interfaces:
     - "interfaces/If_VehicleSpeed.yaml"
+    - "interfaces/If_PowerState.yaml"
   swcs:
     - "swcs/SpeedSensor.yaml"
     - "swcs/SpeedDisplay.yaml"

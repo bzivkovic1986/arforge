@@ -15,3 +15,7 @@ swc:
       description: "Provided sender-receiver port for publishing speed."
       direction: "provides"
       interfaceRef: "If_VehicleSpeed"
+    - name: "Pp_PowerState"
+      description: "Provided mode switch port for ECU power state."
+      direction: "provides"
+      interfaceRef: "If_PowerState"

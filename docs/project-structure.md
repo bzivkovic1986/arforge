@@ -21,6 +21,7 @@ At the repository level, the main implementation lives in:
 - `types/`
 - `units/`
 - `compu_methods/`
+- `modes/`
 - `interfaces/`
 - `swcs/`
 - `system.yaml`
@@ -30,7 +31,9 @@ The aggregator file points to the inputs that make up the project.
 ## What Belongs Where
 
 - `interfaces/`
-  - interface definitions such as sender-receiver and client-server interfaces
+  - interface definitions such as sender-receiver, client-server, and mode-switch interfaces
+- `modes/`
+  - mode declaration group definitions referenced by mode-switch interfaces
 - `swcs/`
   - SWC type definitions, including ports, runnables, events, and ComSpec
 - `system.yaml`

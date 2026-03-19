@@ -136,8 +136,9 @@ class OperationArgument:
 @dataclass(frozen=True)
 class Interface:
     name: str
-    type: str  # senderReceiver | clientServer
+    type: str  # senderReceiver | clientServer | modeSwitch
     description: str | None = None
+    modeGroupRef: str | None = None
     dataElements: List[DataElement] | None = None
     operations: List[Operation] | None = None
 
@@ -204,7 +205,7 @@ class Port:
     name: str
     direction: str  # provides | requires
     interfaceRef: str
-    interfaceType: str  # senderReceiver | clientServer
+    interfaceType: str  # senderReceiver | clientServer | modeSwitch
     description: str | None = None
     comSpec: ComSpec | None = None
 
@@ -397,11 +398,12 @@ def from_dict(d: Dict[str, Any]) -> Project:
                     name=itf["name"],
                     type=itf["type"],
                     description=itf.get("description"),
+                    modeGroupRef=None,
                     dataElements=des,
                     operations=None,
                 )
             )
-        else:
+        elif itf["type"] == "clientServer":
             ops = []
             for op in itf.get("operations", []):
                 op_args = [OperationArgument(**arg) for arg in op.get("arguments", [])]
@@ -419,8 +421,20 @@ def from_dict(d: Dict[str, Any]) -> Project:
                     name=itf["name"],
                     type=itf["type"],
                     description=itf.get("description"),
+                    modeGroupRef=None,
                     dataElements=None,
                     operations=ops,
+                )
+            )
+        else:
+            ifaces.append(
+                Interface(
+                    name=itf["name"],
+                    type=itf["type"],
+                    description=itf.get("description"),
+                    modeGroupRef=itf.get("modeGroupRef"),
+                    dataElements=None,
+                    operations=None,
                 )
             )
 
