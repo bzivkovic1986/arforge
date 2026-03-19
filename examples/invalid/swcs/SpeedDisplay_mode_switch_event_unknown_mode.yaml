@@ -1,0 +1,22 @@
+# ARForge: Invalid example fixture
+# Domain: software component validation.
+# Tests validation failure for mode-switch event unknown mode.
+swc:
+  name: "SpeedDisplay"
+  runnables:
+    - name: "Runnable_ReadVehicleSpeed"
+      timingEventMs: 10
+      reads:
+        - port: "Rp_VehicleSpeed"
+          dataElement: "VehicleSpeed"
+    - name: "Runnable_OnPowerOn"
+      modeSwitchEvents:
+        - port: "Rp_PowerState"
+          mode: "INVALID_MODE"
+  ports:
+    - name: "Rp_VehicleSpeed"
+      direction: "requires"
+      interfaceRef: "If_VehicleSpeed"
+    - name: "Rp_PowerState"
+      direction: "requires"
+      interfaceRef: "If_PowerState"

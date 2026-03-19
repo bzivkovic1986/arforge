@@ -40,9 +40,7 @@ Mode declaration groups are defined in `modes/*.yaml` and currently include:
 - `initialMode`
 - an ordered list of `modes`
 
-Mode declaration groups are now also referenced by `modeSwitch` interfaces and the ports bound to those interfaces.
-
-Mode-related runnable events such as `ModeSwitchEvent` are not yet modeled.
+Mode declaration groups are now also referenced by `modeSwitch` interfaces, the ports bound to those interfaces, and runnable `modeSwitchEvents`.
 
 ## Runnables and Events
 
@@ -54,6 +52,7 @@ Current runnable/event patterns include:
 - initialization runnables using `initEvent`
 - operation-triggered runnables using `operationInvokedEvents`
 - data-triggered runnables using `dataReceiveEvents`
+- mode-triggered runnables using `modeSwitchEvents`
 
 Runnable access definitions belong on the runnable itself:
 
@@ -101,6 +100,16 @@ Examples:
 - raised server errors: `runnables[*].raisesErrors[*].operation`
 
 Connectors only describe which instantiated required and provided ports are wired together.
+
+## Where `mode` Usage Belongs
+
+For AUTOSAR mode-switch communication, the selected mode also belongs in runnable behavior.
+
+Example:
+
+- mode-triggered execution: `runnables[*].modeSwitchEvents[*].mode`
+
+The corresponding `port` must reference a required `modeSwitch` port whose interface resolves to a `ModeDeclarationGroup`.
 
 ## ComSpec
 

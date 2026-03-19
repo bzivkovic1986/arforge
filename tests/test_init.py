@@ -92,6 +92,8 @@ def test_init_default_creates_valid_project(tmp_path: Path) -> None:
     assert 'description: "Provided mode switch port for ECU power state."' in producer_yaml
     assert 'description: "SWC type that reads vehicle speed and could display it to a user."' in consumer_yaml
     assert 'description: "Required mode switch port for ECU power state."' in consumer_yaml
+    assert 'modeSwitchEvents:' in consumer_yaml
+    assert 'mode: "ON"' in consumer_yaml
     assert 'description: "Vehicle speed value shared between the demo SWC types."' in application_types_yaml
     assert 'description: "Raw implementation type for a vehicle speed sample."' in implementation_types_yaml
 
@@ -115,6 +117,9 @@ def test_init_default_creates_valid_project(tmp_path: Path) -> None:
         "SpeedSensor.arxml",
         "DemoSystem.arxml",
     ]
+    speed_display_xml = (out_dir / "SpeedDisplay.arxml").read_text(encoding="utf-8")
+    assert "<MODE-SWITCH-EVENT>" in speed_display_xml
+    assert "<SHORT-NAME>MSE_Runnable_OnPowerOn_Rp_PowerState_ON</SHORT-NAME>" in speed_display_xml
 
 
 def test_init_no_example_creates_structure_only_project(tmp_path: Path) -> None:

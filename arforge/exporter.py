@@ -162,6 +162,10 @@ def _sort_runnable(runnable: Runnable) -> Runnable:
             runnable.dataReceiveEvents,
             key=lambda event: (event.port, event.dataElement),
         ),
+        modeSwitchEvents=sorted(
+            runnable.modeSwitchEvents,
+            key=lambda event: (event.port, event.mode),
+        ),
         raisesErrors=sorted(
             runnable.raisesErrors,
             key=lambda raised_error: (raised_error.operation, raised_error.error),

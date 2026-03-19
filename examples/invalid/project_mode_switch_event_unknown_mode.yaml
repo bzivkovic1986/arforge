@@ -1,0 +1,24 @@
+# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Tests validation failure for mode-switch event unknown mode.
+autosar:
+  version: "4.2"
+  rootPackage: "DEMO"
+
+inputs:
+  baseTypes: "../types/base_types.yaml"
+  implementationDataTypes: "../types/implementation_types.yaml"
+  applicationDataTypes: "../types/application_types.yaml"
+  units:
+    - "../units/*.yaml"
+  compuMethods:
+    - "../compu_methods/*.yaml"
+  modeDeclarationGroups:
+    - "../modes/*.yaml"
+  interfaces:
+    - "../interfaces/If_VehicleSpeed.yaml"
+    - "../interfaces/If_PowerState.yaml"
+  swcs:
+    - "../swcs/SpeedSensor.yaml"
+    - "swcs/SpeedDisplay_mode_switch_event_unknown_mode.yaml"
+  system: "../system.yaml"

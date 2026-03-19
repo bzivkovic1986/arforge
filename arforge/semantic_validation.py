@@ -118,6 +118,7 @@ class SwcPortUsage:
     writes: Tuple[Tuple[str, str], ...] = ()
     calls: Tuple[Tuple[str, str], ...] = ()
     data_receive_events: Tuple[Tuple[str, str], ...] = ()
+    mode_switch_events: Tuple[Tuple[str, str], ...] = ()
     operation_invoked_events: Tuple[Tuple[str, str], ...] = ()
     raises_errors: Tuple[Tuple[str, str, str], ...] = ()
 
@@ -220,6 +221,10 @@ class ValidationContext:
                     swc_port_usage.setdefault((swc.name, event.port), {}).setdefault("data_receive_events", []).append(
                         (runnable.name, event.dataElement)
                     )
+                for event in sorted(runnable.modeSwitchEvents, key=lambda e: (e.port, e.mode)):
+                    swc_port_usage.setdefault((swc.name, event.port), {}).setdefault("mode_switch_events", []).append(
+                        (runnable.name, event.mode)
+                    )
                 for event in sorted(runnable.operationInvokedEvents, key=lambda e: (e.port, e.operation)):
                     swc_port_usage.setdefault((swc.name, event.port), {}).setdefault("operation_invoked_events", []).append(
                         (runnable.name, event.operation)
@@ -244,6 +249,7 @@ class ValidationContext:
                 writes=tuple(usage.get("writes", [])),
                 calls=tuple(usage.get("calls", [])),
                 data_receive_events=tuple(usage.get("data_receive_events", [])),
+                mode_switch_events=tuple(usage.get("mode_switch_events", [])),
                 operation_invoked_events=tuple(usage.get("operation_invoked_events", [])),
                 raises_errors=tuple(usage.get("raises_errors", [])),
             )
@@ -357,6 +363,7 @@ def _is_pure_cyclic_runnable(runnable) -> bool:
         runnable.timingEventMs is not None
         and not runnable.operationInvokedEvents
         and not runnable.dataReceiveEvents
+        and not runnable.modeSwitchEvents
         and not runnable.initEvent
     )
 
