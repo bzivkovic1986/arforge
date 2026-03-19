@@ -90,6 +90,20 @@ class CompuMethod:
     physMax: float | None = None
     entries: List[TextTableEntry] = field(default_factory=list)
 
+
+@dataclass(frozen=True)
+class ModeDeclaration:
+    name: str
+
+
+@dataclass(frozen=True)
+class ModeDeclarationGroup:
+    name: str
+    initialMode: str
+    description: str | None = None
+    modes: List[ModeDeclaration] = field(default_factory=list)
+
+
 @dataclass(frozen=True)
 class DataElement:
     name: str
@@ -278,6 +292,7 @@ class Project:
     applicationDataTypes: List[ApplicationDataType]
     units: List[Unit]
     compuMethods: List[CompuMethod]
+    modeDeclarationGroups: List[ModeDeclarationGroup]
     interfaces: List[Interface]
     swcs: List[Swc]
     system: System
@@ -360,6 +375,16 @@ def from_dict(d: Dict[str, Any]) -> Project:
                 physMin=cm.get("physMin"),
                 physMax=cm.get("physMax"),
                 entries=[TextTableEntry(**entry) for entry in cm.get("entries", [])],
+            )
+        )
+    mode_declaration_groups = []
+    for mdg in d.get("modeDeclarationGroups", []):
+        mode_declaration_groups.append(
+            ModeDeclarationGroup(
+                name=mdg["name"],
+                description=mdg.get("description"),
+                initialMode=mdg["initialMode"],
+                modes=[ModeDeclaration(name=mode_name) for mode_name in mdg.get("modes", [])],
             )
         )
 
@@ -516,6 +541,7 @@ def from_dict(d: Dict[str, Any]) -> Project:
         applicationDataTypes=app_types,
         units=units,
         compuMethods=compu_methods,
+        modeDeclarationGroups=mode_declaration_groups,
         interfaces=ifaces,
         swcs=swcs,
         system=system,

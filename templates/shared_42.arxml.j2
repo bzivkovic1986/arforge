@@ -162,6 +162,27 @@
         </AR-PACKAGE>
 
         <AR-PACKAGE>
+          <SHORT-NAME>Modes</SHORT-NAME>
+          <ELEMENTS>
+            {% for group in mode_declaration_groups %}
+            <MODE-DECLARATION-GROUP>
+              <SHORT-NAME>{{ group.name }}</SHORT-NAME>
+              <CATEGORY>EXPLICIT_ORDER</CATEGORY>
+              <INITIAL-MODE-REF DEST="MODE-DECLARATION">/{{ root_pkg }}/Modes/{{ group.name }}/{{ group.initialMode }}</INITIAL-MODE-REF>
+              <MODE-DECLARATIONS>
+                {% for mode in group.modes %}
+                <MODE-DECLARATION>
+                  <SHORT-NAME>{{ mode.name }}</SHORT-NAME>
+                  <VALUE>{{ loop.index0 }}</VALUE>
+                </MODE-DECLARATION>
+                {% endfor %}
+              </MODE-DECLARATIONS>
+            </MODE-DECLARATION-GROUP>
+            {% endfor %}
+          </ELEMENTS>
+        </AR-PACKAGE>
+
+        <AR-PACKAGE>
           <SHORT-NAME>Interfaces</SHORT-NAME>
           <ELEMENTS>
 

@@ -12,6 +12,7 @@ Schema validation is implemented in `arforge/validate.py` using the JSON schema 
 Current schema coverage includes:
 
 - aggregator project manifests
+- mode declaration groups
 - interfaces
 - SWCs
 - system files
@@ -56,6 +57,7 @@ The current `core` ruleset covers:
 - datatype reference and type graph checks
 - implementation struct and array checks
 - application constraint checks
+- mode declaration group checks
 - compu method and unit consistency checks
 - sender-receiver and client-server interface checks
 - runnable access checks for reads, writes, calls, and raised errors
@@ -75,6 +77,8 @@ The current `core` ruleset covers:
 | CORE-002 | BaseTypeMetadata | Checks base type uniqueness and required metadata consistency. | Error |
 | CORE-010 | InterfaceSemantics | Checks interface structure and datatype references, including implementation datatype structures and arrays. | Error |
 | CORE-011 | ApplicationConstraints | Checks application datatype constraints against implementation types, units, and compu methods. | Error |
+| CORE-012 | ModeDeclarationGroupStructure | Checks mode declaration group uniqueness and local mode naming rules. | Error |
+| CORE-013 | ModeDeclarationGroupInitialMode | Checks that each mode declaration group `initialMode` references one of its declared modes. | Error |
 | CORE-020 | SwcStructure | Checks SWC-local uniqueness for runnables and ports. | Error |
 | CORE-021 | PortInterfaceReferences | Checks that each SWC port references an existing interface and uses the expected kind. | Error |
 | CORE-022 | RunnableAccessSemantics | Checks runnable reads, writes, and calls against SWC port and interface semantics. | Error |

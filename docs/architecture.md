@@ -7,7 +7,7 @@ ARForge follows a straightforward pipeline:
 ## Processing Pipeline
 
 1. Load the aggregator project file (`*.project.yaml`).
-2. Expand file patterns for interfaces, SWCs, units, and compu methods.
+2. Expand file patterns for interfaces, SWCs, units, compu methods, and mode declaration groups.
 3. Validate each input file against JSON schema.
 4. Merge the parsed data into the internal project model.
 5. Run semantic validation cases from the `core` ruleset.
@@ -52,6 +52,7 @@ The loader currently supports:
 - `applicationDataTypes`
 - `units`
 - `compuMethods`
+- `modeDeclarationGroups`
 - `interfaces`
 - `swcs`
 - `system`

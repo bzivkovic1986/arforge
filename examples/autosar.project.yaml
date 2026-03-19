@@ -12,6 +12,8 @@ inputs:
     - "units/units.yaml"
   compuMethods:
     - "compu_methods/compu_methods.yaml"
+  modeDeclarationGroups:
+    - "modes/*.yaml"
   interfaces:
     - "interfaces/If_VehicleSpeed.yaml"
   swcs:

@@ -88,6 +88,15 @@ def test_main_example_descriptions_are_loaded_into_model_ir() -> None:
     assert project.system.description == "Demo AUTOSAR system wiring one speed sender to one speed receiver."
 
 
+def test_main_example_mode_declaration_group_is_loaded_into_model_ir() -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+
+    assert [group.name for group in project.modeDeclarationGroups] == ["Mdg_PowerState"]
+    assert project.modeDeclarationGroups[0].description == "Power state modes for the ECU."
+    assert project.modeDeclarationGroups[0].initialMode == "OFF"
+    assert [mode.name for mode in project.modeDeclarationGroups[0].modes] == ["OFF", "ON", "SLEEP"]
+
+
 @pytest.mark.parametrize(
     "fixture_path",
     _invalid_project_fixtures(),
@@ -281,6 +290,9 @@ def test_split_export_shared_types_match_simple_example_model(tmp_path: Path) ->
     assert "<SHORT-NAME>Impl_VehicleSpeed_U16</SHORT-NAME>" in shared_xml
     assert "<SHORT-NAME>CM_VehicleSpeed_Kph</SHORT-NAME>" in shared_xml
     assert "<SHORT-NAME>km_per_h</SHORT-NAME>" in shared_xml
+    assert "<SHORT-NAME>Mdg_PowerState</SHORT-NAME>" in shared_xml
+    assert "<INITIAL-MODE-REF DEST=\"MODE-DECLARATION\">/DEMO/Modes/Mdg_PowerState/OFF</INITIAL-MODE-REF>" in shared_xml
+    assert "<SHORT-NAME>SLEEP</SHORT-NAME>" in shared_xml
 
 
 def test_split_export_swc_files_contain_aligned_runnables_and_ports(tmp_path: Path) -> None:
@@ -364,6 +376,8 @@ def test_split_export_orders_outputs_deterministically(tmp_path: Path) -> None:
         ("project_sr_duplicate_port_pair.yaml", "CORE-040-SR-DUPLICATE-PORT-PAIR"),
         ("project_sr_read_unconnected.yaml", "CORE-041-SR-READ-UNCONNECTED"),
         ("project_sr_write_unconnected.yaml", "CORE-041-SR-WRITE-UNCONNECTED"),
+        ("project_mode_group_duplicate_modes.yaml", "CORE-012-MDG-DUPLICATE-MODE"),
+        ("project_mode_group_bad_initial_mode.yaml", "CORE-013-MDG-INITIAL-MODE"),
     ],
 )
 def test_data_receive_event_invalid_fixtures_emit_expected_codes(fixture_name: str, expected_code: str) -> None:
