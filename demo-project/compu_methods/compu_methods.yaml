@@ -9,3 +9,13 @@ compuMethods:
     offset: 0.0
     physMin: 0
     physMax: 250
+  - name: "CM_EcuVariant_Table"
+    description: "ECU Variant table definition"
+    category: "textTable"
+    entries:
+      - value: 0
+        label: "Variant A"
+      - value: 1
+        label: "Variant B"
+      - value: 2
+        label: "Variant C"

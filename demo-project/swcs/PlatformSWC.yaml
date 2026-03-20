@@ -1,0 +1,15 @@
+swc:
+  name: "PlatformSWC"
+  category: "application"
+  runnables:
+    - name: "Init"
+      initEvent: true
+      writes:
+        - port: "Pp_EcuVariant"
+          dataElement: "Data"
+    - name: "Cyclic_10ms"
+      timingEventMs: 10
+  ports:
+    - name: "Pp_EcuVariant"
+      direction: "provides"
+      interfaceRef: "If_EcuVariant"

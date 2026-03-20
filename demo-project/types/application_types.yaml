@@ -9,3 +9,7 @@ applicationDataTypes:
       max: 250
     unitRef: "km_per_h"
     compuMethodRef: "CM_VehicleSpeed_Kph"
+  - name: "App_EcuVariant"
+    description: "Ecu Variant information"
+    implementationTypeRef: "Impl_EcuVariant_Enum"
+    compuMethodRef: "CM_EcuVariant_Table"

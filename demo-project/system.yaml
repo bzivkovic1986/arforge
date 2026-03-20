@@ -15,6 +15,12 @@ system:
       - name: "SpeedDisplay_1"
         description: "Instance of the SpeedDisplay SWC type."
         typeRef: "SpeedDisplay"
+      - name: "PlatformSWC_0"
+        description: "Platform SWC nr. 0"
+        typeRef: "PlatformSWC"
+      - name: "AppSwc0"
+        description: "Application SWC nr.0"
+        typeRef: "AppSWC"
     # Connect the provider ports on the producer instance to the receiver ports on the consumer instance.
     connectors:
       - from: "SpeedSensor_1.Pp_VehicleSpeed"
@@ -23,3 +29,5 @@ system:
       - from: "SpeedSensor_1.Pp_PowerState"
         description: "Connects the ECU power-state mode to the display instance."
         to: "SpeedDisplay_1.Rp_PowerState"
+      - from: PlatformSWC_0.Pp_EcuVariant
+        to: AppSwc0.Rp_EcuVariant
