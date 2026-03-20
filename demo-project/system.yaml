@@ -21,6 +21,9 @@ system:
       - name: "AppSwc0"
         description: "Application SWC nr.0"
         typeRef: "AppSWC"
+      - name: "AppSwc1"
+        description: "Application SWC nr.1"
+        typeRef: "AppSWC"
     # Connect the provider ports on the producer instance to the receiver ports on the consumer instance.
     connectors:
       - from: "SpeedSensor_1.Pp_VehicleSpeed"
@@ -31,3 +34,5 @@ system:
         to: "SpeedDisplay_1.Rp_PowerState"
       - from: PlatformSWC_0.Pp_EcuVariant
         to: AppSwc0.Rp_EcuVariant
+      - from: PlatformSWC_0.Pp_EcuVariant
+        to: AppSwc1.Rp_EcuVariant
