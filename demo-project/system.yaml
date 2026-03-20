@@ -36,3 +36,7 @@ system:
         to: AppSwc0.Rp_EcuVariant
       - from: PlatformSWC_0.Pp_EcuVariant
         to: AppSwc1.Rp_EcuVariant
+      - from: PlatformSWC_0.Pp_DiagHandling
+        to: AppSwc0.Rp_DiagHandling
+      - from: PlatformSWC_0.Pp_DiagHandling
+        to: AppSwc1.Rp_DiagHandling

@@ -7,3 +7,7 @@ implementationDataTypes:
   - name: "Impl_EcuVariant_Enum"
     description: "ECU Variant table definition"
     baseTypeRef: "uint8"
+  - name: "Impl_DtcCode_U16"
+    baseTypeRef: "uint16"
+  - name: "Impl_DtcStatus_Enum"
+    baseTypeRef: uint8

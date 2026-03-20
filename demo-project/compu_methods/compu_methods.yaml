@@ -19,3 +19,21 @@ compuMethods:
         label: "Variant B"
       - value: 2
         label: "Variant C"
+  - name: "CM_DtcCode_Linear"
+    description: "DTC Code value definition"
+    category: "linear"
+    factor: 1
+    offset: 0
+    unitRef: "val"
+  - name: "CM_DtcStatus_Enum"
+    description: "DTC status table definition"
+    category: "textTable"
+    entries:
+      - value: 0
+        label: "DTC passed"
+      - value: 1
+        label: "DTC failed"
+      - value: 2
+        label: "DTC prepassed"
+      - value: 3
+        label: "DTC prefailed"
