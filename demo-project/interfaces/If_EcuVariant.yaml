@@ -1,0 +1,6 @@
+interface:
+  name: "If_EcuVariant"
+  type: "senderReceiver"
+  dataElements:
+    - name: "Data"
+      typeRef: "App_EcuVariant"

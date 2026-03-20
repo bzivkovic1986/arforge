@@ -1,0 +1,14 @@
+swc:
+  name: "AppSWC"
+  runnables:
+    - name: "Init"
+      initEvent: true
+      reads:
+        - port: "Rp_EcuVariant"
+          dataElement: "Data"
+    - name: "Cyclic_5ms"
+      timingEventMs: 5
+  ports:
+    - name: "Rp_EcuVariant"
+      direction: "requires"
+      interfaceRef: If_EcuVariant
