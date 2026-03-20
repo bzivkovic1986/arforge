@@ -1,0 +1,22 @@
+interface:
+  name: "If_DiagHandling"
+  type: clientServer
+  operations:
+    - name: SetEventStatus
+      returnType: void
+      arguments:
+        - name: DtcCode
+          direction: in
+          typeRef: App_DtcCode
+        - name: DtcStatus
+          direction: in
+          typeRef: App_DtcStatus
+    - name: GetEventStatus
+      returnType: void
+      arguments:
+        - name: DtcCode
+          direction: in
+          typeRef: App_DtcCode
+        - name: DtcStatus
+          direction: inout
+          typeRef: App_DtcStatus

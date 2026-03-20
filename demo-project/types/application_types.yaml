@@ -13,3 +13,12 @@ applicationDataTypes:
     description: "Ecu Variant information"
     implementationTypeRef: "Impl_EcuVariant_Enum"
     compuMethodRef: "CM_EcuVariant_Table"
+  - name: "App_DtcCode"
+    description: "DTC Code value"
+    implementationTypeRef: Impl_DtcCode_U16
+    compuMethodRef: CM_DtcCode_Linear
+    unitRef: val
+  - name: App_DtcStatus
+    description: "Dtc Status value"
+    implementationTypeRef: "Impl_DtcStatus_Enum"
+    compuMethodRef: "CM_DtcStatus_Enum"

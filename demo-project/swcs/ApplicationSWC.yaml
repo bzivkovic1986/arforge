@@ -8,7 +8,15 @@ swc:
           dataElement: "Data"
     - name: "Cyclic_5ms"
       timingEventMs: 5
+      calls:
+        - port: "Rp_DiagHandling"
+          operation: "SetEventStatus"
+        - port: "Rp_DiagHandling"
+          operation: "GetEventStatus"
   ports:
     - name: "Rp_EcuVariant"
       direction: "requires"
       interfaceRef: If_EcuVariant
+    - name: "Rp_DiagHandling"
+      direction: "requires"
+      interfaceRef: "If_DiagHandling"

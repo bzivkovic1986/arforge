@@ -9,7 +9,18 @@ swc:
           dataElement: "Data"
     - name: "Cyclic_10ms"
       timingEventMs: 10
+    - name: "Runnable_GetEventStatus"
+      operationInvokedEvents:
+        - port: "Pp_DiagHandling"
+          operation: "GetEventStatus"
+    - name: "Runnable_SetEventStatus"
+      operationInvokedEvents:
+        - port: "Pp_DiagHandling"
+          operation: "SetEventStatus"
   ports:
     - name: "Pp_EcuVariant"
       direction: "provides"
       interfaceRef: "If_EcuVariant"
+    - name: "Pp_DiagHandling"
+      direction: provides
+      interfaceRef: If_DiagHandling

@@ -4,3 +4,5 @@ units:
   - name: "km_per_h"
     description: "Vehicle speed unit used by the scaffolded example."
     displayName: "km/h"
+  - name: "val"
+    displayName: "val"
