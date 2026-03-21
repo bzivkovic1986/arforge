@@ -22,3 +22,7 @@ applicationDataTypes:
     description: "Dtc Status value"
     implementationTypeRef: "Impl_DtcStatus_Enum"
     compuMethodRef: "CM_DtcStatus_Enum"
+  - name: App_ChipHealthStatus
+    description: "Health status of the chip"
+    implementationTypeRef: "Impl_ChipHealthStatus"
+    compuMethodRef: "CM_ChipHealthStatus_Enum"

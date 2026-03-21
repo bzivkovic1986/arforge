@@ -24,6 +24,8 @@ system:
       - name: "AppSwc1"
         description: "Application SWC nr.1"
         typeRef: "AppSWC"
+      - name: CddFakeChip
+        typeRef: CddFakeChip
     # Connect the provider ports on the producer instance to the receiver ports on the consumer instance.
     connectors:
       - from: "SpeedSensor_1.Pp_VehicleSpeed"
@@ -40,3 +42,5 @@ system:
         to: AppSwc0.Rp_DiagHandling
       - from: PlatformSWC_0.Pp_DiagHandling
         to: AppSwc1.Rp_DiagHandling
+      - from: CddFakeChip.PpFakeChip
+        to: PlatformSWC_0.Rp_FakeChipHandling

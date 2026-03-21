@@ -37,3 +37,12 @@ compuMethods:
         label: "DTC prepassed"
       - value: 3
         label: "DTC prefailed"
+  - name: "CM_ChipHealthStatus_Enum"
+    category: "textTable"
+    entries:
+      - value: 0
+        label: "Chip OK"
+      - value: 1
+        label: "Chip overvoltage error"
+      - value: 2
+        label: "Chip undervoltage error"
