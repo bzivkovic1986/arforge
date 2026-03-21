@@ -9,6 +9,11 @@ swc:
           dataElement: "Data"
     - name: "Cyclic_10ms"
       timingEventMs: 10
+      calls:
+        - port: Rp_FakeChipHandling
+          operation: GetHealthStatus
+        - port: Rp_FakeChipHandling
+          operation: GetVoltage
     - name: "Runnable_GetEventStatus"
       operationInvokedEvents:
         - port: "Pp_DiagHandling"
@@ -24,3 +29,8 @@ swc:
     - name: "Pp_DiagHandling"
       direction: provides
       interfaceRef: If_DiagHandling
+    - name: "Rp_FakeChipHandling"
+      direction: requires
+      interfaceRef: If_FakeChipHandling
+      comSpec:
+        callMode: asynchronous

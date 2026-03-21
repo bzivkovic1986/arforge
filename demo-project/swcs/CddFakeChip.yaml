@@ -1,0 +1,18 @@
+swc:
+  name: CddFakeChip
+  category: complexDeviceDriver
+  runnables:
+    - name: Runnable_100ms
+      timingEventMs: 100
+    - name: Runnable_GetHealthStatus
+      operationInvokedEvents:
+        - port: PpFakeChip
+          operation: GetHealthStatus
+    - name: Runnable_GetVoltage
+      operationInvokedEvents:
+        - port: PpFakeChip
+          operation: GetVoltage
+  ports:
+    - name: PpFakeChip
+      direction: provides
+      interfaceRef: If_FakeChipHandling

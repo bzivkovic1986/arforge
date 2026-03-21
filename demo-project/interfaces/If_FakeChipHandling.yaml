@@ -1,0 +1,12 @@
+interface:
+  name: If_FakeChipHandling
+  type: clientServer
+  operations:
+    - name: GetHealthStatus
+      returnType: App_ChipHealthStatus
+    - name: GetVoltage
+      arguments:
+        - name: Value
+          direction: inout
+          typeRef: uint16
+      
