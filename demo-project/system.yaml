@@ -48,3 +48,7 @@ system:
         to: AppSwc0.Rp_MeasQueued
       - from: PlatformSWC_0.Pp_MeasQueued
         to: AppSwc1.Rp_MeasQueued
+      - from: PlatformSWC_0.Pp_CanState
+        to: AppSwc0.Rp_CanCommState
+      - from: PlatformSWC_0.Pp_CanState
+        to: AppSwc1.Rp_CanCommState

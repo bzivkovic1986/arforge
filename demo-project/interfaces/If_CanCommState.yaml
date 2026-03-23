@@ -1,0 +1,4 @@
+interface:
+  name: If_CanCommState
+  type: modeSwitch
+  modeGroupRef: Mdg_CanCommState

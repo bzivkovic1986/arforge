@@ -17,6 +17,10 @@ swc:
       dataReceiveEvents:
         - port: Rp_MeasQueued
           dataElement: Value
+    - name: Runnable_OnCommActive
+      modeSwitchEvents:
+        - port: Rp_CanCommState
+          mode: BUS_ON
   ports:
     - name: "Rp_EcuVariant"
       direction: "requires"
@@ -32,3 +36,6 @@ swc:
       comSpec:
         mode: queued
         queueLength: 5
+    - name: Rp_CanCommState
+      interfaceRef: If_CanCommState
+      direction: requires
