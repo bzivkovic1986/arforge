@@ -7,6 +7,8 @@ swc:
       writes:
         - port: "Pp_EcuVariant"
           dataElement: "Data"
+        - port: Pp_MeasQueued
+          dataElement: Value
     - name: "Cyclic_10ms"
       timingEventMs: 10
       calls:
@@ -34,3 +36,6 @@ swc:
       interfaceRef: If_FakeChipHandling
       comSpec:
         callMode: asynchronous
+    - name: Pp_MeasQueued
+      interfaceRef: If_MeasurementsQueued
+      direction: provides

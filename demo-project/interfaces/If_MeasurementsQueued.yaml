@@ -1,0 +1,6 @@
+interface:
+  name: If_MeasurementsQueued
+  type: senderReceiver
+  dataElements:
+    - name: Value
+      typeRef: uint8

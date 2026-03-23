@@ -13,6 +13,10 @@ swc:
           operation: "SetEventStatus"
         - port: "Rp_DiagHandling"
           operation: "GetEventStatus"
+    - name: "Runnable_MeasQueued"
+      dataReceiveEvents:
+        - port: Rp_MeasQueued
+          dataElement: Value
   ports:
     - name: "Rp_EcuVariant"
       direction: "requires"
@@ -22,3 +26,9 @@ swc:
     - name: "Rp_DiagHandling"
       direction: "requires"
       interfaceRef: "If_DiagHandling"
+    - name: Rp_MeasQueued
+      direction: requires
+      interfaceRef: If_MeasurementsQueued
+      comSpec:
+        mode: queued
+        queueLength: 5
