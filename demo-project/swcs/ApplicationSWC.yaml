@@ -17,6 +17,8 @@ swc:
     - name: "Rp_EcuVariant"
       direction: "requires"
       interfaceRef: If_EcuVariant
+      comSpec:
+        mode: explicit
     - name: "Rp_DiagHandling"
       direction: "requires"
       interfaceRef: "If_DiagHandling"
