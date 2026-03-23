@@ -8,3 +8,10 @@ modeDeclarationGroups:
       - "OFF"
       - "ON"
       - "SLEEP"
+  - name: "Mdg_CanCommState"
+    description: "CAN communication state"
+    initialMode: "BUS_OFF"
+    modes:
+      - "BUS_OFF"
+      - "BUS_SLEEP"
+      - "BUS_ON"
