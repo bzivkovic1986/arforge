@@ -44,3 +44,7 @@ system:
         to: AppSwc1.Rp_DiagHandling
       - from: CddFakeChip.PpFakeChip
         to: PlatformSWC_0.Rp_FakeChipHandling
+      - from: PlatformSWC_0.Pp_MeasQueued
+        to: AppSwc0.Rp_MeasQueued
+      - from: PlatformSWC_0.Pp_MeasQueued
+        to: AppSwc1.Rp_MeasQueued
