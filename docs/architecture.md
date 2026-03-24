@@ -23,8 +23,10 @@ ARForge follows a straightforward pipeline:
   - internal data model used after parsing
 - `arforge/semantic_validation.py`
   - validation runner, finding model, and validation context/indexes
+- `arforge/validation/cases/`
+  - domain-organized semantic validation cases (`CORE-*`)
 - `arforge/validation_cases.py`
-  - individual semantic validation cases (`CORE-*`)
+  - compatibility export surface for validation case imports
 - `arforge/exporter.py`
   - export orchestration, rendering, and file writing
 - `arforge/scaffold.py`
@@ -60,6 +62,7 @@ The loader currently supports:
 ## Validation Architecture
 
 - Each semantic rule is implemented as a separate validation case.
+- Cases are organized by domain under `arforge/validation/cases/`.
 - Cases are grouped into the `core` ruleset in `arforge/validation_registry.py`.
 - Findings are sorted deterministically by severity, code, message, and location.
 

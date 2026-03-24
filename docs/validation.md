@@ -22,7 +22,9 @@ Current schema coverage includes:
 
 ## Semantic Validation
 
-Semantic validation is implemented as separate `ValidationCase` units in `arforge/validation_cases.py`.
+Semantic validation is implemented as separate `ValidationCase` units under `arforge/validation/cases/`.
+
+The top-level `arforge/validation_cases.py` module re-exports those case definitions from a single import surface.
 
 Each finding carries:
 
