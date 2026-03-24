@@ -10,10 +10,33 @@ swc:
       reads:
         - port: "Rp_VehicleSpeed"
           dataElement: "VehicleSpeed"
+    - name: "Runnable_ReadVehicleSpeedImplicit"
+      timingEventMs: 10
+      reads:
+        - port: "Rp_VehicleSpeedImplicit"
+          dataElement: "VehicleSpeed"
+    - name: "Runnable_ReadVehicleSpeedQueued"
+      timingEventMs: 10
+      reads:
+        - port: "Rp_VehicleSpeedQueued"
+          dataElement: "VehicleSpeed"
   ports:
     - name: "Rp_VehicleSpeed"
       direction: "requires"
       interfaceRef: "If_VehicleSpeed"
+      comSpec:
+        mode: "explicit"
+    - name: "Rp_VehicleSpeedImplicit"
+      direction: "requires"
+      interfaceRef: "If_VehicleSpeed"
+      comSpec:
+        mode: "implicit"
+    - name: "Rp_VehicleSpeedQueued"
+      direction: "requires"
+      interfaceRef: "If_VehicleSpeed"
+      comSpec:
+        mode: "queued"
+        queueLength: 4
     - name: "Rp_PowerState"
       direction: "requires"
       interfaceRef: "If_PowerState"

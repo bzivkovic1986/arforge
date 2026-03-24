@@ -2,13 +2,25 @@
 # Defines ports, runnables, and internal behavior for one AUTOSAR SWC type.
 swc:
   name: "SpeedDisplay"
-  description: "SWC type that reads vehicle speed and could display it to a user."
+  description: "SWC type that reads vehicle speed through explicit, implicit, and queued receiver semantics."
   runnables:
     - name: "Runnable_ReadVehicleSpeed"
-      description: "Reads the latest vehicle speed sample from the required port."
+      description: "Reads the latest vehicle speed sample from the explicit required port."
       timingEventMs: 10
       reads:
         - port: "Rp_VehicleSpeed"
+          dataElement: "VehicleSpeed"
+    - name: "Runnable_ReadVehicleSpeedImplicit"
+      description: "Reads the latest vehicle speed sample from the implicit required port."
+      timingEventMs: 10
+      reads:
+        - port: "Rp_VehicleSpeedImplicit"
+          dataElement: "VehicleSpeed"
+    - name: "Runnable_ReadVehicleSpeedQueued"
+      description: "Reads the latest vehicle speed sample from the queued required port."
+      timingEventMs: 10
+      reads:
+        - port: "Rp_VehicleSpeedQueued"
           dataElement: "VehicleSpeed"
     - name: "Runnable_OnPowerOn"
       description: "React to the ECU entering the ON power mode."
@@ -20,6 +32,21 @@ swc:
       description: "Required sender-receiver port for receiving speed."
       direction: "requires"
       interfaceRef: "If_VehicleSpeed"
+      comSpec:
+        mode: "explicit"
+    - name: "Rp_VehicleSpeedImplicit"
+      description: "Required sender-receiver port for receiving speed with implicit semantics."
+      direction: "requires"
+      interfaceRef: "If_VehicleSpeed"
+      comSpec:
+        mode: "implicit"
+    - name: "Rp_VehicleSpeedQueued"
+      description: "Required sender-receiver port for receiving speed with queued semantics."
+      direction: "requires"
+      interfaceRef: "If_VehicleSpeed"
+      comSpec:
+        mode: "queued"
+        queueLength: 4
     - name: "Rp_PowerState"
       description: "Required mode switch port for ECU power state."
       direction: "requires"

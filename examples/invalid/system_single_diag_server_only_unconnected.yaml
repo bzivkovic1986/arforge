@@ -14,5 +14,9 @@ system:
     connectors:
       - from: "SpeedSensor_1.Pp_VehicleSpeed"
         to: "SpeedDisplay_1.Rp_VehicleSpeed"
+      - from: "SpeedSensor_1.Pp_VehicleSpeed"
+        to: "SpeedDisplay_1.Rp_VehicleSpeedImplicit"
+      - from: "SpeedSensor_1.Pp_VehicleSpeed"
+        to: "SpeedDisplay_1.Rp_VehicleSpeedQueued"
       - from: "SpeedSensor_1.Pp_PowerState"
         to: "SpeedDisplay_1.Rp_PowerState"

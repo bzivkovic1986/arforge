@@ -248,6 +248,8 @@ ports:
 
 **SR ComSpec modes:** `implicit`, `explicit`, `queued`. Queued ports require `queueLength >= 1`.
 
+In exported ARXML, `implicit` and `explicit` receiver ports remain nonqueued, but ARForge preserves the distinction on `NONQUEUED-RECEIVER-COM-SPEC` through receiver-side update metadata instead of collapsing both modes to an identical empty com-spec block.
+
 **CS ComSpec call modes:** `synchronous`, `asynchronous`. Synchronous ports may specify `timeoutMs`. Asynchronous ports must not carry `timeoutMs` or `queueLength`.
 
 **Mode-switch ports** do not support ComSpec.

@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 import hashlib
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -80,7 +81,7 @@ def test_main_example_descriptions_are_loaded_into_model_ir() -> None:
         "SWC type that publishes the current vehicle speed."
     )
     assert next(swc for swc in project.swcs if swc.name == "SpeedDisplay").description == (
-        "SWC type that reads vehicle speed and could display it to a user."
+        "SWC type that reads vehicle speed through explicit, implicit, and queued receiver semantics."
     )
     provided_mode_port = next(
         port
@@ -126,7 +127,9 @@ def test_main_example_descriptions_are_loaded_into_model_ir() -> None:
     assert next(compu for compu in project.compuMethods if compu.name == "CM_VehicleSpeed_Kph").description == (
         "Identity scaling for the demo vehicle speed value."
     )
-    assert project.system.description == "Demo AUTOSAR system wiring one speed flow and one mode-switch flow."
+    assert project.system.description == (
+        "Demo AUTOSAR system wiring explicit, implicit, and queued speed flows plus one mode-switch flow."
+    )
 
 
 def test_main_example_mode_declaration_group_is_loaded_into_model_ir() -> None:
@@ -136,6 +139,16 @@ def test_main_example_mode_declaration_group_is_loaded_into_model_ir() -> None:
     assert project.modeDeclarationGroups[0].description == "Power state modes for the ECU."
     assert project.modeDeclarationGroups[0].initialMode == "OFF"
     assert [mode.name for mode in project.modeDeclarationGroups[0].modes] == ["OFF", "ON", "SLEEP"]
+
+
+def _extract_r_port_fragment(xml: str, port_name: str) -> str:
+    match = re.search(
+        rf"<R-PORT-PROTOTYPE>\s*<SHORT-NAME>{re.escape(port_name)}</SHORT-NAME>(.*?)</R-PORT-PROTOTYPE>",
+        xml,
+        flags=re.DOTALL,
+    )
+    assert match is not None, f"Missing R-PORT-PROTOTYPE for {port_name}"
+    return match.group(1)
 
 
 @pytest.mark.parametrize(
@@ -417,11 +430,13 @@ def test_split_export_system_contains_one_clear_end_to_end_connection(tmp_path: 
     assert "<SHORT-NAME>SpeedSensor_1</SHORT-NAME>" in system_xml
     assert "<SHORT-NAME>SpeedDisplay_1</SHORT-NAME>" in system_xml
     assert system_xml.count("<SW-COMPONENT-PROTOTYPE>") == 2
-    assert system_xml.count("<ASSEMBLY-SW-CONNECTOR>") == 2
+    assert system_xml.count("<ASSEMBLY-SW-CONNECTOR>") == 4
     assert "<TYPE-TREF DEST=\"APPLICATION-SW-COMPONENT-TYPE\">/DEMO/Components/SpeedSensor</TYPE-TREF>" in system_xml
     assert "<TYPE-TREF DEST=\"APPLICATION-SW-COMPONENT-TYPE\">/DEMO/Components/SpeedDisplay</TYPE-TREF>" in system_xml
     assert "/DEMO/System/Composition_DemoSystem/SpeedSensor_1/Pp_VehicleSpeed</TARGET-P-PORT-REF>" in system_xml
     assert "/DEMO/System/Composition_DemoSystem/SpeedDisplay_1/Rp_VehicleSpeed</TARGET-R-PORT-REF>" in system_xml
+    assert "/DEMO/System/Composition_DemoSystem/SpeedDisplay_1/Rp_VehicleSpeedImplicit</TARGET-R-PORT-REF>" in system_xml
+    assert "/DEMO/System/Composition_DemoSystem/SpeedDisplay_1/Rp_VehicleSpeedQueued</TARGET-R-PORT-REF>" in system_xml
     assert "/DEMO/System/Composition_DemoSystem/SpeedSensor_1/Pp_PowerState</TARGET-P-PORT-REF>" in system_xml
     assert "/DEMO/System/Composition_DemoSystem/SpeedDisplay_1/Rp_PowerState</TARGET-R-PORT-REF>" in system_xml
 
@@ -463,13 +478,69 @@ def test_split_export_swc_files_contain_aligned_runnables_and_ports(tmp_path: Pa
     assert "<SHORT-NAME>Pp_PowerState</SHORT-NAME>" in speed_sensor_xml
     assert "<PROVIDED-INTERFACE-TREF DEST=\"MODE-SWITCH-INTERFACE\">/DEMO/Interfaces/If_PowerState</PROVIDED-INTERFACE-TREF>" in speed_sensor_xml
     assert "<SHORT-NAME>Runnable_ReadVehicleSpeed</SHORT-NAME>" in speed_display_xml
+    assert "<SHORT-NAME>Runnable_ReadVehicleSpeedImplicit</SHORT-NAME>" in speed_display_xml
+    assert "<SHORT-NAME>Runnable_ReadVehicleSpeedQueued</SHORT-NAME>" in speed_display_xml
     assert "<SHORT-NAME>Runnable_OnPowerOn</SHORT-NAME>" in speed_display_xml
     assert "<SHORT-NAME>Rp_VehicleSpeed</SHORT-NAME>" in speed_display_xml
+    assert "<SHORT-NAME>Rp_VehicleSpeedImplicit</SHORT-NAME>" in speed_display_xml
+    assert "<SHORT-NAME>Rp_VehicleSpeedQueued</SHORT-NAME>" in speed_display_xml
     assert "<SHORT-NAME>Rp_PowerState</SHORT-NAME>" in speed_display_xml
     assert "<REQUIRED-INTERFACE-TREF DEST=\"MODE-SWITCH-INTERFACE\">/DEMO/Interfaces/If_PowerState</REQUIRED-INTERFACE-TREF>" in speed_display_xml
     assert "<MODE-SWITCH-EVENT>" in speed_display_xml
     assert "<SHORT-NAME>MSE_Runnable_OnPowerOn_Rp_PowerState_ON</SHORT-NAME>" in speed_display_xml
     assert "<TARGET-MODE-DECLARATION-REF DEST=\"MODE-DECLARATION\">/DEMO/Modes/Mdg_PowerState/ON</TARGET-MODE-DECLARATION-REF>" in speed_display_xml
+
+
+def test_split_export_preserves_explicit_sr_receiver_semantics(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    speed_display_xml = (out_dir / "SpeedDisplay.arxml").read_text(encoding="utf-8")
+    explicit_fragment = _extract_r_port_fragment(speed_display_xml, "Rp_VehicleSpeed")
+
+    assert "<NONQUEUED-RECEIVER-COM-SPEC>" in explicit_fragment
+    assert "<ENABLE-UPDATE>true</ENABLE-UPDATE>" in explicit_fragment
+
+
+def test_split_export_preserves_implicit_sr_receiver_semantics(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    speed_display_xml = (out_dir / "SpeedDisplay.arxml").read_text(encoding="utf-8")
+    implicit_fragment = _extract_r_port_fragment(speed_display_xml, "Rp_VehicleSpeedImplicit")
+
+    assert "<NONQUEUED-RECEIVER-COM-SPEC>" in implicit_fragment
+    assert "<ENABLE-UPDATE>false</ENABLE-UPDATE>" in implicit_fragment
+
+
+def test_split_export_preserves_queued_sr_receiver_semantics(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    speed_display_xml = (out_dir / "SpeedDisplay.arxml").read_text(encoding="utf-8")
+    queued_fragment = _extract_r_port_fragment(speed_display_xml, "Rp_VehicleSpeedQueued")
+
+    assert "<QUEUED-RECEIVER-COM-SPEC>" in queued_fragment
+    assert "<QUEUE-LENGTH>4</QUEUE-LENGTH>" in queued_fragment
+
+
+def test_split_export_explicit_and_implicit_receiver_fragments_differ(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    speed_display_xml = (out_dir / "SpeedDisplay.arxml").read_text(encoding="utf-8")
+    explicit_fragment = _extract_r_port_fragment(speed_display_xml, "Rp_VehicleSpeed")
+    implicit_fragment = _extract_r_port_fragment(speed_display_xml, "Rp_VehicleSpeedImplicit")
+
+    assert explicit_fragment != implicit_fragment
 
 
 def test_main_example_omitted_swc_category_defaults_to_application() -> None:
