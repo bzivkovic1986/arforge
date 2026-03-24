@@ -152,3 +152,5 @@ Normal `validate` output prints findings and a severity summary.
 ## Tests and Fixtures
 
 `tests/test_examples.py` uses the checked-in example project plus invalid fixtures under `examples/invalid/` to verify deterministic validation behavior and expected finding codes.
+
+For fixture naming, layout, and extension guidelines, see [`examples/invalid/README.md`](/d:/VMs/git/arforge/examples/invalid/README.md).

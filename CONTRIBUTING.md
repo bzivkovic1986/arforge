@@ -15,6 +15,8 @@ That keeps the project coherent while still making room for useful external cont
 - Submit focused pull requests for bug fixes, docs updates, tests, or incremental features.
 - Improve examples and invalid fixtures when validation behavior changes.
 
+When working with invalid validation fixtures, follow the guidance in [`examples/invalid/README.md`](/d:/VMs/git/arforge/examples/invalid/README.md).
+
 ## Before Starting Larger Changes
 
 Please start with an issue or discussion before implementing larger changes, including:
