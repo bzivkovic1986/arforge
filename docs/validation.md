@@ -81,6 +81,7 @@ The current `core` ruleset covers:
 | CORE-011 | ApplicationConstraints | Checks application datatype constraints against implementation types, units, and compu methods. | Error |
 | CORE-012 | ModeDeclarationGroupStructure | Checks mode declaration group uniqueness and local mode naming rules. | Error |
 | CORE-013 | ModeDeclarationGroupInitialMode | Checks that each mode declaration group `initialMode` references one of its declared modes. | Error |
+| CORE-014 | UnusedModeDeclarationGroups | Checks for mode declaration groups that are declared but never referenced by mode-switch interfaces. | Warning |
 | CORE-020 | SwcStructure | Checks SWC-local uniqueness for runnables and ports. | Error |
 | CORE-021 | PortInterfaceReferences | Checks that each SWC port references an existing interface and uses the expected kind. | Error |
 | CORE-022 | RunnableAccessSemantics | Checks runnable reads, writes, and calls against SWC port and interface semantics. | Error |
@@ -116,6 +117,12 @@ Severity in the table reflects the normal outcome pattern of each rule. Some cas
 This is distinct from the integration-oriented checks in `CORE-042`, `CORE-044`, and `CORE-045`, which still describe instantiated or connected system behavior.
 
 Mode-switch provides ports are intentionally skipped by `CORE-046` because provider-side mode behavior is not modeled in ARForge yet.
+
+## Unused Mode Declaration Groups
+
+`CORE-014` warns when a `ModeDeclarationGroup` is declared in the project but no `modeSwitch` interface references it via `modeGroupRef`.
+
+This is a model-quality signal only: validation still succeeds unless some separate semantic error is also present.
 
 ## Timing Analysis Rules
 

@@ -621,6 +621,35 @@ class ModeDeclarationGroupInitialModeCase(ValidationCase):
         return findings
 
 
+class UnusedModeDeclarationGroupCase(ValidationCase):
+    case_id = "CORE-014"
+    name = "UnusedModeDeclarationGroups"
+    description = "Checks for mode declaration groups that are declared but never referenced by mode-switch interfaces."
+    tags = ("core", "modes", "analysis", "usage")
+    default_severity = "warning"
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.declared_mode_declaration_groups:
+            return False, "no mode declaration groups defined"
+        return True, None
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        findings: List[Finding] = []
+        referenced_groups = set(ctx.referenced_mode_declaration_groups)
+
+        for group_name in ctx.declared_mode_declaration_groups:
+            if group_name in referenced_groups:
+                continue
+            findings.append(
+                self.finding(
+                    f"ModeDeclarationGroup '{group_name}' is declared but not referenced by any ModeSwitchInterface.",
+                    code="CORE-014-MDG-DECLARED-UNUSED",
+                )
+            )
+
+        return findings
+
+
 class ApplicationConstraintCase(ValidationCase):
     case_id = "CORE-011"
     name = "ApplicationConstraints"
@@ -2241,6 +2270,7 @@ def core_validation_cases() -> List[ValidationCase]:
         InterfaceSemanticCase(),
         ModeDeclarationGroupStructureCase(),
         ModeDeclarationGroupInitialModeCase(),
+        UnusedModeDeclarationGroupCase(),
         ApplicationConstraintCase(),
         SwcStructureCase(),
         SwcPortInterfaceCase(),

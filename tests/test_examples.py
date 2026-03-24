@@ -24,6 +24,7 @@ WARNING_ONLY_PROJECT = INVALID_DIR / "project_connected_sr_port_unused.yaml"
 ERROR_PROJECT = INVALID_DIR / "project_bad_runnable_access.yaml"
 MIXED_PROJECT = INVALID_DIR / "project_sr_read_unconnected.yaml"
 CS_SERVER_WARNING_PROJECT = INVALID_DIR / "project_cs_server_oie_unconnected.yaml"
+UNUSED_MODE_GROUP_PROJECT = INVALID_DIR / "project_unused_mode_group.yaml"
 
 
 def _is_project_fixture(path: Path) -> bool:
@@ -41,6 +42,7 @@ def _invalid_project_fixtures() -> list[Path]:
         "project_declared_unused_mode_requires.yaml",
         "project_declared_unused_sr_provides.yaml",
         "project_mode_switch_unconnected.yaml",
+        "project_unused_mode_group.yaml",
         "project_sr_consumer_faster.yaml",
         "project_sr_producer_faster.yaml",
         "project_sr_timing_equal.yaml",
@@ -315,6 +317,42 @@ def test_main_example_has_no_declared_unused_port_findings() -> None:
     assert "CORE-046-MS-REQUIRES-DECLARED-UNUSED" not in warning_codes
 
 
+def test_main_example_has_no_unused_mode_declaration_group_warning() -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    report = build_semantic_report(project, ruleset="core")
+    warning_codes = {finding.code for finding in report.findings if finding.severity == "warning"}
+
+    assert "CORE-014-MDG-DECLARED-UNUSED" not in warning_codes
+
+
+def test_unused_mode_group_project_passes_validation_and_reports_warning() -> None:
+    project = load_and_validate_aggregator(UNUSED_MODE_GROUP_PROJECT)
+    report = build_semantic_report(project, ruleset="core")
+
+    assert report.error_findings() == []
+    unused_group_findings = [finding for finding in report.findings if finding.code == "CORE-014-MDG-DECLARED-UNUSED"]
+    assert len(unused_group_findings) == 1
+    assert unused_group_findings[0].severity == FindingSeverity.WARNING
+    assert unused_group_findings[0].message == (
+        "ModeDeclarationGroup 'Mdg_UnusedPowerState' is declared but not referenced by any ModeSwitchInterface."
+    )
+
+
+def test_cli_validate_unused_mode_group_warns_and_succeeds() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "arforge.cli", "validate", str(UNUSED_MODE_GROUP_PROJECT)],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "WARNING CORE-014-MDG-DECLARED-UNUSED" in result.stdout
+    assert "Mdg_UnusedPowerState" in result.stdout
+    assert "errors: 0" in result.stdout
+    assert "warnings: 1" in result.stdout
+
+
 def test_split_export_reports_aligned_example_outputs(tmp_path: Path) -> None:
     project = load_and_validate_aggregator(VALID_PROJECT)
     template_dir = REPO_ROOT / "templates"
@@ -485,6 +523,7 @@ def test_data_receive_event_invalid_fixtures_emit_expected_codes(fixture_name: s
         ("project_declared_unused_cs_requires.yaml", "CORE-046-CS-REQUIRES-DECLARED-UNUSED"),
         ("project_declared_unused_cs_provides.yaml", "CORE-046-CS-PROVIDES-DECLARED-UNUSED"),
         ("project_declared_unused_mode_requires.yaml", "CORE-046-MS-REQUIRES-DECLARED-UNUSED"),
+        ("project_unused_mode_group.yaml", "CORE-014-MDG-DECLARED-UNUSED"),
         ("project_sr_read_unconnected.yaml", "CORE-041-SR-REQUIRES-NO-INCOMING"),
         ("project_sr_write_unconnected.yaml", "CORE-041-SR-PROVIDES-NO-OUTGOING"),
         ("project_cs_call_unconnected.yaml", "CORE-044-CS-REQUIRES-NO-CONNECTOR"),
