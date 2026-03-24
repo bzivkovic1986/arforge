@@ -1,75 +1,158 @@
-# CLI
+# CLI Reference
 
-ARForge currently provides three CLI commands:
+All ARForge commands are run as a Python module. The syntax is the same on Linux and Windows.
 
-- `init`
-- `validate`
-- `export`
+```bash
+python -m arforge.cli <command> [options]
+```
 
-There is no `inspect` command in the current implementation.
+---
 
 ## `init`
 
-Create a new project scaffold:
+Create a new project scaffold at the given path.
 
 ```bash
-python -m arforge.cli init demo-system
+python -m arforge.cli init <path> [options]
 ```
 
-Useful options:
+**Options:**
 
-- `--name` to set the system name used in scaffolded files
-- `--no-example` to create structure without the runnable example
-- `--force` to allow scaffolding into an existing non-empty directory
+| Option | Description |
+|---|---|
+| `--name NAME` | System name used in scaffolded files. Defaults to the directory name. |
+| `--no-example` | Create the directory structure without the runnable example SWCs and interfaces. |
+| `--force` | Allow scaffolding into an existing non-empty directory. |
+
+**Examples:**
+
+```bash
+python -m arforge.cli init my-ecu
+python -m arforge.cli init my-ecu --name MyEcu --no-example
+```
+
+The scaffold creates a ready-to-validate project with a working example — a `SpeedSensor` and `SpeedDisplay` SWC wired together through a sender-receiver and a mode-switch flow. Use `--no-example` if you want only the directory structure.
+
+---
 
 ## `validate`
 
-Validate a project manifest and its referenced YAML inputs:
+Load a project manifest and run full validation — schema validation followed by semantic validation.
 
 ```bash
+python -m arforge.cli validate <project.yaml> [options]
+```
+
+**Options:**
+
+| Option | Description |
+|---|---|
+| `-v` | Verbose — show per-case execution information. |
+| `-vv` | Very verbose — show case descriptions and full execution detail. |
+
+**Exit codes:**
+
+| Code | Meaning |
+|---|---|
+| `0` | Validation passed — no error-severity findings |
+| `1` | One or more error-severity findings exist |
+
+Warnings and infos are always reported but never cause a non-zero exit.
+
+**Examples:**
+
+```bash
+# Basic validation
 python -m arforge.cli validate examples/autosar.project.yaml
-```
 
-Verbose modes:
-
-```bash
-python -m arforge.cli validate examples/autosar.project.yaml -v
+# With verbose output
 python -m arforge.cli validate examples/autosar.project.yaml -vv
+
+# In CI — fail the pipeline on any error finding
+python -m arforge.cli validate examples/autosar.project.yaml || exit 1
 ```
 
-Behavior:
+**Output format:**
 
-- schema validation runs during loading
-- semantic validation runs with the `core` ruleset
-- exit code is non-zero only when `error` findings exist
-- warnings and infos are reported but do not fail the command on their own
+```
+[ERROR]   CORE-022-READ-UNKNOWN-PORT   Runnable 'Runnable_UseSpeed': read references unknown port 'Rp_Missing'
+[WARNING] CORE-050                     SR consumer 'SpeedConsumer_1.Rp_VehicleSpeed' runs faster than producer
+
+Summary: 1 error, 1 warning, 0 info
+```
+
+---
 
 ## `export`
 
-Validate first, then export ARXML.
+Validate the project and, if validation passes, export ARXML.
 
-Split export:
+```bash
+python -m arforge.cli export <project.yaml> --out <path> [options]
+```
+
+**Options:**
+
+| Option | Description |
+|---|---|
+| `--out PATH` | Output path. Required. For split export, a directory path. For monolithic export, a file path ending in `.arxml`. |
+| `--split-by-swc` | Split output into shared types, one file per SWC, and a system file. |
+| `--templates DIR` | Use an alternate Jinja2 template directory instead of the built-in templates. |
+| `-v` | Verbose output. |
+| `-vv` | Very verbose output. |
+
+**Export is blocked if validation reports any error-severity findings.** Warnings do not block export.
+
+**Split export:**
 
 ```bash
 python -m arforge.cli export examples/autosar.project.yaml --out build/out --split-by-swc
 ```
 
-Monolithic export:
+Produces:
+
+```
+build/out/
+├── DEMO_SharedTypes.arxml
+├── SpeedSensor.arxml
+├── SpeedDisplay.arxml
+└── Composition_DemoSystem.arxml
+```
+
+**Monolithic export:**
 
 ```bash
 python -m arforge.cli export examples/autosar.project.yaml --out build/all.arxml
 ```
 
-Verbose modes:
+**Custom templates** — for OEM-specific ARXML profiles:
 
 ```bash
-python -m arforge.cli export examples/autosar.project.yaml --out build/out --split-by-swc -v
-python -m arforge.cli export examples/autosar.project.yaml --out build/out --split-by-swc -vv
+python -m arforge.cli export examples/autosar.project.yaml --out build/out --templates my-templates/
 ```
 
-Behavior:
+The custom template directory must contain the same template filenames as the built-in `templates/` directory. This is the designed extension point for OEM-specific ARXML conventions without modifying ARForge core.
 
-- export fails if validation reports semantic errors
-- split export writes shared types, per-SWC files, and a system file
-- monolithic export expects a file path
-- `--templates` can be used to point to an alternate template directory
+---
+
+## Running via VS Code tasks
+
+If you are working in VS Code, all commands above are available as pre-configured tasks under `Terminal → Run Task`. The active project manifest is resolved from the `arforge.projectFile` setting in `.vscode/settings.json`.
+
+See [Project Structure — VS Code setup](./project-structure.md#vs-code-setup) for details.
+
+---
+
+## CI integration
+
+ARForge is designed to run in CI without modification. A minimal pipeline step:
+
+```bash
+# Validate on every pull request
+python -m arforge.cli validate autosar.project.yaml
+
+# Export on merge to main
+python -m arforge.cli export autosar.project.yaml --out build/arxml --split-by-swc
+```
+
+Since validation findings are sorted deterministically and finding codes are stable across versions, CI output is consistent and finding codes can be used in suppression lists or pipeline conditions.

@@ -1,80 +1,105 @@
 # Architecture
 
-ARForge follows a straightforward pipeline:
+This page describes the internal design of ARForge. It is intended for contributors and for engineers who want to understand how the tool works under the hood.
 
-`YAML -> schema validation -> semantic validation -> internal model -> ARXML export`
+## Processing pipeline
 
-## Processing Pipeline
+Every ARForge command that touches a project runs through the same pipeline:
 
-1. Load the aggregator project file (`*.project.yaml`).
-2. Expand file patterns for interfaces, SWCs, units, compu methods, and mode declaration groups.
-3. Validate each input file against JSON schema.
-4. Merge the parsed data into the internal project model.
-5. Run semantic validation cases from the `core` ruleset.
-6. Render ARXML through Jinja2 templates and write outputs.
+```
+project.yaml
+     ↓
+load_aggregator_with_report()
+     ↓ glob expansion + YAML parsing + JSON Schema validation
+merged raw input
+     ↓
+model build
+     ↓ typed internal model
+semantic validation
+     ↓ ValidationResult with sorted findings
+ARXML export  (only if no error findings)
+     ↓
+output files
+```
 
-## Module Responsibilities
+Each stage has a clear responsibility and a hard boundary. The loader does not reason about semantics. The semantic validator does not render output. The exporter does not re-validate.
 
-- `arforge/cli.py`
-  - user-facing CLI commands and console output
-- `arforge/validate.py`
-  - project loading, glob expansion, schema validation, and aggregation
-- `arforge/model.py`
-  - internal data model used after parsing
-- `arforge/semantic_validation.py`
-  - validation runner, finding model, and validation context/indexes
-- `arforge/validation/cases/`
-  - domain-organized semantic validation cases (`CORE-*`)
-- `arforge/validation_cases.py`
-  - compatibility export surface for validation case imports
-- `arforge/exporter.py`
-  - export orchestration, rendering, and file writing
-- `arforge/scaffold.py`
-  - project scaffold generation used by `arforge init`
-- `templates/*.j2`
-  - ARXML rendering templates
-- `schemas/*.json`
-  - schema constraints for YAML inputs
+## Module responsibilities
 
-## Internal Responsibilities
+**`arforge/cli.py`**
+User-facing commands and console output. Formats findings, prints summaries, handles exit codes. Does not contain business logic.
 
-- The loader is responsible for finding files, parsing YAML, and enforcing schema shape.
-- The model layer is responsible for turning merged input into a consistent internal representation.
-- The semantic validation layer is responsible for cross-file and cross-reference rules that JSON Schema cannot express cleanly.
-- The exporter is responsible for deterministic rendering and writing of ARXML artifacts.
+**`arforge/validate.py`**
+Project loading. Resolves the manifest path, expands glob patterns, parses YAML files, validates each file against its JSON Schema, and merges the parsed data into a unified raw input structure. Produces a load report that captures schema errors before semantic validation begins.
 
-## Data Flow
+**`arforge/model.py`**
+Internal data model. Converts the merged raw input into a typed internal representation. The model is what semantic validation and the exporter operate on — not raw dicts.
 
-`project.yaml` -> `load_aggregator_with_report()` -> merged input -> model build -> semantic validation -> exporter render/write
+**`arforge/semantic_validation.py`**
+Validation runner, finding model, and validation context. Defines `Finding`, `ValidationResult`, `ValidationCase`, and the indexes used by individual cases (port lookup by name, interface lookup by type, etc.). Runs cases in sorted order. Sorts findings deterministically.
 
-The loader currently supports:
+**`arforge/validation/cases/`**
+Domain-organized semantic validation case implementations. Each module covers a specific area of the AUTOSAR model:
 
-- `baseTypes`
-- `implementationDataTypes`
-- `applicationDataTypes`
-- `units`
-- `compuMethods`
-- `modeDeclarationGroups`
-- `interfaces`
-- `swcs`
-- `system`
+| Module | Domain |
+|---|---|
+| `common.py` | Global uniqueness, base type metadata |
+| `types.py` | Interface semantics, application constraints |
+| `modes.py` | Mode declaration group structure, initial mode, unused groups |
+| `swc.py` | SWC structure, port references, runnable access, ComSpec, events |
+| `system.py` | System instance types, connection semantics |
+| `connectivity.py` | SR/CS/MS port connectivity, usage analysis, declared port usage |
+| `timing.py` | SR timing mismatch analysis |
 
-## Validation Architecture
+**`arforge/validation_cases.py`**
+Compatibility export surface. Re-exports the domain case modules for backward-compatible imports.
 
-- Each semantic rule is implemented as a separate validation case.
-- Cases are organized by domain under `arforge/validation/cases/`.
-- Cases are grouped into the `core` ruleset in `arforge/validation_registry.py`.
-- Findings are sorted deterministically by severity, code, message, and location.
+**`arforge/validation_registry.py`**
+Ruleset registry. Maps ruleset names to lists of `ValidationCase` instances. Currently contains one ruleset: `core`. The registry is the extension point for adding OEM-specific or project-specific rulesets.
 
-## Export Architecture
+**`arforge/exporter.py`**
+Export orchestration. Builds the rendering context from the validated model, drives Jinja2 template rendering, and writes output files. Handles split and monolithic layout. Enforces deterministic output ordering.
 
-ARForge currently supports two export layouts:
+**`arforge/scaffold.py`**
+Project scaffold generation for `arforge init`. Writes the directory structure and example files.
 
-- split export:
-  - `<RootPackage>_SharedTypes.arxml`
-  - one `<SWC>.arxml` per SWC type
-  - one `<System>.arxml` for the composition
-- monolithic export:
-  - one combined ARXML file
+**`templates/*.j2`**
+Jinja2 ARXML templates. Four templates cover the current export layouts: `all_42.arxml.j2` (monolithic), `swc_42.arxml.j2` (per-SWC split), `shared_42.arxml.j2` (shared types), `system_42.arxml.j2` (system composition). Template filenames encode the target AUTOSAR version.
 
-Objects are ordered deterministically where needed so repeated exports produce stable output.
+**`schemas/*.json`**
+JSON Schema files for each input category. Used by the loader for structural validation before semantic validation runs.
+
+**`.vscode/`**
+VS Code configuration. `settings.json` maps YAML schemas to file patterns for inline autocomplete and diagnostics. `tasks.json` defines platform-aware task runners for validate, export, init, and pytest — with separate `windows`, `linux`, and `osx` command entries resolving the correct `.venv` Python executable on each platform.
+
+## Validation architecture
+
+Each semantic rule is a `ValidationCase` subclass with:
+
+- a stable `case_id` (`CORE-XXX`)
+- a `name` and `description`
+- a `validate(model, context)` method that returns a list of `Finding` objects
+
+Cases are independent. They do not call each other. The runner executes them in sorted order by code, making execution order deterministic regardless of registration order.
+
+The `ValidationContext` built by the runner contains pre-built indexes — interface lookup by name, port lookup by SWC, instance lookup by name — so individual cases do not need to traverse the full model for every check.
+
+Findings carry a `code`, `message`, and `severity`. The `code` field uses a hierarchical naming scheme: the group prefix (`CORE-022`) identifies the rule family, the suffix (`-READ-UNKNOWN-PORT`) identifies the specific condition within that rule. This makes findings greppable and stable across versions.
+
+## Export architecture
+
+The exporter receives the validated model and builds a rendering context — a set of plain data structures the Jinja2 templates can consume without any further model traversal.
+
+Output ordering is enforced explicitly in the rendering context, not left to dict iteration order. This guarantees that repeated exports of the same model produce byte-identical ARXML.
+
+The `--templates` CLI option allows substituting the built-in template directory with a custom one. This is the designed extension point for OEM-specific ARXML profiles — custom templates can add vendor extensions, change package structure, or enforce naming conventions without modifying ARForge itself.
+
+## Adding a validation rule
+
+1. Choose the appropriate domain module under `arforge/validation/cases/` or create a new one for a new domain.
+2. Add a new `ValidationCase` subclass with a stable `CORE-XXX` code that does not collide with existing codes.
+3. Register it in the `core` ruleset via `arforge/validation_registry.py`.
+4. Add an invalid fixture under `examples/invalid/` that triggers the new finding. Follow the naming convention in `examples/invalid/README.md`.
+5. Add a test case in `tests/test_examples.py` that asserts the expected finding code.
+
+The invalid fixture corpus serves as both documentation and regression protection. Every rule must have at least one fixture that proves it fires.

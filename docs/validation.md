@@ -1,156 +1,153 @@
 # Validation
 
-Validation in ARForge has two layers:
+ARForge validates every project in two stages before allowing export. Both stages must pass for export to proceed.
 
-1. JSON Schema validation for file structure
-2. semantic validation for model correctness across files and references
+## Stage 1 — Schema validation
 
-## Schema Validation
+Schema validation checks the structure of each YAML file against a JSON Schema. It catches missing required fields, wrong value types, and unsupported keys. Schema errors are reported immediately during loading, before semantic validation runs.
 
-Schema validation is implemented in `arforge/validate.py` using the JSON schema files in `schemas/`.
+Schemas exist for every input category: aggregator manifests, base types, implementation types, application types, units, compu methods, mode declaration groups, interfaces, SWCs, and system files.
 
-Current schema coverage includes:
+## Stage 2 — Semantic validation
 
-- aggregator project manifests
-- mode declaration groups
-- interfaces
-- SWCs
-- system files
-- base, implementation, and application data types
-- units
-- compu methods
+Semantic validation checks the meaning of the model — cross-file references, type graph consistency, port compatibility, runnable access correctness, connectivity, and timing relationships. These are rules that JSON Schema cannot express.
 
-## Semantic Validation
+Each semantic rule is implemented as a named `ValidationCase` with a stable `CORE-XXX` identifier. Rules are organized by domain under `arforge/validation/cases/`. They run in deterministic order and findings are sorted deterministically by severity, code, and message — so CI output is stable across runs.
 
-Semantic validation is implemented as separate `ValidationCase` units under `arforge/validation/cases/`.
+### Finding structure
 
-The top-level `arforge/validation_cases.py` module re-exports those case definitions from a single import surface.
+Every finding carries three fields:
 
-Each finding carries:
+- **code** — a stable `CORE-XXX-DETAIL` identifier
+- **message** — a human-readable description of the problem
+- **severity** — `error`, `warning`, or `info`
 
-- `code`
-- `message`
-- `severity`
+`arforge validate` exits with a non-zero code only when at least one `error` finding exists. Warnings and infos are reported but do not block export.
 
-Supported severity values are:
+### Verbosity
 
-- `error`
-- `warning`
-- `info`
+```bash
+arforge validate project.yaml        # findings + severity summary
+arforge validate project.yaml -v     # adds per-case execution info
+arforge validate project.yaml -vv    # adds case descriptions and full detail
+```
 
-`arforge validate` fails only when at least one `error` finding is present.
+---
 
-## Deterministic Behavior
+## Validation rules
 
-Validation behavior is designed to be deterministic:
+### CORE-001 — GlobalUniqueness
+Checks that all globally named elements are unique across the project. Covers data type names, interface names, SWC names, unit names, compu method names, and system composition instance names.
 
-- validation cases run in sorted order
-- findings are sorted deterministically
-- example fixtures are used to lock expected behavior
+### CORE-002 — BaseTypeMetadata
+Checks that base type definitions are internally consistent: no duplicate names, required fields present, valid bit length and signedness values.
 
-This supports stable diffs, reliable tests, and predictable CI output.
+### CORE-010 — InterfaceSemantics
+Checks the internal structure of interface definitions and their type references.
 
-## Current Rule Coverage
+Covers: SR data element type references, CS operation argument types and return types, CS possible error code validity, CS duplicate operation and argument names, mode-switch `modeGroupRef` resolution, struct field type resolution, struct cycles, array element type resolution, array length validity.
 
-The current `core` ruleset covers:
+### CORE-011 — ApplicationConstraints
+Checks that application data type constraints are valid given the backing implementation type. Covers: constraint min/max ordering, constraint values within base type range, constraint applicability (structs and arrays cannot carry constraints).
 
-- global and local uniqueness checks
-- base type metadata checks
-- datatype reference and type graph checks
-- implementation struct and array checks
-- application constraint checks
-- mode declaration group checks
-- compu method and unit consistency checks
-- sender-receiver, client-server, and mode-switch interface checks
-- runnable access checks for reads, writes, calls, and raised errors
-- event binding checks
-- mode-switch event binding checks
-- trigger policy checks
-- ComSpec validation
-- system component instance type checks
-- SWC-local declared-but-unused port warnings
-- connector compatibility checks
-- instantiated-port connectivity and usage checks
-- connected mode-switch requires-port usage checks
-- cyclic sender-receiver timing mismatch warnings
+### CORE-012 — ModeDeclarationGroupStructure
+Checks mode declaration group internal consistency: no duplicate group names, no duplicate mode names within a group, no empty mode names.
 
-## Core Validation Cases
+### CORE-013 — ModeDeclarationGroupInitialMode
+Checks that each `initialMode` references one of the declared modes in the same group.
 
-| ID | Name | Description | Severity |
-|----|------|-------------|----------|
-| CORE-001 | GlobalUniqueness | Checks that globally named model elements remain unique. | Error |
-| CORE-002 | BaseTypeMetadata | Checks base type uniqueness and required metadata consistency. | Error |
-| CORE-010 | InterfaceSemantics | Checks interface structure and datatype references, including implementation datatype structures and arrays, plus mode-switch `modeGroupRef` rules. | Error |
-| CORE-011 | ApplicationConstraints | Checks application datatype constraints against implementation types, units, and compu methods. | Error |
-| CORE-012 | ModeDeclarationGroupStructure | Checks mode declaration group uniqueness and local mode naming rules. | Error |
-| CORE-013 | ModeDeclarationGroupInitialMode | Checks that each mode declaration group `initialMode` references one of its declared modes. | Error |
-| CORE-014 | UnusedModeDeclarationGroups | Checks for mode declaration groups that are declared but never referenced by mode-switch interfaces. | Warning |
-| CORE-020 | SwcStructure | Checks SWC-local uniqueness for runnables and ports. | Error |
-| CORE-021 | PortInterfaceReferences | Checks that each SWC port references an existing interface and uses the expected kind. | Error |
-| CORE-022 | RunnableAccessSemantics | Checks runnable reads, writes, and calls against SWC port and interface semantics. | Error |
-| CORE-023 | OperationInvokedEvents | Checks operation-invoked event bindings for provided client-server operations. | Error |
-| CORE-024 | RunnableTriggerPolicy | Checks that each runnable uses exactly one trigger style. | Error |
-| CORE-025 | PortComSpecSemantics | Checks sender-receiver and client-server ComSpec on SWC ports. | Error |
-| CORE-026 | RunnableRaisedErrors | Checks runnable `raisesErrors` declarations for provided client-server operations. | Error |
-| CORE-027 | DataReceiveEvents | Checks `dataReceiveEvents` bindings for required sender-receiver ports. | Error |
-| CORE-028 | ModeSwitchEvents | Checks `modeSwitchEvents` bindings for required mode-switch ports and declared modes. | Error |
-| CORE-030 | SystemInstanceTypes | Checks that composition component prototypes reference known SWC types. | Error |
-| CORE-040 | ConnectionSemantics | Checks system connections and connector-level sender-receiver and client-server semantics. | Error |
-| CORE-041 | SenderReceiverConnectivity | Checks sender-receiver instantiated-port connectivity against connectors and runnable behavior. | Error or warning, depending on finding |
-| CORE-042 | SenderReceiverUsage | Checks whether connected sender-receiver ports are actually used by runnable behavior. | Warning |
-| CORE-043 | ClientServerConnectivity | Checks client-server instantiated-port connectivity against connectors and runnable behavior. | Error or warning, depending on finding |
-| CORE-044 | ClientServerUsage | Checks whether connected or unconnected client-server ports are actually used by runnable behavior. | Warning |
-| CORE-045 | ModeSwitchConnectivity | Checks mode-switch instantiated-port connectivity against connectors. | Warning |
-| CORE-046 | DeclaredPortUsage | Checks whether declared SWC ports are actually used by runnable behavior before or regardless of system connectivity. | Warning |
-| CORE-047 | ModeSwitchUsage | Checks whether connected mode-switch requires ports are actually used by runnable `modeSwitchEvents`. | Warning |
-| CORE-050 | SRConsumerFasterThanProducer | Warns when a cyclic sender-receiver consumer runs faster than its cyclic producer. | Warning |
-| CORE-051 | SRProducerFasterThanConsumer | Warns when a cyclic sender-receiver producer runs faster than its cyclic consumer. | Warning |
+### CORE-014 — UnusedModeDeclarationGroups
+Warns when a mode declaration group is declared but never referenced by any mode-switch interface. An unused group has no effect on the model and likely indicates a leftover definition or a missing interface reference. Severity: **warning**.
 
-Severity in the table reflects the normal outcome pattern of each rule. Some cases, such as `CORE-041` and `CORE-043`, can emit both hard errors and integration-quality warnings under different conditions.
+### CORE-020 — SwcStructure
+Checks SWC-local uniqueness: no duplicate runnable names, no duplicate port names within an SWC.
 
-## Declared Vs Connected Usage
+### CORE-021 — PortInterfaceReferences
+Checks that every SWC port references an existing interface by name, and that the port kind matches the interface kind (e.g. a mode-switch port must reference a mode-switch interface).
 
-`CORE-046` is SWC-local and warns when a declared port has no runnable-side usage yet:
+### CORE-022 — RunnableAccessSemantics
+Checks runnable `reads`, `writes`, and `calls` against port and interface semantics.
 
-- sender-receiver provides ports with no writes
-- sender-receiver requires ports with no reads and no `dataReceiveEvents`
-- client-server requires ports with no calls
-- client-server provides ports with no `operationInvokedEvents`
-- mode-switch requires ports with no `modeSwitchEvents`
+- `reads` must reference a `requires` port on an SR interface
+- `writes` must reference a `provides` port on an SR interface
+- `calls` must reference a `requires` port on a CS interface
+- data element names must exist in the referenced interface
+- operation names must exist in the referenced interface
 
-This is distinct from the integration-oriented checks in `CORE-042`, `CORE-044`, `CORE-045`, and `CORE-047`, which describe instantiated or connected system behavior.
+### CORE-023 — OperationInvokedEvents
+Checks `operationInvokedEvents` bindings: port must exist, port must be a `provides` CS port, operation must exist in the interface.
 
-Mode-switch provides ports are intentionally skipped by `CORE-046` because provider-side mode behavior is not modeled in ARForge yet.
+### CORE-024 — RunnableTriggerPolicy
+Checks that every runnable has exactly one trigger. A runnable with both `timingEventMs` and `initEvent`, or with no trigger at all, is an error.
 
-`CORE-047` complements `CORE-045` for mode-switch requires ports. `CORE-045` warns when a mode-switch port is left unconnected, while `CORE-047` warns when a connected mode-switch requires port is still not referenced by any runnable `modeSwitchEvents`.
+### CORE-025 — PortComSpecSemantics
+Checks ComSpec on SWC ports against the port kind and call mode.
 
-## Unused Mode Declaration Groups
+SR ComSpec rules: `mode` must be `implicit`, `explicit`, or `queued`. Queued ports require `queueLength >= 1`. Non-queued ports must not carry `queueLength`. SR ports must not carry CS fields.
 
-`CORE-014` warns when a `ModeDeclarationGroup` is declared in the project but no `modeSwitch` interface references it via `modeGroupRef`.
+CS ComSpec rules: `callMode` is required. Synchronous ports may carry `timeoutMs`; asynchronous ports must not. CS ports must not carry SR fields.
 
-This is a model-quality signal only: validation still succeeds unless some separate semantic error is also present.
+Mode-switch ports do not support ComSpec.
 
-## Timing Analysis Rules
+### CORE-026 — RunnableRaisedErrors
+Checks `raisesErrors` declarations: port must be a `provides` CS port, operation must exist, error name must be declared in `possibleErrors` of that operation, operation binding must be unambiguous.
 
-`CORE-050` and `CORE-051` are design-quality rules, not structural validity errors.
+### CORE-027 — DataReceiveEvents
+Checks `dataReceiveEvents` bindings: port must exist, must be a `requires` SR port, data element must exist in the interface.
 
-They compare cyclic runnable periods when both sides of a connected sender-receiver flow use `timingEventMs`:
+### CORE-028 — ModeSwitchEvents
+Checks `modeSwitchEvents` bindings: port must exist, must be a `requires` mode-switch port, the referenced mode must be declared in the resolved `ModeDeclarationGroup`.
 
-- `CORE-050`: consumer runs faster than producer and may read stale data
-- `CORE-051`: producer runs faster than consumer and may overwrite intermediate values before consumption
+### CORE-030 — SystemInstanceTypes
+Checks that every component prototype in the system composition references a known SWC type by name.
 
-Equal timing does not produce a finding.
+### CORE-040 — ConnectionSemantics
+Checks every connector in the system composition.
 
-## CLI Output
+- both endpoint instances must exist
+- both endpoint ports must exist on those instances
+- `from` port must be a `provides` port; `to` port must be a `requires` port
+- both ports must reference the same interface
+- interface kind must be consistent (SR-to-SR, CS-to-CS, MS-to-MS)
+- duplicate port pairs are rejected
 
-Normal `validate` output prints findings and a severity summary.
+### CORE-041 — SenderReceiverConnectivity
+Checks SR port connectivity and runnable usage against each other. A `provides` SR port with no outgoing connector is an error. A `requires` SR port that a runnable reads from but has no incoming connector is an error. Ports that are connected but not used by any runnable produce warnings. Severity: **error or warning**, depending on the specific finding.
 
-`-v` adds per-case execution information.
+### CORE-042 — SenderReceiverUsage
+Warns when connected SR ports are never accessed by any runnable. These are design quality warnings. Severity: **warning**.
 
-`-vv` also includes case descriptions and more detailed execution output.
+### CORE-043 — ClientServerConnectivity
+Checks CS port connectivity against runnable behavior. A CS `requires` port that is called by a runnable but has no connector is an error. A CS `provides` port with an `operationInvokedEvent` but no incoming connector is an error. Severity: **error**.
 
-## Tests and Fixtures
+### CORE-044 — ClientServerUsage
+Warns when CS ports are connected but never used in runnable `calls` or `operationInvokedEvents`. Also warns when CS ports have no connector at all. Severity: **warning**.
 
-`tests/test_examples.py` uses the checked-in example project plus invalid fixtures under `examples/invalid/` to verify deterministic validation behavior and expected finding codes.
+### CORE-045 — ModeSwitchConnectivity
+Checks mode-switch port connectivity. A `provides` mode-switch port with no outgoing connector produces a warning. A `requires` mode-switch port with no incoming connector produces a warning. Severity: **warning**.
 
-For fixture naming, layout, and extension guidelines, see [`examples/invalid/README.md`](/d:/VMs/git/arforge/examples/invalid/README.md).
+### CORE-046 — DeclaredPortUsage
+Warns when a declared SWC port is never used by any runnable behavior, even before system connectors are considered. This is an SWC-level design quality check — a port that exists in the type definition but is never accessed by any runnable is likely unintentional.
+
+Covers all interface kinds and both port directions: SR provides/requires, CS provides/requires, and mode-switch requires. Mode-switch provides ports are excluded from this check because provider-side mode behavior is not modeled in ARForge at the SWC level. Severity: **warning**.
+
+### CORE-047 — ModeSwitchUsage
+Warns when a connected mode-switch `requires` port is never used by any runnable `modeSwitchEvents`. A mode-switch port that is wired in the system composition but never triggers any runnable behavior is likely a design oversight. Severity: **warning**.
+
+### CORE-050 — SRConsumerFasterThanProducer
+Warns when a cyclic SR consumer runs at a shorter period than its connected cyclic SR producer. The consumer may read stale data on some cycles.
+
+Example: producer at 10 ms, consumer at 5 ms → `CORE-050` warning. Severity: **warning**.
+
+### CORE-051 — SRProducerFasterThanConsumer
+Warns when a cyclic SR producer runs at a shorter period than its connected cyclic SR consumer. The producer may overwrite intermediate values before the consumer reads them.
+
+Example: producer at 5 ms, consumer at 10 ms → `CORE-051` warning. Equal periods produce no finding. Severity: **warning**.
+
+---
+
+## Tests and fixtures
+
+The `tests/` directory contains pytest coverage for all validation behavior. `examples/invalid/` contains a corpus of deliberately broken model fixtures — one per finding code — used to verify that each rule fires exactly when expected and not otherwise. See `examples/invalid/README.md` for the fixture naming convention and contribution guidance.
+
+Every validation rule has explicit test cases for both valid and invalid inputs. This corpus is also useful as a reference for understanding exactly what each rule checks.
