@@ -1,0 +1,14 @@
+# ARForge: System composition
+# Support system for declared client-server provides usage warnings.
+system:
+  name: "DemoSystem"
+  composition:
+    name: "Composition_DemoSystem"
+    components:
+      - name: "DiagServerUnused_1"
+        typeRef: "DiagServerUnused"
+      - name: "DiagClientOnly_1"
+        typeRef: "DiagClientOnly"
+    connectors:
+      - from: "DiagServerUnused_1.Pp_Diag"
+        to: "DiagClientOnly_1.Rp_Diag"

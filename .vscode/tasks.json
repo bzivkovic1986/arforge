@@ -2,72 +2,110 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "autosar: validate project",
+      "label": "arforge: init project",
       "type": "shell",
-      "command": ".venv\\Scripts\\python.exe",
-      "args": ["-m", "arforge.cli", "validate", "${config:arforge.projectFile}"],
+      "command": "${workspaceFolder}${/}.venv${/}bin${/}python",
+      "windows": {
+        "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+      },
+      "linux": {
+        "command": "${workspaceFolder}/.venv/bin/python"
+      },
+      "osx": {
+        "command": "${workspaceFolder}/.venv/bin/python"
+      },
+      "args": [
+        "-m",
+        "arforge.cli",
+        "init",
+        "demo-project"
+      ],
       "problemMatcher": []
     },
     {
-      "label": "autosar: validate project (-v)",
+      "label": "arforge: validate project",
       "type": "shell",
-      "command": ".venv\\Scripts\\python.exe",
-      "args": ["-m", "arforge.cli", "validate", "-v", "${config:arforge.projectFile}"],
+      "command": "${workspaceFolder}${/}.venv${/}bin${/}python",
+      "windows": {
+        "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+      },
+      "linux": {
+        "command": "${workspaceFolder}/.venv/bin/python"
+      },
+      "osx": {
+        "command": "${workspaceFolder}/.venv/bin/python"
+      },
+      "args": [
+        "-m",
+        "arforge.cli",
+        "validate",
+        "${config:arforge.projectFile}",
+        "-vv"
+      ],
       "problemMatcher": []
     },
     {
-      "label": "autosar: validate project (-vv)",
+      "label": "arforge: export project (monolithic)",
       "type": "shell",
-      "command": ".venv\\Scripts\\python.exe",
-      "args": ["-m", "arforge.cli", "validate", "-vv", "${config:arforge.projectFile}"],
+      "command": "${workspaceFolder}${/}.venv${/}bin${/}python",
+      "windows": {
+        "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+      },
+      "linux": {
+        "command": "${workspaceFolder}/.venv/bin/python"
+      },
+      "osx": {
+        "command": "${workspaceFolder}/.venv/bin/python"
+      },
+      "args": [
+        "-m",
+        "arforge.cli",
+        "export",
+        "${config:arforge.projectFile}",
+        "--out",
+        "build/DemoProject.arxml",
+        "-vv"
+      ],
       "problemMatcher": []
     },
     {
-      "label": "autosar: export split-by-swc",
+      "label": "arforge: export project (split by swc)",
       "type": "shell",
-      "command": ".venv\\Scripts\\python.exe",
-      "args": ["-m", "arforge.cli", "export", "${config:arforge.projectFile}", "--out", "build/out", "--split-by-swc"],
-      "problemMatcher": []
-    },
-    {
-      "label": "autosar: export split-by-swc (-v)",
-      "type": "shell",
-      "command": ".venv\\Scripts\\python.exe",
-      "args": ["-m", "arforge.cli", "export", "-v", "${config:arforge.projectFile}", "--out", "build/out", "--split-by-swc"],
-      "problemMatcher": []
-    },
-    {
-      "label": "autosar: export split-by-swc (-vv)",
-      "type": "shell",
-      "command": ".venv\\Scripts\\python.exe",
-      "args": ["-m", "arforge.cli", "export", "-vv", "${config:arforge.projectFile}", "--out", "build/out", "--split-by-swc"],
-      "problemMatcher": []
-    },
-    {
-      "label": "autosar: export monolithic",
-      "type": "shell",
-      "command": ".venv\\Scripts\\python.exe",
-      "args": ["-m", "arforge.cli", "export", "${config:arforge.projectFile}", "--out", "build/all.arxml"],
-      "problemMatcher": []
-    },
-    {
-      "label": "autosar: export monolithic (-v)",
-      "type": "shell",
-      "command": ".venv\\Scripts\\python.exe",
-      "args": ["-m", "arforge.cli", "export", "-v", "${config:arforge.projectFile}", "--out", "build/all.arxml"],
-      "problemMatcher": []
-    },
-    {
-      "label": "autosar: export monolithic (-vv)",
-      "type": "shell",
-      "command": ".venv\\Scripts\\python.exe",
-      "args": ["-m", "arforge.cli", "export", "-vv", "${config:arforge.projectFile}", "--out", "build/all.arxml"],
+      "command": "${workspaceFolder}${/}.venv${/}bin${/}python",
+      "windows": {
+        "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+      },
+      "linux": {
+        "command": "${workspaceFolder}/.venv/bin/python"
+      },
+      "osx": {
+        "command": "${workspaceFolder}/.venv/bin/python"
+      },
+      "args": [
+        "-m",
+        "arforge.cli",
+        "export",
+        "${config:arforge.projectFile}",
+        "--out",
+        "build",
+        "--split-by-swc",
+        "-vv"
+      ],
       "problemMatcher": []
     },
     {
       "label": "arforge: pytest",
       "type": "shell",
-      "command": ".venv\\Scripts\\python.exe",
+      "command": "${workspaceFolder}${/}.venv${/}bin${/}python",
+      "windows": {
+        "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+      },
+      "linux": {
+        "command": "${workspaceFolder}/.venv/bin/python"
+      },
+      "osx": {
+        "command": "${workspaceFolder}/.venv/bin/python"
+      },
       "args": ["-m", "pytest", "-q"],
       "problemMatcher": []
     }

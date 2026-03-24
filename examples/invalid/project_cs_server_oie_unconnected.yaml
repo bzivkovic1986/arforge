@@ -1,0 +1,26 @@
+# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Tests warning-only client-server server runnable bindings on an unconnected provides port.
+autosar:
+  version: "4.2"
+  rootPackage: "DEMO"
+
+inputs:
+  baseTypes: "support/base_types.yaml"
+  implementationDataTypes: "support/implementation_types.yaml"
+  applicationDataTypes: "support/application_types.yaml"
+  units:
+    - "support/units.yaml"
+  compuMethods:
+    - "support/compu_methods.yaml"
+  modeDeclarationGroups:
+    - "../modes/*.yaml"
+  interfaces:
+    - "../interfaces/If_VehicleSpeed.yaml"
+    - "../interfaces/If_PowerState.yaml"
+    - "../interfaces/If_Diagnostics.yaml"
+  swcs:
+    - "../swcs/SpeedSensor.yaml"
+    - "../swcs/SpeedDisplay.yaml"
+    - "swcs/DiagServerOnly.yaml"
+  system: "system_single_diag_server_only_unconnected.yaml"

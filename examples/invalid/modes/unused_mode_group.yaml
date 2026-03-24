@@ -1,0 +1,10 @@
+# ARForge: Invalid example support fixture
+# Domain: mode declaration groups.
+# Provides an extra declared mode group that is not referenced by any mode-switch interface.
+modeDeclarationGroups:
+  - name: Mdg_UnusedPowerState
+    description: "Unused power state mode group for validation warning coverage."
+    initialMode: "OFF"
+    modes:
+      - "OFF"
+      - "ON"

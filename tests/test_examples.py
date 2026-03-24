@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 import hashlib
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -23,6 +24,9 @@ SYSTEM_EXAMPLE_OUTPUT = "DemoSystem.arxml"
 WARNING_ONLY_PROJECT = INVALID_DIR / "project_connected_sr_port_unused.yaml"
 ERROR_PROJECT = INVALID_DIR / "project_bad_runnable_access.yaml"
 MIXED_PROJECT = INVALID_DIR / "project_sr_read_unconnected.yaml"
+CS_SERVER_WARNING_PROJECT = INVALID_DIR / "project_cs_server_oie_unconnected.yaml"
+UNUSED_MODE_GROUP_PROJECT = INVALID_DIR / "project_unused_mode_group.yaml"
+CONNECTED_UNUSED_MODE_SWITCH_PROJECT = INVALID_DIR / "project_connected_mode_switch_port_unused.yaml"
 
 
 def _is_project_fixture(path: Path) -> bool:
@@ -34,7 +38,14 @@ def _is_project_fixture(path: Path) -> bool:
 def _invalid_project_fixtures() -> list[Path]:
     warning_only = {
         "project_connected_sr_port_unused.yaml",
+        "project_cs_server_oie_unconnected.yaml",
+        "project_declared_unused_cs_provides.yaml",
+        "project_declared_unused_cs_requires.yaml",
+        "project_declared_unused_mode_requires.yaml",
+        "project_declared_unused_sr_provides.yaml",
+        "project_connected_mode_switch_port_unused.yaml",
         "project_mode_switch_unconnected.yaml",
+        "project_unused_mode_group.yaml",
         "project_sr_consumer_faster.yaml",
         "project_sr_producer_faster.yaml",
         "project_sr_timing_equal.yaml",
@@ -70,7 +81,7 @@ def test_main_example_descriptions_are_loaded_into_model_ir() -> None:
         "SWC type that publishes the current vehicle speed."
     )
     assert next(swc for swc in project.swcs if swc.name == "SpeedDisplay").description == (
-        "SWC type that reads vehicle speed and could display it to a user."
+        "SWC type that reads vehicle speed through explicit, implicit, and queued receiver semantics."
     )
     provided_mode_port = next(
         port
@@ -116,7 +127,9 @@ def test_main_example_descriptions_are_loaded_into_model_ir() -> None:
     assert next(compu for compu in project.compuMethods if compu.name == "CM_VehicleSpeed_Kph").description == (
         "Identity scaling for the demo vehicle speed value."
     )
-    assert project.system.description == "Demo AUTOSAR system wiring one speed flow and one mode-switch flow."
+    assert project.system.description == (
+        "Demo AUTOSAR system wiring explicit, implicit, and queued speed flows plus one mode-switch flow."
+    )
 
 
 def test_main_example_mode_declaration_group_is_loaded_into_model_ir() -> None:
@@ -126,6 +139,16 @@ def test_main_example_mode_declaration_group_is_loaded_into_model_ir() -> None:
     assert project.modeDeclarationGroups[0].description == "Power state modes for the ECU."
     assert project.modeDeclarationGroups[0].initialMode == "OFF"
     assert [mode.name for mode in project.modeDeclarationGroups[0].modes] == ["OFF", "ON", "SLEEP"]
+
+
+def _extract_r_port_fragment(xml: str, port_name: str) -> str:
+    match = re.search(
+        rf"<R-PORT-PROTOTYPE>\s*<SHORT-NAME>{re.escape(port_name)}</SHORT-NAME>(.*?)</R-PORT-PROTOTYPE>",
+        xml,
+        flags=re.DOTALL,
+    )
+    assert match is not None, f"Missing R-PORT-PROTOTYPE for {port_name}"
+    return match.group(1)
 
 
 @pytest.mark.parametrize(
@@ -238,7 +261,30 @@ def test_cli_validate_warning_only_project_shows_warning_and_succeeds() -> None:
     assert result.returncode == 0, result.stdout + result.stderr
     assert "WARNING CORE-042-SR-CONNECTED-REQUIRES-UNUSED" in result.stdout
     assert "errors: 0" in result.stdout
-    assert "warnings: 1" in result.stdout
+    assert "warnings: 2" in result.stdout
+
+
+def test_cs_server_unconnected_binding_passes_validation_and_reports_warning() -> None:
+    project = load_and_validate_aggregator(CS_SERVER_WARNING_PROJECT)
+    report = build_semantic_report(project, ruleset="core")
+
+    assert report.error_findings() == []
+    oie_findings = [finding for finding in report.findings if finding.code == "CORE-043-CS-OIE-UNCONNECTED"]
+    assert oie_findings
+    assert all(finding.severity == FindingSeverity.WARNING for finding in oie_findings)
+
+
+def test_cli_validate_cs_server_unconnected_binding_warns_and_succeeds() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "arforge.cli", "validate", str(CS_SERVER_WARNING_PROJECT)],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "WARNING CORE-043-CS-OIE-UNCONNECTED" in result.stdout
+    assert "errors: 0" in result.stdout
 
 
 def test_cli_validate_error_project_shows_error_and_fails() -> None:
@@ -274,6 +320,91 @@ def test_validation_report_summary_counts_are_grouped_by_severity() -> None:
     assert report.severity_counts() == {"error": 3, "warning": 2, "info": 0}
 
 
+def test_main_example_has_no_declared_unused_port_findings() -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    report = build_semantic_report(project, ruleset="core")
+    warning_codes = {finding.code for finding in report.findings if finding.severity == "warning"}
+
+    assert "CORE-046-SR-PROVIDES-DECLARED-UNUSED" not in warning_codes
+    assert "CORE-046-SR-REQUIRES-DECLARED-UNUSED" not in warning_codes
+    assert "CORE-046-CS-PROVIDES-DECLARED-UNUSED" not in warning_codes
+    assert "CORE-046-CS-REQUIRES-DECLARED-UNUSED" not in warning_codes
+    assert "CORE-046-MS-REQUIRES-DECLARED-UNUSED" not in warning_codes
+
+
+def test_main_example_has_no_connected_unused_mode_switch_requires_warning() -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    report = build_semantic_report(project, ruleset="core")
+    warning_codes = {finding.code for finding in report.findings if finding.severity == "warning"}
+
+    assert "CORE-047-MS-CONNECTED-REQUIRES-UNUSED" not in warning_codes
+
+
+def test_main_example_has_no_unused_mode_declaration_group_warning() -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    report = build_semantic_report(project, ruleset="core")
+    warning_codes = {finding.code for finding in report.findings if finding.severity == "warning"}
+
+    assert "CORE-014-MDG-DECLARED-UNUSED" not in warning_codes
+
+
+def test_unused_mode_group_project_passes_validation_and_reports_warning() -> None:
+    project = load_and_validate_aggregator(UNUSED_MODE_GROUP_PROJECT)
+    report = build_semantic_report(project, ruleset="core")
+
+    assert report.error_findings() == []
+    unused_group_findings = [finding for finding in report.findings if finding.code == "CORE-014-MDG-DECLARED-UNUSED"]
+    assert len(unused_group_findings) == 1
+    assert unused_group_findings[0].severity == FindingSeverity.WARNING
+    assert unused_group_findings[0].message == (
+        "ModeDeclarationGroup 'Mdg_UnusedPowerState' is declared but not referenced by any ModeSwitchInterface."
+    )
+
+
+def test_cli_validate_unused_mode_group_warns_and_succeeds() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "arforge.cli", "validate", str(UNUSED_MODE_GROUP_PROJECT)],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "WARNING CORE-014-MDG-DECLARED-UNUSED" in result.stdout
+    assert "Mdg_UnusedPowerState" in result.stdout
+    assert "errors: 0" in result.stdout
+    assert "warnings: 1" in result.stdout
+
+
+def test_connected_unused_mode_switch_project_passes_validation_and_reports_warning() -> None:
+    project = load_and_validate_aggregator(CONNECTED_UNUSED_MODE_SWITCH_PROJECT)
+    report = build_semantic_report(project, ruleset="core")
+
+    assert report.error_findings() == []
+    connected_findings = [
+        finding for finding in report.findings if finding.code == "CORE-047-MS-CONNECTED-REQUIRES-UNUSED"
+    ]
+    assert len(connected_findings) == 1
+    assert connected_findings[0].severity == FindingSeverity.WARNING
+    assert connected_findings[0].message == (
+        "Connected modeSwitch requires port 'SpeedDisplay_1.Rp_PowerState' is not used by any runnable modeSwitchEvents."
+    )
+
+
+def test_cli_validate_connected_unused_mode_switch_warns_and_succeeds() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "arforge.cli", "validate", str(CONNECTED_UNUSED_MODE_SWITCH_PROJECT)],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "WARNING CORE-047-MS-CONNECTED-REQUIRES-UNUSED" in result.stdout
+    assert "SpeedDisplay_1.Rp_PowerState" in result.stdout
+    assert "errors: 0" in result.stdout
+
+
 def test_split_export_reports_aligned_example_outputs(tmp_path: Path) -> None:
     project = load_and_validate_aggregator(VALID_PROJECT)
     template_dir = REPO_ROOT / "templates"
@@ -299,11 +430,13 @@ def test_split_export_system_contains_one_clear_end_to_end_connection(tmp_path: 
     assert "<SHORT-NAME>SpeedSensor_1</SHORT-NAME>" in system_xml
     assert "<SHORT-NAME>SpeedDisplay_1</SHORT-NAME>" in system_xml
     assert system_xml.count("<SW-COMPONENT-PROTOTYPE>") == 2
-    assert system_xml.count("<ASSEMBLY-SW-CONNECTOR>") == 2
+    assert system_xml.count("<ASSEMBLY-SW-CONNECTOR>") == 4
     assert "<TYPE-TREF DEST=\"APPLICATION-SW-COMPONENT-TYPE\">/DEMO/Components/SpeedSensor</TYPE-TREF>" in system_xml
     assert "<TYPE-TREF DEST=\"APPLICATION-SW-COMPONENT-TYPE\">/DEMO/Components/SpeedDisplay</TYPE-TREF>" in system_xml
     assert "/DEMO/System/Composition_DemoSystem/SpeedSensor_1/Pp_VehicleSpeed</TARGET-P-PORT-REF>" in system_xml
     assert "/DEMO/System/Composition_DemoSystem/SpeedDisplay_1/Rp_VehicleSpeed</TARGET-R-PORT-REF>" in system_xml
+    assert "/DEMO/System/Composition_DemoSystem/SpeedDisplay_1/Rp_VehicleSpeedImplicit</TARGET-R-PORT-REF>" in system_xml
+    assert "/DEMO/System/Composition_DemoSystem/SpeedDisplay_1/Rp_VehicleSpeedQueued</TARGET-R-PORT-REF>" in system_xml
     assert "/DEMO/System/Composition_DemoSystem/SpeedSensor_1/Pp_PowerState</TARGET-P-PORT-REF>" in system_xml
     assert "/DEMO/System/Composition_DemoSystem/SpeedDisplay_1/Rp_PowerState</TARGET-R-PORT-REF>" in system_xml
 
@@ -345,13 +478,69 @@ def test_split_export_swc_files_contain_aligned_runnables_and_ports(tmp_path: Pa
     assert "<SHORT-NAME>Pp_PowerState</SHORT-NAME>" in speed_sensor_xml
     assert "<PROVIDED-INTERFACE-TREF DEST=\"MODE-SWITCH-INTERFACE\">/DEMO/Interfaces/If_PowerState</PROVIDED-INTERFACE-TREF>" in speed_sensor_xml
     assert "<SHORT-NAME>Runnable_ReadVehicleSpeed</SHORT-NAME>" in speed_display_xml
+    assert "<SHORT-NAME>Runnable_ReadVehicleSpeedImplicit</SHORT-NAME>" in speed_display_xml
+    assert "<SHORT-NAME>Runnable_ReadVehicleSpeedQueued</SHORT-NAME>" in speed_display_xml
     assert "<SHORT-NAME>Runnable_OnPowerOn</SHORT-NAME>" in speed_display_xml
     assert "<SHORT-NAME>Rp_VehicleSpeed</SHORT-NAME>" in speed_display_xml
+    assert "<SHORT-NAME>Rp_VehicleSpeedImplicit</SHORT-NAME>" in speed_display_xml
+    assert "<SHORT-NAME>Rp_VehicleSpeedQueued</SHORT-NAME>" in speed_display_xml
     assert "<SHORT-NAME>Rp_PowerState</SHORT-NAME>" in speed_display_xml
     assert "<REQUIRED-INTERFACE-TREF DEST=\"MODE-SWITCH-INTERFACE\">/DEMO/Interfaces/If_PowerState</REQUIRED-INTERFACE-TREF>" in speed_display_xml
     assert "<MODE-SWITCH-EVENT>" in speed_display_xml
     assert "<SHORT-NAME>MSE_Runnable_OnPowerOn_Rp_PowerState_ON</SHORT-NAME>" in speed_display_xml
     assert "<TARGET-MODE-DECLARATION-REF DEST=\"MODE-DECLARATION\">/DEMO/Modes/Mdg_PowerState/ON</TARGET-MODE-DECLARATION-REF>" in speed_display_xml
+
+
+def test_split_export_preserves_explicit_sr_receiver_semantics(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    speed_display_xml = (out_dir / "SpeedDisplay.arxml").read_text(encoding="utf-8")
+    explicit_fragment = _extract_r_port_fragment(speed_display_xml, "Rp_VehicleSpeed")
+
+    assert "<NONQUEUED-RECEIVER-COM-SPEC>" in explicit_fragment
+    assert "<ENABLE-UPDATE>true</ENABLE-UPDATE>" in explicit_fragment
+
+
+def test_split_export_preserves_implicit_sr_receiver_semantics(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    speed_display_xml = (out_dir / "SpeedDisplay.arxml").read_text(encoding="utf-8")
+    implicit_fragment = _extract_r_port_fragment(speed_display_xml, "Rp_VehicleSpeedImplicit")
+
+    assert "<NONQUEUED-RECEIVER-COM-SPEC>" in implicit_fragment
+    assert "<ENABLE-UPDATE>false</ENABLE-UPDATE>" in implicit_fragment
+
+
+def test_split_export_preserves_queued_sr_receiver_semantics(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    speed_display_xml = (out_dir / "SpeedDisplay.arxml").read_text(encoding="utf-8")
+    queued_fragment = _extract_r_port_fragment(speed_display_xml, "Rp_VehicleSpeedQueued")
+
+    assert "<QUEUED-RECEIVER-COM-SPEC>" in queued_fragment
+    assert "<QUEUE-LENGTH>4</QUEUE-LENGTH>" in queued_fragment
+
+
+def test_split_export_explicit_and_implicit_receiver_fragments_differ(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "out"
+    _ = write_outputs(project, template_dir=template_dir, out=out_dir, split_by_swc=True)
+
+    speed_display_xml = (out_dir / "SpeedDisplay.arxml").read_text(encoding="utf-8")
+    explicit_fragment = _extract_r_port_fragment(speed_display_xml, "Rp_VehicleSpeed")
+    implicit_fragment = _extract_r_port_fragment(speed_display_xml, "Rp_VehicleSpeedImplicit")
+
+    assert explicit_fragment != implicit_fragment
 
 
 def test_main_example_omitted_swc_category_defaults_to_application() -> None:
@@ -439,10 +628,18 @@ def test_data_receive_event_invalid_fixtures_emit_expected_codes(fixture_name: s
 @pytest.mark.parametrize(
     ("fixture_name", "expected_warning"),
     [
+        ("project_declared_unused_sr_provides.yaml", "CORE-046-SR-PROVIDES-DECLARED-UNUSED"),
+        ("project_connected_sr_port_unused.yaml", "CORE-046-SR-REQUIRES-DECLARED-UNUSED"),
+        ("project_declared_unused_cs_requires.yaml", "CORE-046-CS-REQUIRES-DECLARED-UNUSED"),
+        ("project_declared_unused_cs_provides.yaml", "CORE-046-CS-PROVIDES-DECLARED-UNUSED"),
+        ("project_declared_unused_mode_requires.yaml", "CORE-046-MS-REQUIRES-DECLARED-UNUSED"),
+        ("project_connected_mode_switch_port_unused.yaml", "CORE-047-MS-CONNECTED-REQUIRES-UNUSED"),
+        ("project_unused_mode_group.yaml", "CORE-014-MDG-DECLARED-UNUSED"),
         ("project_sr_read_unconnected.yaml", "CORE-041-SR-REQUIRES-NO-INCOMING"),
         ("project_sr_write_unconnected.yaml", "CORE-041-SR-PROVIDES-NO-OUTGOING"),
         ("project_cs_call_unconnected.yaml", "CORE-044-CS-REQUIRES-NO-CONNECTOR"),
         ("project_connected_sr_port_unused.yaml", "CORE-042-SR-CONNECTED-REQUIRES-UNUSED"),
+        ("project_cs_server_oie_unconnected.yaml", "CORE-043-CS-OIE-UNCONNECTED"),
     ],
 )
 def test_invalid_project_fixtures_emit_expected_warnings(fixture_name: str, expected_warning: str) -> None:

@@ -61,6 +61,11 @@
                     </QUEUED-RECEIVER-COM-SPEC>
                     {% else %}
                     <NONQUEUED-RECEIVER-COM-SPEC>
+                      {% if p.comSpec.mode == "explicit" %}
+                      <ENABLE-UPDATE>true</ENABLE-UPDATE>
+                      {% elif p.comSpec.mode == "implicit" %}
+                      <ENABLE-UPDATE>false</ENABLE-UPDATE>
+                      {% endif %}
                     </NONQUEUED-RECEIVER-COM-SPEC>
                     {% endif %}
                   </REQUIRED-COM-SPECS>

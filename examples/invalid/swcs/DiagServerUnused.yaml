@@ -1,0 +1,12 @@
+# ARForge: Invalid example fixture
+# Domain: software component validation.
+# Tests warning for declared client-server provides port with no operationInvokedEvents.
+swc:
+  name: "DiagServerUnused"
+  runnables:
+    - name: "Runnable_Idle"
+      timingEventMs: 10
+  ports:
+    - name: "Pp_Diag"
+      direction: "provides"
+      interfaceRef: "If_Diagnostics"

@@ -124,6 +124,21 @@ class SwcPortUsage:
 
 
 @dataclass(frozen=True)
+class DeclaredPortUsage:
+    swc_name: str
+    port: Port
+    usage: SwcPortUsage
+
+
+@dataclass(frozen=True)
+class ModeSwitchRequiresPortAnalysis:
+    swc_name: str
+    port: Port
+    usage: SwcPortUsage
+    connected_instances: Tuple[InstancePortConnectivity, ...] = ()
+
+
+@dataclass(frozen=True)
 class SrTimingCommunication:
     provider_swc_name: str
     provider_port_name: str
@@ -145,6 +160,18 @@ class ValidationContext:
         self.unit_by_name = {u.name: u for u in project.units}
         self.compu_method_by_name = {c.name: c for c in project.compuMethods}
         self.mode_declaration_group_by_name = {g.name: g for g in project.modeDeclarationGroups}
+        self.declared_mode_declaration_groups = tuple(
+            sorted(group.name for group in project.modeDeclarationGroups)
+        )
+        self.referenced_mode_declaration_groups = tuple(
+            sorted(
+                {
+                    interface.modeGroupRef
+                    for interface in project.interfaces
+                    if interface.type == "modeSwitch" and interface.modeGroupRef
+                }
+            )
+        )
         self.datatype_by_name = {**self.base_type_by_name, **self.implementation_type_by_name, **self.application_type_by_name}
         self.iface_by_name = {i.name: i for i in project.interfaces}
         self.swc_by_name = {s.name: s for s in project.swcs}
@@ -253,6 +280,45 @@ class ValidationContext:
                 operation_invoked_events=tuple(usage.get("operation_invoked_events", [])),
                 raises_errors=tuple(usage.get("raises_errors", [])),
             )
+        self.declared_port_usage_by_swc: Dict[str, Tuple[DeclaredPortUsage, ...]] = {}
+        for swc in sorted(project.swcs, key=lambda s: s.name):
+            declared_usage: List[DeclaredPortUsage] = []
+            for port in sorted(swc.ports, key=lambda p: p.name):
+                usage = self.runnable_port_usage_by_swc_port.get(
+                    (swc.name, port.name),
+                    SwcPortUsage(swc_name=swc.name, port_name=port.name),
+                )
+                declared_usage.append(
+                    DeclaredPortUsage(
+                        swc_name=swc.name,
+                        port=port,
+                        usage=usage,
+                    )
+                )
+            self.declared_port_usage_by_swc[swc.name] = tuple(declared_usage)
+        self.mode_switch_requires_port_analysis_by_swc: Dict[str, Tuple[ModeSwitchRequiresPortAnalysis, ...]] = {}
+        for swc in sorted(project.swcs, key=lambda s: s.name):
+            analyses: List[ModeSwitchRequiresPortAnalysis] = []
+            for port in sorted(swc.ports, key=lambda p: p.name):
+                if port.direction != "requires" or port.interfaceType != "modeSwitch":
+                    continue
+
+                usage = self.find_swc_port_usage(swc.name, port.name)
+                connected_instances: List[InstancePortConnectivity] = []
+                for instance in sorted(self.instances_by_swc_name.get(swc.name, []), key=lambda i: i.name):
+                    connectivity = self.find_instance_port_connectivity(instance.name, port.name)
+                    if connectivity is not None and connectivity.incoming_connectors:
+                        connected_instances.append(connectivity)
+
+                analyses.append(
+                    ModeSwitchRequiresPortAnalysis(
+                        swc_name=swc.name,
+                        port=port,
+                        usage=usage,
+                        connected_instances=tuple(connected_instances),
+                    )
+                )
+            self.mode_switch_requires_port_analysis_by_swc[swc.name] = tuple(analyses)
         self.sr_timing_communications = tuple(self._build_sr_timing_communications())
 
     def find_swc_port(self, swc_name: str, port_name: str) -> Optional[Port]:
@@ -272,6 +338,12 @@ class ValidationContext:
             (swc_name, port_name),
             SwcPortUsage(swc_name=swc_name, port_name=port_name),
         )
+
+    def iter_declared_port_usage(self, swc_name: str) -> Tuple[DeclaredPortUsage, ...]:
+        return self.declared_port_usage_by_swc.get(swc_name, ())
+
+    def iter_mode_switch_requires_port_analysis(self, swc_name: str) -> Tuple[ModeSwitchRequiresPortAnalysis, ...]:
+        return self.mode_switch_requires_port_analysis_by_swc.get(swc_name, ())
 
     def _build_sr_timing_communications(self) -> List[SrTimingCommunication]:
         communications: List[SrTimingCommunication] = []

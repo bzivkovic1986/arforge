@@ -2,7 +2,7 @@
 # Defines component prototypes (instances) and connectors between their ports.
 system:
   name: "DemoSystem"
-  description: "Demo AUTOSAR system wiring one speed flow and one mode-switch flow."
+  description: "Demo AUTOSAR system wiring explicit, implicit, and queued speed flows plus one mode-switch flow."
   composition:
     name: "Composition_DemoSystem"
     description: "Top-level composition for the scaffolded sender-receiver and mode-switch example."
@@ -18,8 +18,14 @@ system:
     # Connect the provider ports on the producer instance to the receiver ports on the consumer instance.
     connectors:
       - from: "SpeedSensor_1.Pp_VehicleSpeed"
-        description: "Connects the published speed sample to the display instance."
+        description: "Connects the published speed sample to the explicit receiver port."
         to: "SpeedDisplay_1.Rp_VehicleSpeed"
+      - from: "SpeedSensor_1.Pp_VehicleSpeed"
+        description: "Connects the published speed sample to the implicit receiver port."
+        to: "SpeedDisplay_1.Rp_VehicleSpeedImplicit"
+      - from: "SpeedSensor_1.Pp_VehicleSpeed"
+        description: "Connects the published speed sample to the queued receiver port."
+        to: "SpeedDisplay_1.Rp_VehicleSpeedQueued"
       - from: "SpeedSensor_1.Pp_PowerState"
         description: "Connects the ECU power-state mode to the display instance."
         to: "SpeedDisplay_1.Rp_PowerState"
