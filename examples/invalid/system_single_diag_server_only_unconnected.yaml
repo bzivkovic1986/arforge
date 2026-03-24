@@ -1,0 +1,18 @@
+# ARForge: System composition
+# Support system for unconnected client-server server-side runnable bindings.
+system:
+  name: "DemoSystem"
+  composition:
+    name: "Composition_DemoSystem"
+    components:
+      - name: "SpeedSensor_1"
+        typeRef: "SpeedSensor"
+      - name: "SpeedDisplay_1"
+        typeRef: "SpeedDisplay"
+      - name: "DiagServerOnly_1"
+        typeRef: "DiagServerOnly"
+    connectors:
+      - from: "SpeedSensor_1.Pp_VehicleSpeed"
+        to: "SpeedDisplay_1.Rp_VehicleSpeed"
+      - from: "SpeedSensor_1.Pp_PowerState"
+        to: "SpeedDisplay_1.Rp_PowerState"

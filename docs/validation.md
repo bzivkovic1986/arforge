@@ -94,14 +94,14 @@ The current `core` ruleset covers:
 | CORE-040 | ConnectionSemantics | Checks system connections and connector-level sender-receiver and client-server semantics. | Error |
 | CORE-041 | SenderReceiverConnectivity | Checks sender-receiver instantiated-port connectivity against connectors and runnable behavior. | Error or warning, depending on finding |
 | CORE-042 | SenderReceiverUsage | Checks whether connected sender-receiver ports are actually used by runnable behavior. | Warning |
-| CORE-043 | ClientServerConnectivity | Checks client-server instantiated-port connectivity against connectors and runnable behavior. | Error |
+| CORE-043 | ClientServerConnectivity | Checks client-server instantiated-port connectivity against connectors and runnable behavior. | Error or warning, depending on finding |
 | CORE-044 | ClientServerUsage | Checks whether connected or unconnected client-server ports are actually used by runnable behavior. | Warning |
 | CORE-045 | ModeSwitchConnectivity | Checks mode-switch instantiated-port connectivity against connectors. | Warning |
 | CORE-046 | DeclaredPortUsage | Checks whether declared SWC ports are actually used by runnable behavior before or regardless of system connectivity. | Warning |
 | CORE-050 | SRConsumerFasterThanProducer | Warns when a cyclic sender-receiver consumer runs faster than its cyclic producer. | Warning |
 | CORE-051 | SRProducerFasterThanConsumer | Warns when a cyclic sender-receiver producer runs faster than its cyclic consumer. | Warning |
 
-Severity in the table reflects the normal outcome pattern of each rule. Some cases, such as `CORE-041`, can emit both hard errors and design-quality warnings under different conditions.
+Severity in the table reflects the normal outcome pattern of each rule. Some cases, such as `CORE-041` and `CORE-043`, can emit both hard errors and integration-quality warnings under different conditions.
 
 ## Declared Vs Connected Usage
 

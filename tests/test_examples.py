@@ -23,6 +23,7 @@ SYSTEM_EXAMPLE_OUTPUT = "DemoSystem.arxml"
 WARNING_ONLY_PROJECT = INVALID_DIR / "project_connected_sr_port_unused.yaml"
 ERROR_PROJECT = INVALID_DIR / "project_bad_runnable_access.yaml"
 MIXED_PROJECT = INVALID_DIR / "project_sr_read_unconnected.yaml"
+CS_SERVER_WARNING_PROJECT = INVALID_DIR / "project_cs_server_oie_unconnected.yaml"
 
 
 def _is_project_fixture(path: Path) -> bool:
@@ -34,6 +35,7 @@ def _is_project_fixture(path: Path) -> bool:
 def _invalid_project_fixtures() -> list[Path]:
     warning_only = {
         "project_connected_sr_port_unused.yaml",
+        "project_cs_server_oie_unconnected.yaml",
         "project_declared_unused_cs_provides.yaml",
         "project_declared_unused_cs_requires.yaml",
         "project_declared_unused_mode_requires.yaml",
@@ -243,6 +245,29 @@ def test_cli_validate_warning_only_project_shows_warning_and_succeeds() -> None:
     assert "WARNING CORE-042-SR-CONNECTED-REQUIRES-UNUSED" in result.stdout
     assert "errors: 0" in result.stdout
     assert "warnings: 2" in result.stdout
+
+
+def test_cs_server_unconnected_binding_passes_validation_and_reports_warning() -> None:
+    project = load_and_validate_aggregator(CS_SERVER_WARNING_PROJECT)
+    report = build_semantic_report(project, ruleset="core")
+
+    assert report.error_findings() == []
+    oie_findings = [finding for finding in report.findings if finding.code == "CORE-043-CS-OIE-UNCONNECTED"]
+    assert oie_findings
+    assert all(finding.severity == FindingSeverity.WARNING for finding in oie_findings)
+
+
+def test_cli_validate_cs_server_unconnected_binding_warns_and_succeeds() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "arforge.cli", "validate", str(CS_SERVER_WARNING_PROJECT)],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "WARNING CORE-043-CS-OIE-UNCONNECTED" in result.stdout
+    assert "errors: 0" in result.stdout
 
 
 def test_cli_validate_error_project_shows_error_and_fails() -> None:
@@ -464,6 +489,7 @@ def test_data_receive_event_invalid_fixtures_emit_expected_codes(fixture_name: s
         ("project_sr_write_unconnected.yaml", "CORE-041-SR-PROVIDES-NO-OUTGOING"),
         ("project_cs_call_unconnected.yaml", "CORE-044-CS-REQUIRES-NO-CONNECTOR"),
         ("project_connected_sr_port_unused.yaml", "CORE-042-SR-CONNECTED-REQUIRES-UNUSED"),
+        ("project_cs_server_oie_unconnected.yaml", "CORE-043-CS-OIE-UNCONNECTED"),
     ],
 )
 def test_invalid_project_fixtures_emit_expected_warnings(fixture_name: str, expected_warning: str) -> None:

@@ -1811,6 +1811,7 @@ class CsPortConnectivityCase(ValidationCase):
                                 f"SWC instance '{instance.name}' runnable '{runnable_name}' operationInvokedEvents waits on operation "
                                 f"'{operation}' from unconnected clientServer provides port '{port.name}'.",
                                 code="CORE-043-CS-OIE-UNCONNECTED",
+                                severity="warning",
                             )
                         )
 
