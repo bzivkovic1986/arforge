@@ -2004,6 +2004,10 @@ class DeclaredPortUsageCase(ValidationCase):
         findings: List[Finding] = []
 
         for swc in sorted(ctx.project.swcs, key=lambda s: s.name):
+            mode_switch_requires_analysis = {
+                analysis.port.name: analysis
+                for analysis in ctx.iter_mode_switch_requires_port_analysis(swc.name)
+            }
             for declared_usage in ctx.iter_declared_port_usage(swc.name):
                 port = declared_usage.port
                 usage = declared_usage.usage
@@ -2043,7 +2047,10 @@ class DeclaredPortUsageCase(ValidationCase):
                         )
                     continue
 
-                if port.interfaceType == "modeSwitch" and port.direction == "requires" and not usage.mode_switch_events:
+                if port.interfaceType == "modeSwitch" and port.direction == "requires":
+                    analysis = mode_switch_requires_analysis.get(port.name)
+                    if analysis is None or analysis.usage.mode_switch_events:
+                        continue
                     findings.append(
                         self.finding(
                             f"ModeSwitch requires port '{port_ref}' is declared but no runnable modeSwitchEvents uses it.",
@@ -2052,6 +2059,44 @@ class DeclaredPortUsageCase(ValidationCase):
                     )
                 # Provider-side mode behavior is not modeled in ARForge yet, so we intentionally
                 # skip a declared-but-unused check for modeSwitch provides ports here.
+
+        return findings
+
+
+class ModeSwitchUsageCase(ValidationCase):
+    case_id = "CORE-047"
+    name = "ModeSwitchUsage"
+    description = "Checks whether connected mode-switch requires ports are actually used by runnable modeSwitchEvents."
+    tags = ("core", "system", "connections", "runnables", "mode-switch", "usage")
+    default_severity = "warning"
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        if not ctx.project.system.composition.connectors:
+            return False, "no system connectors defined"
+        has_mode_switch_requires_ports = any(
+            ctx.iter_mode_switch_requires_port_analysis(swc.name)
+            for swc in ctx.project.swcs
+        )
+        if not has_mode_switch_requires_ports:
+            return False, "no modeSwitch requires ports defined"
+        return True, None
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        findings: List[Finding] = []
+
+        for swc in sorted(ctx.project.swcs, key=lambda s: s.name):
+            for analysis in ctx.iter_mode_switch_requires_port_analysis(swc.name):
+                if analysis.usage.mode_switch_events:
+                    continue
+
+                for connectivity in analysis.connected_instances:
+                    findings.append(
+                        self.finding(
+                            f"Connected modeSwitch requires port '{connectivity.instance_name}.{analysis.port.name}' "
+                            "is not used by any runnable modeSwitchEvents.",
+                            code="CORE-047-MS-CONNECTED-REQUIRES-UNUSED",
+                        )
+                    )
 
         return findings
 
@@ -2289,6 +2334,7 @@ def core_validation_cases() -> List[ValidationCase]:
         CsPortUsageCase(),
         ModeSwitchConnectivityCase(),
         DeclaredPortUsageCase(),
+        ModeSwitchUsageCase(),
         SrConsumerFasterThanProducerCase(),
         SrProducerFasterThanConsumerCase(),
     ]

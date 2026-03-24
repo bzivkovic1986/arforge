@@ -69,6 +69,7 @@ The current `core` ruleset covers:
 - SWC-local declared-but-unused port warnings
 - connector compatibility checks
 - instantiated-port connectivity and usage checks
+- connected mode-switch requires-port usage checks
 - cyclic sender-receiver timing mismatch warnings
 
 ## Core Validation Cases
@@ -99,6 +100,7 @@ The current `core` ruleset covers:
 | CORE-044 | ClientServerUsage | Checks whether connected or unconnected client-server ports are actually used by runnable behavior. | Warning |
 | CORE-045 | ModeSwitchConnectivity | Checks mode-switch instantiated-port connectivity against connectors. | Warning |
 | CORE-046 | DeclaredPortUsage | Checks whether declared SWC ports are actually used by runnable behavior before or regardless of system connectivity. | Warning |
+| CORE-047 | ModeSwitchUsage | Checks whether connected mode-switch requires ports are actually used by runnable `modeSwitchEvents`. | Warning |
 | CORE-050 | SRConsumerFasterThanProducer | Warns when a cyclic sender-receiver consumer runs faster than its cyclic producer. | Warning |
 | CORE-051 | SRProducerFasterThanConsumer | Warns when a cyclic sender-receiver producer runs faster than its cyclic consumer. | Warning |
 
@@ -114,9 +116,11 @@ Severity in the table reflects the normal outcome pattern of each rule. Some cas
 - client-server provides ports with no `operationInvokedEvents`
 - mode-switch requires ports with no `modeSwitchEvents`
 
-This is distinct from the integration-oriented checks in `CORE-042`, `CORE-044`, and `CORE-045`, which still describe instantiated or connected system behavior.
+This is distinct from the integration-oriented checks in `CORE-042`, `CORE-044`, `CORE-045`, and `CORE-047`, which describe instantiated or connected system behavior.
 
 Mode-switch provides ports are intentionally skipped by `CORE-046` because provider-side mode behavior is not modeled in ARForge yet.
+
+`CORE-047` complements `CORE-045` for mode-switch requires ports. `CORE-045` warns when a mode-switch port is left unconnected, while `CORE-047` warns when a connected mode-switch requires port is still not referenced by any runnable `modeSwitchEvents`.
 
 ## Unused Mode Declaration Groups
 

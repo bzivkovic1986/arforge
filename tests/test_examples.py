@@ -25,6 +25,7 @@ ERROR_PROJECT = INVALID_DIR / "project_bad_runnable_access.yaml"
 MIXED_PROJECT = INVALID_DIR / "project_sr_read_unconnected.yaml"
 CS_SERVER_WARNING_PROJECT = INVALID_DIR / "project_cs_server_oie_unconnected.yaml"
 UNUSED_MODE_GROUP_PROJECT = INVALID_DIR / "project_unused_mode_group.yaml"
+CONNECTED_UNUSED_MODE_SWITCH_PROJECT = INVALID_DIR / "project_connected_mode_switch_port_unused.yaml"
 
 
 def _is_project_fixture(path: Path) -> bool:
@@ -41,6 +42,7 @@ def _invalid_project_fixtures() -> list[Path]:
         "project_declared_unused_cs_requires.yaml",
         "project_declared_unused_mode_requires.yaml",
         "project_declared_unused_sr_provides.yaml",
+        "project_connected_mode_switch_port_unused.yaml",
         "project_mode_switch_unconnected.yaml",
         "project_unused_mode_group.yaml",
         "project_sr_consumer_faster.yaml",
@@ -317,6 +319,14 @@ def test_main_example_has_no_declared_unused_port_findings() -> None:
     assert "CORE-046-MS-REQUIRES-DECLARED-UNUSED" not in warning_codes
 
 
+def test_main_example_has_no_connected_unused_mode_switch_requires_warning() -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    report = build_semantic_report(project, ruleset="core")
+    warning_codes = {finding.code for finding in report.findings if finding.severity == "warning"}
+
+    assert "CORE-047-MS-CONNECTED-REQUIRES-UNUSED" not in warning_codes
+
+
 def test_main_example_has_no_unused_mode_declaration_group_warning() -> None:
     project = load_and_validate_aggregator(VALID_PROJECT)
     report = build_semantic_report(project, ruleset="core")
@@ -351,6 +361,35 @@ def test_cli_validate_unused_mode_group_warns_and_succeeds() -> None:
     assert "Mdg_UnusedPowerState" in result.stdout
     assert "errors: 0" in result.stdout
     assert "warnings: 1" in result.stdout
+
+
+def test_connected_unused_mode_switch_project_passes_validation_and_reports_warning() -> None:
+    project = load_and_validate_aggregator(CONNECTED_UNUSED_MODE_SWITCH_PROJECT)
+    report = build_semantic_report(project, ruleset="core")
+
+    assert report.error_findings() == []
+    connected_findings = [
+        finding for finding in report.findings if finding.code == "CORE-047-MS-CONNECTED-REQUIRES-UNUSED"
+    ]
+    assert len(connected_findings) == 1
+    assert connected_findings[0].severity == FindingSeverity.WARNING
+    assert connected_findings[0].message == (
+        "Connected modeSwitch requires port 'SpeedDisplay_1.Rp_PowerState' is not used by any runnable modeSwitchEvents."
+    )
+
+
+def test_cli_validate_connected_unused_mode_switch_warns_and_succeeds() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "arforge.cli", "validate", str(CONNECTED_UNUSED_MODE_SWITCH_PROJECT)],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "WARNING CORE-047-MS-CONNECTED-REQUIRES-UNUSED" in result.stdout
+    assert "SpeedDisplay_1.Rp_PowerState" in result.stdout
+    assert "errors: 0" in result.stdout
 
 
 def test_split_export_reports_aligned_example_outputs(tmp_path: Path) -> None:
@@ -523,6 +562,7 @@ def test_data_receive_event_invalid_fixtures_emit_expected_codes(fixture_name: s
         ("project_declared_unused_cs_requires.yaml", "CORE-046-CS-REQUIRES-DECLARED-UNUSED"),
         ("project_declared_unused_cs_provides.yaml", "CORE-046-CS-PROVIDES-DECLARED-UNUSED"),
         ("project_declared_unused_mode_requires.yaml", "CORE-046-MS-REQUIRES-DECLARED-UNUSED"),
+        ("project_connected_mode_switch_port_unused.yaml", "CORE-047-MS-CONNECTED-REQUIRES-UNUSED"),
         ("project_unused_mode_group.yaml", "CORE-014-MDG-DECLARED-UNUSED"),
         ("project_sr_read_unconnected.yaml", "CORE-041-SR-REQUIRES-NO-INCOMING"),
         ("project_sr_write_unconnected.yaml", "CORE-041-SR-PROVIDES-NO-OUTGOING"),
