@@ -63,7 +63,7 @@
         "export",
         "${config:arforge.projectFile}",
         "--out",
-        "demo-project/build/DemoProject.arxml",
+        "build/DemoProject.arxml",
         "-vv"
       ],
       "problemMatcher": []
@@ -87,7 +87,7 @@
         "export",
         "${config:arforge.projectFile}",
         "--out",
-        "demo-project/build",
+        "build",
         "--split-by-swc",
         "-vv"
       ],
