@@ -1,0 +1,22 @@
+# ARForge: Invalid example fixture
+# Domain: software component validation.
+# Tests warning for declared sender-receiver provides port with no runnable write.
+swc:
+  name: "SpeedSensor"
+  category: "service"
+  runnables:
+    - name: "Runnable_DiagServer"
+      operationInvokedEvents:
+        - port: "Pp_Diag"
+          operation: "ReadDTC"
+        - port: "Pp_Diag"
+          operation: "ClearDTC"
+        - port: "Pp_Diag"
+          operation: "LogEvent"
+  ports:
+    - name: "Pp_VehicleSpeed"
+      direction: "provides"
+      interfaceRef: "If_VehicleSpeed"
+    - name: "Pp_Diag"
+      direction: "provides"
+      interfaceRef: "If_Diagnostics"

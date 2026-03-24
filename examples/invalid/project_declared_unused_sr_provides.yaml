@@ -1,0 +1,23 @@
+# ARForge: Invalid example fixture
+# Domain: project-level validation.
+# Tests warning for declared sender-receiver provides port with no runnable write.
+autosar:
+  version: "4.2"
+  rootPackage: "DEMO"
+
+inputs:
+  baseTypes: "support/base_types.yaml"
+  implementationDataTypes: "support/implementation_types.yaml"
+  applicationDataTypes: "support/application_types.yaml"
+  units:
+    - "support/units.yaml"
+  compuMethods:
+    - "support/compu_methods.yaml"
+  modeDeclarationGroups:
+    - "../modes/*.yaml"
+  interfaces:
+    - "../interfaces/*.yaml"
+  swcs:
+    - "swcs/SpeedSensor_NoSrWrite.yaml"
+    - "../swcs/SpeedConsumer.yaml"
+  system: "support/system_consumer_pair.yaml"

@@ -1031,6 +1031,9 @@ class OperationInvokedEventCase(ValidationCase):
                 itf = ctx.iface_by_name.get(port.interfaceRef)
                 if itf is None or itf.type != "clientServer":
                     continue
+                port_usage = ctx.find_swc_port_usage(swc.name, port.name)
+                if not port_usage.operation_invoked_events:
+                    continue
                 for op in sorted(itf.operations or [], key=lambda o: o.name):
                     if (swc.name, port.name, op.name) not in valid_bindings:
                         findings.append(
@@ -1950,6 +1953,79 @@ class ModeSwitchConnectivityCase(ValidationCase):
         return findings
 
 
+class DeclaredPortUsageCase(ValidationCase):
+    case_id = "CORE-046"
+    name = "DeclaredPortUsage"
+    description = "Checks whether declared SWC ports are ever used by runnable behavior, even before system connectors exist."
+    tags = ("core", "swc", "runnables", "usage", "analysis")
+    default_severity = "warning"
+
+    def applicability(self, ctx: ValidationContext) -> tuple[bool, str | None]:
+        has_relevant_ports = any(
+            port.interfaceType in {"senderReceiver", "clientServer", "modeSwitch"}
+            for swc in ctx.project.swcs
+            for port in swc.ports
+        )
+        if not has_relevant_ports:
+            return False, "no senderReceiver, clientServer, or modeSwitch ports defined"
+        return True, None
+
+    def run(self, ctx: ValidationContext) -> List[Finding]:
+        findings: List[Finding] = []
+
+        for swc in sorted(ctx.project.swcs, key=lambda s: s.name):
+            for declared_usage in ctx.iter_declared_port_usage(swc.name):
+                port = declared_usage.port
+                usage = declared_usage.usage
+                port_ref = f"{swc.name}.{port.name}"
+
+                if port.interfaceType == "senderReceiver":
+                    if port.direction == "provides" and not usage.writes:
+                        findings.append(
+                            self.finding(
+                                f"SenderReceiver provides port '{port_ref}' is declared but no runnable writes to it.",
+                                code="CORE-046-SR-PROVIDES-DECLARED-UNUSED",
+                            )
+                        )
+                    if port.direction == "requires" and not usage.reads and not usage.data_receive_events:
+                        findings.append(
+                            self.finding(
+                                f"SenderReceiver requires port '{port_ref}' is declared but no runnable reads from it and no dataReceiveEvent references it.",
+                                code="CORE-046-SR-REQUIRES-DECLARED-UNUSED",
+                            )
+                        )
+                    continue
+
+                if port.interfaceType == "clientServer":
+                    if port.direction == "requires" and not usage.calls:
+                        findings.append(
+                            self.finding(
+                                f"ClientServer requires port '{port_ref}' is declared but no runnable call uses it.",
+                                code="CORE-046-CS-REQUIRES-DECLARED-UNUSED",
+                            )
+                        )
+                    if port.direction == "provides" and not usage.operation_invoked_events:
+                        findings.append(
+                            self.finding(
+                                f"ClientServer provides port '{port_ref}' is declared but no runnable operationInvokedEvent binds any exposed operation on it.",
+                                code="CORE-046-CS-PROVIDES-DECLARED-UNUSED",
+                            )
+                        )
+                    continue
+
+                if port.interfaceType == "modeSwitch" and port.direction == "requires" and not usage.mode_switch_events:
+                    findings.append(
+                        self.finding(
+                            f"ModeSwitch requires port '{port_ref}' is declared but no runnable modeSwitchEvents uses it.",
+                            code="CORE-046-MS-REQUIRES-DECLARED-UNUSED",
+                        )
+                    )
+                # Provider-side mode behavior is not modeled in ARForge yet, so we intentionally
+                # skip a declared-but-unused check for modeSwitch provides ports here.
+
+        return findings
+
+
 class SrPortConnectivityCase(ValidationCase):
     case_id = "CORE-041"
     name = "SenderReceiverConnectivity"
@@ -2178,9 +2254,10 @@ def core_validation_cases() -> List[ValidationCase]:
         ConnectionSemanticCase(),
         SrPortConnectivityCase(),
         SrPortUsageCase(),
-        SrConsumerFasterThanProducerCase(),
-        SrProducerFasterThanConsumerCase(),
         CsPortConnectivityCase(),
         CsPortUsageCase(),
         ModeSwitchConnectivityCase(),
+        DeclaredPortUsageCase(),
+        SrConsumerFasterThanProducerCase(),
+        SrProducerFasterThanConsumerCase(),
     ]

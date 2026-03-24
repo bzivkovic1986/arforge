@@ -66,6 +66,7 @@ The current `core` ruleset covers:
 - trigger policy checks
 - ComSpec validation
 - system component instance type checks
+- SWC-local declared-but-unused port warnings
 - connector compatibility checks
 - instantiated-port connectivity and usage checks
 - cyclic sender-receiver timing mismatch warnings
@@ -96,10 +97,25 @@ The current `core` ruleset covers:
 | CORE-043 | ClientServerConnectivity | Checks client-server instantiated-port connectivity against connectors and runnable behavior. | Error |
 | CORE-044 | ClientServerUsage | Checks whether connected or unconnected client-server ports are actually used by runnable behavior. | Warning |
 | CORE-045 | ModeSwitchConnectivity | Checks mode-switch instantiated-port connectivity against connectors. | Warning |
+| CORE-046 | DeclaredPortUsage | Checks whether declared SWC ports are actually used by runnable behavior before or regardless of system connectivity. | Warning |
 | CORE-050 | SRConsumerFasterThanProducer | Warns when a cyclic sender-receiver consumer runs faster than its cyclic producer. | Warning |
 | CORE-051 | SRProducerFasterThanConsumer | Warns when a cyclic sender-receiver producer runs faster than its cyclic consumer. | Warning |
 
 Severity in the table reflects the normal outcome pattern of each rule. Some cases, such as `CORE-041`, can emit both hard errors and design-quality warnings under different conditions.
+
+## Declared Vs Connected Usage
+
+`CORE-046` is SWC-local and warns when a declared port has no runnable-side usage yet:
+
+- sender-receiver provides ports with no writes
+- sender-receiver requires ports with no reads and no `dataReceiveEvents`
+- client-server requires ports with no calls
+- client-server provides ports with no `operationInvokedEvents`
+- mode-switch requires ports with no `modeSwitchEvents`
+
+This is distinct from the integration-oriented checks in `CORE-042`, `CORE-044`, and `CORE-045`, which still describe instantiated or connected system behavior.
+
+Mode-switch provides ports are intentionally skipped by `CORE-046` because provider-side mode behavior is not modeled in ARForge yet.
 
 ## Timing Analysis Rules
 

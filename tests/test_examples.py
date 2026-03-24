@@ -34,6 +34,10 @@ def _is_project_fixture(path: Path) -> bool:
 def _invalid_project_fixtures() -> list[Path]:
     warning_only = {
         "project_connected_sr_port_unused.yaml",
+        "project_declared_unused_cs_provides.yaml",
+        "project_declared_unused_cs_requires.yaml",
+        "project_declared_unused_mode_requires.yaml",
+        "project_declared_unused_sr_provides.yaml",
         "project_mode_switch_unconnected.yaml",
         "project_sr_consumer_faster.yaml",
         "project_sr_producer_faster.yaml",
@@ -238,7 +242,7 @@ def test_cli_validate_warning_only_project_shows_warning_and_succeeds() -> None:
     assert result.returncode == 0, result.stdout + result.stderr
     assert "WARNING CORE-042-SR-CONNECTED-REQUIRES-UNUSED" in result.stdout
     assert "errors: 0" in result.stdout
-    assert "warnings: 1" in result.stdout
+    assert "warnings: 2" in result.stdout
 
 
 def test_cli_validate_error_project_shows_error_and_fails() -> None:
@@ -272,6 +276,18 @@ def test_validation_report_summary_counts_are_grouped_by_severity() -> None:
     report = build_semantic_report(project, ruleset="core")
 
     assert report.severity_counts() == {"error": 3, "warning": 2, "info": 0}
+
+
+def test_main_example_has_no_declared_unused_port_findings() -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    report = build_semantic_report(project, ruleset="core")
+    warning_codes = {finding.code for finding in report.findings if finding.severity == "warning"}
+
+    assert "CORE-046-SR-PROVIDES-DECLARED-UNUSED" not in warning_codes
+    assert "CORE-046-SR-REQUIRES-DECLARED-UNUSED" not in warning_codes
+    assert "CORE-046-CS-PROVIDES-DECLARED-UNUSED" not in warning_codes
+    assert "CORE-046-CS-REQUIRES-DECLARED-UNUSED" not in warning_codes
+    assert "CORE-046-MS-REQUIRES-DECLARED-UNUSED" not in warning_codes
 
 
 def test_split_export_reports_aligned_example_outputs(tmp_path: Path) -> None:
@@ -439,6 +455,11 @@ def test_data_receive_event_invalid_fixtures_emit_expected_codes(fixture_name: s
 @pytest.mark.parametrize(
     ("fixture_name", "expected_warning"),
     [
+        ("project_declared_unused_sr_provides.yaml", "CORE-046-SR-PROVIDES-DECLARED-UNUSED"),
+        ("project_connected_sr_port_unused.yaml", "CORE-046-SR-REQUIRES-DECLARED-UNUSED"),
+        ("project_declared_unused_cs_requires.yaml", "CORE-046-CS-REQUIRES-DECLARED-UNUSED"),
+        ("project_declared_unused_cs_provides.yaml", "CORE-046-CS-PROVIDES-DECLARED-UNUSED"),
+        ("project_declared_unused_mode_requires.yaml", "CORE-046-MS-REQUIRES-DECLARED-UNUSED"),
         ("project_sr_read_unconnected.yaml", "CORE-041-SR-REQUIRES-NO-INCOMING"),
         ("project_sr_write_unconnected.yaml", "CORE-041-SR-PROVIDES-NO-OUTGOING"),
         ("project_cs_call_unconnected.yaml", "CORE-044-CS-REQUIRES-NO-CONNECTOR"),

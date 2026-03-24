@@ -124,6 +124,13 @@ class SwcPortUsage:
 
 
 @dataclass(frozen=True)
+class DeclaredPortUsage:
+    swc_name: str
+    port: Port
+    usage: SwcPortUsage
+
+
+@dataclass(frozen=True)
 class SrTimingCommunication:
     provider_swc_name: str
     provider_port_name: str
@@ -253,6 +260,22 @@ class ValidationContext:
                 operation_invoked_events=tuple(usage.get("operation_invoked_events", [])),
                 raises_errors=tuple(usage.get("raises_errors", [])),
             )
+        self.declared_port_usage_by_swc: Dict[str, Tuple[DeclaredPortUsage, ...]] = {}
+        for swc in sorted(project.swcs, key=lambda s: s.name):
+            declared_usage: List[DeclaredPortUsage] = []
+            for port in sorted(swc.ports, key=lambda p: p.name):
+                usage = self.runnable_port_usage_by_swc_port.get(
+                    (swc.name, port.name),
+                    SwcPortUsage(swc_name=swc.name, port_name=port.name),
+                )
+                declared_usage.append(
+                    DeclaredPortUsage(
+                        swc_name=swc.name,
+                        port=port,
+                        usage=usage,
+                    )
+                )
+            self.declared_port_usage_by_swc[swc.name] = tuple(declared_usage)
         self.sr_timing_communications = tuple(self._build_sr_timing_communications())
 
     def find_swc_port(self, swc_name: str, port_name: str) -> Optional[Port]:
@@ -272,6 +295,9 @@ class ValidationContext:
             (swc_name, port_name),
             SwcPortUsage(swc_name=swc_name, port_name=port_name),
         )
+
+    def iter_declared_port_usage(self, swc_name: str) -> Tuple[DeclaredPortUsage, ...]:
+        return self.declared_port_usage_by_swc.get(swc_name, ())
 
     def _build_sr_timing_communications(self) -> List[SrTimingCommunication]:
         communications: List[SrTimingCommunication] = []
