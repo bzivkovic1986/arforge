@@ -1,0 +1,41 @@
+@startuml
+title Behavior View - {{ view.swc_name }}
+top to bottom direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 60
+skinparam ranksep 80
+skinparam linetype ortho
+skinparam rectangle {
+  RoundCorner 12
+}
+
+package "{{ view.swc_name }}" {
+{% for port in view.incoming_ports %}
+  rectangle "{{ port.name }}\n{{ port.kind_label }}" as {{ port.id }} {{ port.fill_color }}
+{% endfor %}
+
+{% for row in view.runnable_rows %}
+  together {
+{% for runnable in row.runnables %}
+    component "{{ runnable.name }}{% for line in runnable.metadata_lines %}\n{{ line }}{% endfor %}" as {{ runnable.id }} #ffe599
+{% endfor %}
+  }
+{% endfor %}
+
+{% for port in view.outgoing_ports %}
+  rectangle "{{ port.name }}\n{{ port.kind_label }}" as {{ port.id }} {{ port.fill_color }}
+{% endfor %}
+}
+
+{% if view.incoming_ports and view.runnables %}
+{{ view.incoming_ports[0].id }} -[hidden]down-> {{ view.runnables[0].id }}
+{% endif %}
+{% if view.runnables and view.outgoing_ports %}
+{{ view.runnables[0].id }} -[hidden]down-> {{ view.outgoing_ports[0].id }}
+{% endif %}
+
+{% for edge in view.edges %}
+{{ edge.source_id }} --> {{ edge.target_id }} : {{ edge.label }}
+{% endfor %}
+@enduml

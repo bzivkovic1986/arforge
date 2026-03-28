@@ -47,6 +47,7 @@ Current implementation targets a practical AUTOSAR Classic 4.2 subset:
 | **System composition** | Component prototypes, SWC type references, port-level assembly connectors for SR, CS, and mode-switch |
 | **Validation** | 191 stable finding codes, three severity levels (error/warning/info), verbose diagnostics |
 | **Export** | Jinja2-based ARXML, monolithic or split-by-SWC, deterministic ordering |
+| **Diagrams** | Unified `generate diagram` command for PlantUML architecture views |
 
 ---
 
@@ -101,6 +102,9 @@ python -m arforge.cli validate examples/autosar.project.yaml
 
 # Export — monolithic or split by SWC
 python -m arforge.cli export examples/autosar.project.yaml --out build/out --split-by-swc
+
+# Generate architecture diagrams
+python -m arforge.cli generate diagram examples/autosar.project.yaml --format plantuml --out build/diagrams
 ```
 
 ### Run tests

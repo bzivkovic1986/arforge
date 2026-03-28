@@ -1,0 +1,28 @@
+@startuml
+title Interface / Contract View
+top to bottom direction
+skinparam shadowing false
+skinparam class {
+  BackgroundColor White
+  ArrowColor #555555
+  BorderColor #555555
+}
+
+{% for entity in view.entities %}
+{% if entity.shape == "enum" %}
+enum "{{ entity.name }}" as {{ entity.id }} {
+  kind: {{ entity.stereotype }}
+{% else %}
+class "{{ entity.name }}" as {{ entity.id }} {
+  kind: {{ entity.stereotype }}
+{% endif %}
+{% for line in entity.body_lines %}
+  {{ line }}
+{% endfor %}
+}
+{% endfor %}
+
+{% for relation in view.relations %}
+{{ relation.source_id }} --> {{ relation.target_id }} : {{ relation.label }}
+{% endfor %}
+@enduml

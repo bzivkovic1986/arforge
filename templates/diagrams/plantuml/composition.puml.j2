@@ -1,0 +1,47 @@
+@startuml
+title Composition View - {{ view.system_name }}
+top to bottom direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 70
+skinparam ranksep 90
+skinparam linetype ortho
+skinparam rectangle {
+  RoundCorner 12
+}
+
+package "{{ view.composition_name }}" as {{ view.boundary_id }} {
+{% for row in view.rows %}
+  together {
+{% for instance in row.instances %}
+    rectangle "{{ instance.name }}" as {{ instance.id }} {
+{% for port in instance.incoming_ports %}
+      rectangle "{{ port.name }}\n{{ port.kind_label }}" as {{ port.id }} {{ port.fill_color }}
+{% endfor %}
+      rectangle ": {{ instance.type_name }}" as {{ instance.header_id }} {{ instance.body_fill_color }}
+{% for port in instance.outgoing_ports %}
+      rectangle "{{ port.name }}\n{{ port.kind_label }}" as {{ port.id }} {{ port.fill_color }}
+{% endfor %}
+    }
+{% endfor %}
+  }
+{% endfor %}
+}
+
+{% for link in view.row_links %}
+{{ link.source_id }} -[hidden]{{ link.direction }}-> {{ link.target_id }}
+{% endfor %}
+{% for connector in view.assembly_connectors %}
+{{ connector.source_id }} -{{ connector.direction_hint }}-> {{ connector.target_id }} : {{ connector.label }}
+{% endfor %}
+{% for connector in view.delegation_connectors %}
+{{ connector.source_id }} ..{{ connector.direction_hint }}.> {{ connector.target_id }} : {{ connector.label }}
+{% endfor %}
+
+legend right
+  |= Kind |= Meaning |
+  | SR | SenderReceiver |
+  | C/S | ClientServer |
+  | Mode | ModeSwitch |
+endlegend
+@enduml

@@ -72,8 +72,8 @@ ARForge currently provides a complete SWC design and ARXML export pipeline for A
 **C code skeleton generation**
 Generate `.c` and `.h` implementation templates from the validated SWC model. Runnable stubs with correct `Rte_Read_`, `Rte_Write_`, `Rte_Call_`, and `Rte_Receive_` signatures derived from port definitions, ComSpec, and CS argument directions. This turns ARForge from a design tool into a development tool and is entirely derivable from the existing validated model — no new YAML syntax required.
 
-**PlantUML / Mermaid diagram generation**
-Generate system topology diagrams showing component instances and their port connections, and per-SWC diagrams showing provides/requires ports with interface names. Mermaid output renders natively in GitHub markdown, making generated diagrams first-class repository artifacts alongside the YAML.
+**PlantUML diagram generation**
+Generate system topology diagrams showing component instances and their port connections, and per-SWC diagrams showing provides/requires ports with interface names.
 
 **Deeper connectivity and usage reporting**
 A structured `arforge report` command producing a human-readable summary of what is connected, what is dangling, and what is defined but unused across the full project. Useful for architecture reviews and integration handoffs.
