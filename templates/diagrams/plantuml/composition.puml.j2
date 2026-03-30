@@ -1,19 +1,12 @@
 @startuml
 title Composition View - {{ view.system_name }}
 top to bottom direction
-skinparam shadowing false
-skinparam componentStyle rectangle
-skinparam nodesep 70
-skinparam ranksep 90
-skinparam component {
-  RoundCorner 12
-}
 skinparam legendBackgroundColor #FFFFFF
 skinparam legendBorderColor #FFFFFF
 skinparam legendEntrySeparator #FFFFFF
 
 {% for instance in view.instances %}
-component "{{ instance.name }}\n{{ instance.type_label }}" as {{ instance.id }} {{ instance.fill_color }} {
+component "{{ instance.name }}" as {{ instance.id }} {{ instance.fill_color }} {
 {% for port in instance.incoming_ports %}
   portin "{{ port.name }}" as {{ port.id }} {{ port.fill_color }}
 {% endfor %}

@@ -145,6 +145,7 @@ class BehaviorEdgeView:
 class BehaviorDiagramView:
     swc_name: str
     swc_type_label: str
+    swc_fill_color: str
     incoming_ports: List[BehaviorPortView]
     outgoing_ports: List[BehaviorPortView]
     runnable_columns: int
@@ -675,12 +676,20 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
 
 def _runnable_metadata_lines(swc: Swc, runnable_name: str) -> List[str]:
     runnable = next(r for r in swc.runnables if r.name == runnable_name)
-    lines = []
     if runnable.initEvent:
-        lines.append("init")
+        return ["(init)"]
     if runnable.timingEventMs is not None:
-        lines.append(f"cyclic {runnable.timingEventMs} ms")
-    return lines
+        return [f"(cyclic, {runnable.timingEventMs} ms)"]
+    if runnable.modeSwitchEvents:
+        event = sorted(runnable.modeSwitchEvents, key=lambda item: (item.port, item.mode))[0]
+        return [f"(mode, {event.port}: {event.mode})"]
+    if runnable.dataReceiveEvents:
+        event = sorted(runnable.dataReceiveEvents, key=lambda item: (item.port, item.dataElement))[0]
+        return [f"(receive, {event.port}: {event.dataElement})"]
+    if runnable.operationInvokedEvents:
+        event = sorted(runnable.operationInvokedEvents, key=lambda item: (item.port, item.operation))[0]
+        return [f"(invoked, {event.port}: {event.operation})"]
+    return []
 
 
 def _behavior_edge(
@@ -760,7 +769,7 @@ def _build_behavior_view(swc: Swc) -> BehaviorDiagramView:
                 _behavior_edge(
                     port_map[event.port].id,
                     runnable_id,
-                    f"invoked {event.operation}",
+                    "",
                     "eventEdge",
                 )
             )
@@ -770,7 +779,7 @@ def _build_behavior_view(swc: Swc) -> BehaviorDiagramView:
                 _behavior_edge(
                     port_map[event.port].id,
                     runnable_id,
-                    f"mode {event.mode}",
+                    "",
                     "modeEdge",
                 )
             )
@@ -815,6 +824,7 @@ def _build_behavior_view(swc: Swc) -> BehaviorDiagramView:
     return BehaviorDiagramView(
         swc_name=swc.name,
         swc_type_label=_swc_category_label(swc.category),
+        swc_fill_color=_swc_fill_color(swc.category),
         incoming_ports=incoming_ports,
         outgoing_ports=outgoing_ports,
         runnable_columns=runnable_columns,

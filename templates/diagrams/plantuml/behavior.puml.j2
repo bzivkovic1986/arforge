@@ -1,41 +1,63 @@
 @startuml
 title Behavior View - {{ view.swc_name }}
 top to bottom direction
-skinparam shadowing false
-skinparam packageStyle rectangle
-skinparam nodesep 60
-skinparam ranksep 80
-skinparam linetype ortho
-skinparam rectangle {
-  RoundCorner 12
-}
+skinparam legendBackgroundColor #FFFFFF
+skinparam legendBorderColor #FFFFFF
+skinparam legendEntrySeparator #FFFFFF
 
-package "{{ view.swc_name }}\n{{ view.swc_type_label }}" #f7f7f7 {
+component "{{ view.swc_name }}" as swc__{{ view.swc_name }} {{ view.swc_fill_color }} {
 {% for port in view.incoming_ports %}
-  rectangle "{{ port.name }}\n{{ port.kind_label }}" as {{ port.id }} {{ port.fill_color }}
+  portin "{{ port.name }}" as {{ port.id }} {{ port.fill_color }}
 {% endfor %}
 
 {% for row in view.runnable_rows %}
-  together {
 {% for runnable in row.runnables %}
-    component "{{ runnable.name }}{% for line in runnable.metadata_lines %}\n{{ line }}{% endfor %}" as {{ runnable.id }} #ffe599
+  component "{{ runnable.name }}{% for line in runnable.metadata_lines %}\n{{ line }}{% endfor %}" as {{ runnable.id }} #e9e4df
 {% endfor %}
-  }
 {% endfor %}
 
 {% for port in view.outgoing_ports %}
-  rectangle "{{ port.name }}\n{{ port.kind_label }}" as {{ port.id }} {{ port.fill_color }}
+  portout "{{ port.name }}" as {{ port.id }} {{ port.fill_color }}
 {% endfor %}
 }
 
-{% if view.incoming_ports and view.runnables %}
-{{ view.incoming_ports[0].id }} -[hidden]down-> {{ view.runnables[0].id }}
-{% endif %}
-{% if view.runnables and view.outgoing_ports %}
-{{ view.runnables[0].id }} -[hidden]down-> {{ view.outgoing_ports[0].id }}
-{% endif %}
-
 {% for edge in view.edges %}
-{{ edge.source_id }} --> {{ edge.target_id }} : {{ edge.label }}
+{% if edge.style_class == "modeEdge" %}
+{% if edge.label %}
+{{ edge.source_id }} -[#8e44ad,dashed]-> {{ edge.target_id }} : {{ edge.label }}
+{% else %}
+{{ edge.source_id }} -[#8e44ad,dashed]-> {{ edge.target_id }}
+{% endif %}
+{% elif edge.style_class == "callEdge" or edge.style_class == "eventEdge" %}
+{% if edge.label %}
+{{ edge.source_id }} -[#c77d00,bold]-> {{ edge.target_id }} : {{ edge.label }}
+{% else %}
+{{ edge.source_id }} -[#c77d00,bold]-> {{ edge.target_id }}
+{% endif %}
+{% else %}
+{% if edge.label %}
+{{ edge.source_id }} -[#2e8b57]-> {{ edge.target_id }} : {{ edge.label }}
+{% else %}
+{{ edge.source_id }} -[#2e8b57]-> {{ edge.target_id }}
+{% endif %}
+{% endif %}
 {% endfor %}
+
+legend bottom
+|=    |= SWC Type |
+|<back:#d6e4ff>        </back>| Application SWC |
+|<back:#d8f3dc>        </back>| Service SWC |
+|<back:#ffe5b4>        </back>| Complex Device Driver |
+|=    |= Port Type |
+|<back:#b7efc5>        </back>| Provided S/R |
+|<back:#9ec5fe>        </back>| Required S/R |
+|<back:#fff3bf>        </back>| Provided C/S |
+|<back:#ffcf99>        </back>| Required C/S |
+|<back:#e0bbff>        </back>| Provided ModeSwitch |
+|<back:#ffb3c6>        </back>| Required ModeSwitch |
+|=    |= Connector Type |= Description |
+|<back:#2e8b57>        </back>| Sender/Receiver connector |
+|<back:#c77d00>        </back>| Client/Server connector |
+|<back:#8e44ad>        </back>| ModeSwitch connector |
+endlegend
 @enduml

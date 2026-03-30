@@ -247,8 +247,7 @@ def test_generate_diagrams_contain_expected_smoke_fragments(
 
     assert composition_name in composition_text
     assert "Rp_PowerState" in composition_text
-    assert "(Application SWC)" in composition_text
-    assert 'component "SpeedSensor_1\\n(Application SWC)"' in composition_text
+    assert 'component "SpeedSensor_1"' in composition_text
     assert 'portout "Pp_VehicleSpeed"' in composition_text
     assert 'portin "Rp_PowerState"' in composition_text
     assert "Provided S/R" in composition_text
