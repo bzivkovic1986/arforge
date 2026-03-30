@@ -253,6 +253,7 @@ def test_generate_diagrams_contain_expected_smoke_fragments(
     assert "SpeedDisplay_1" in interfaces_text
     assert "Rp_VehicleSpeed" in interfaces_text
     assert "Mdg_PowerState" in interfaces_text
+    assert "type__App_VehicleSpeed --> type__Impl_VehicleSpeed_U16 : impl" in interfaces_text
     assert behavior_name in behavior_text
     assert "Pp_VehicleSpeed" in behavior_text
 

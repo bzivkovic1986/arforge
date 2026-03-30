@@ -82,6 +82,7 @@ class InterfaceEntityView:
     id: str
     name: str
     stereotype: str
+    layer: str
     body_lines: List[str]
     style_class: str
     fill_color: str
@@ -96,8 +97,15 @@ class InterfaceRelationView:
 
 
 @dataclass(frozen=True)
+class InterfaceLayerView:
+    id: str
+    entities: List[InterfaceEntityView]
+
+
+@dataclass(frozen=True)
 class InterfaceDiagramView:
     entities: List[InterfaceEntityView]
+    layers: List[InterfaceLayerView]
     relations: List[InterfaceRelationView]
 
 
@@ -248,6 +256,26 @@ def _connector_label(connection: Connection, source_port: Port | None) -> tuple[
 
 def _sorted_unique(items: Iterable[str]) -> List[str]:
     return sorted({item for item in items if item})
+
+
+def _build_interface_layers(entities: Iterable[InterfaceEntityView]) -> List[InterfaceLayerView]:
+    layer_order = [
+        "instances",
+        "ports",
+        "interfaces",
+        "application_types",
+        "implementation_types",
+        "compu_methods",
+        "mode_groups",
+    ]
+    grouped = {layer: [] for layer in layer_order}
+    for entity in entities:
+        grouped.setdefault(entity.layer, []).append(entity)
+    return [
+        InterfaceLayerView(id=layer, entities=sorted(grouped[layer], key=lambda entity: (entity.name, entity.stereotype)))
+        for layer in layer_order
+        if grouped.get(layer)
+    ]
 
 
 def _build_composition_view(project: Project) -> CompositionDiagramView:
@@ -423,6 +451,7 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
                 id=_node_id("instance", instance.name),
                 name=instance.name,
                 stereotype="componentInstance",
+                layer="instances",
                 body_lines=[f"type: {instance.typeRef}"],
                 style_class="componentInstance",
                 fill_color="#f7f7f7",
@@ -440,6 +469,7 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
                     id=port_id,
                     name=port.name,
                     stereotype="instantiatedPort",
+                    layer="ports",
                     body_lines=port_lines,
                     style_class="instantiatedPort",
                     fill_color=fill_color,
@@ -532,6 +562,7 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
                 id=_node_id("if", interface.name),
                 name=interface.name,
                 stereotype=f"{interface.type}Interface",
+                layer="interfaces",
                 body_lines=body_lines,
                 style_class=f"interface_{interface.type}",
                 fill_color={
@@ -550,6 +581,7 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
                 id=_node_id("type", data_type.name),
                 name=data_type.name,
                 stereotype="applicationDataType",
+                layer="application_types",
                 body_lines=_type_body_lines(data_type),
                 style_class="applicationType",
                 fill_color="#d9f2d9",
@@ -557,6 +589,13 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
             )
         )
         referenced_impl_types.add(data_type.implementationTypeRef)
+        relations.append(
+            InterfaceRelationView(
+                source_id=_node_id("type", data_type.name),
+                target_id=_node_id("type", data_type.implementationTypeRef),
+                label="impl",
+            )
+        )
         if data_type.compuMethodRef and data_type.compuMethodRef in compu_methods:
             referenced_compu_methods.add(data_type.compuMethodRef)
             relations.append(
@@ -583,6 +622,7 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
                 id=_node_id("type", data_type.name),
                 name=data_type.name,
                 stereotype="implementationDataType",
+                layer="implementation_types",
                 body_lines=body_lines,
                 style_class="implementationType",
                 fill_color="#f4f4f4",
@@ -607,6 +647,7 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
                 id=_node_id("compu", compu.name),
                 name=compu.name,
                 stereotype=stereotype,
+                layer="compu_methods",
                 body_lines=body_lines,
                 style_class="compuMethod",
                 fill_color="#fde9d9",
@@ -623,6 +664,7 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
                 id=_node_id("mode", group.name),
                 name=group.name,
                 stereotype="modeDeclarationGroup",
+                layer="mode_groups",
                 body_lines=body_lines,
                 style_class="modeGroup",
                 fill_color="#eadcf8",
@@ -631,8 +673,9 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
         )
 
     entities = sorted(entities, key=lambda entity: (entity.name, entity.stereotype))
+    layers = _build_interface_layers(entities)
     relations = sorted(relations, key=lambda relation: (relation.source_id, relation.target_id, relation.label))
-    return InterfaceDiagramView(entities=entities, relations=relations)
+    return InterfaceDiagramView(entities=entities, layers=layers, relations=relations)
 
 
 def _runnable_metadata_lines(swc: Swc, runnable_name: str) -> List[str]:
