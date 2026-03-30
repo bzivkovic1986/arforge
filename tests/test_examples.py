@@ -35,7 +35,8 @@ SHARED_EXAMPLE_OUTPUT = "DEMO_SharedTypes.arxml"
 SYSTEM_EXAMPLE_OUTPUT = "DemoSystem.arxml"
 PLANTUML_DIAGRAM_OUTPUTS = [
     "composition_DemoSystem.puml",
-    "interfaces.puml",
+    "interfaces_wiring.puml",
+    "interfaces_contracts.puml",
     "behavior_SpeedDisplay.puml",
     "behavior_SpeedSensor.puml",
 ]
@@ -242,7 +243,8 @@ def test_generate_diagrams_contain_expected_smoke_fragments(
     extension = ".puml"
 
     composition_text = (out_dir / f"composition_DemoSystem{extension}").read_text(encoding="utf-8")
-    interfaces_text = (out_dir / f"interfaces{extension}").read_text(encoding="utf-8")
+    interfaces_wiring_text = (out_dir / f"interfaces_wiring{extension}").read_text(encoding="utf-8")
+    interfaces_contracts_text = (out_dir / f"interfaces_contracts{extension}").read_text(encoding="utf-8")
     behavior_text = (out_dir / f"behavior_SpeedSensor{extension}").read_text(encoding="utf-8")
 
     assert composition_name in composition_text
@@ -257,11 +259,12 @@ def test_generate_diagrams_contain_expected_smoke_fragments(
     assert ": C/S" not in composition_text
     assert "Application SWC" in composition_text
     assert "Client/Server connector" in composition_text
-    assert interface_name in interfaces_text
-    assert "SpeedDisplay_1" in interfaces_text
-    assert "Rp_VehicleSpeed" in interfaces_text
-    assert "Mdg_PowerState" in interfaces_text
-    assert "type__App_VehicleSpeed --> type__Impl_VehicleSpeed_U16 : impl" in interfaces_text
+    assert interface_name in interfaces_wiring_text
+    assert "SpeedDisplay_1" in interfaces_wiring_text
+    assert "Rp_VehicleSpeed" in interfaces_wiring_text
+    assert interface_name in interfaces_contracts_text
+    assert "Mdg_PowerState" in interfaces_contracts_text
+    assert "type__App_VehicleSpeed --> type__Impl_VehicleSpeed_U16 : impl" in interfaces_contracts_text
     assert behavior_name in behavior_text
     assert "Pp_VehicleSpeed" in behavior_text
 

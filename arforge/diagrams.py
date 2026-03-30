@@ -157,7 +157,8 @@ class BehaviorDiagramView:
 @dataclass(frozen=True)
 class DiagramBuild:
     composition: CompositionDiagramView
-    interfaces: InterfaceDiagramView
+    interfaces_wiring: InterfaceDiagramView
+    interfaces_contracts: InterfaceDiagramView
     behaviors: List[BehaviorDiagramView]
 
 
@@ -165,7 +166,8 @@ class DiagramBuild:
 class DiagramBackendSpec:
     extension: str
     composition_template: str
-    interfaces_template: str
+    interfaces_wiring_template: str
+    interfaces_contracts_template: str
     behavior_template: str
 
 
@@ -173,7 +175,8 @@ BACKENDS: Dict[DiagramFormat, DiagramBackendSpec] = {
     "plantuml": DiagramBackendSpec(
         extension=".puml",
         composition_template="diagrams/plantuml/composition.puml.j2",
-        interfaces_template="diagrams/plantuml/interfaces.puml.j2",
+        interfaces_wiring_template="diagrams/plantuml/interfaces.puml.j2",
+        interfaces_contracts_template="diagrams/plantuml/interfaces.puml.j2",
         behavior_template="diagrams/plantuml/behavior.puml.j2",
     ),
 }
@@ -426,15 +429,17 @@ def _type_body_lines(data_type: ApplicationDataType) -> List[str]:
     return lines
 
 
-def _build_interface_view(project: Project) -> InterfaceDiagramView:
+def _build_interface_views(project: Project) -> tuple[InterfaceDiagramView, InterfaceDiagramView]:
     app_types = {data_type.name: data_type for data_type in project.applicationDataTypes}
     impl_types = {data_type.name: data_type for data_type in project.implementationDataTypes}
     compu_methods = {compu.name: compu for compu in project.compuMethods}
     mode_groups = {group.name: group for group in project.modeDeclarationGroups}
     swc_by_name = {swc.name: swc for swc in project.swcs}
 
-    entities: List[InterfaceEntityView] = []
-    relations: List[InterfaceRelationView] = []
+    wiring_entities: List[InterfaceEntityView] = []
+    wiring_relations: List[InterfaceRelationView] = []
+    contract_entities: List[InterfaceEntityView] = []
+    contract_relations: List[InterfaceRelationView] = []
     referenced_app_types: set[str] = set()
     referenced_impl_types: set[str] = set()
     referenced_compu_methods: set[str] = set()
@@ -442,7 +447,7 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
 
     for instance in project.system.composition.components:
         swc = swc_by_name.get(instance.typeRef)
-        entities.append(
+        wiring_entities.append(
             InterfaceEntityView(
                 id=_node_id("instance", instance.name),
                 name=instance.name,
@@ -460,7 +465,7 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
             kind_label, _, fill_color = _port_style(port)
             port_id = _node_id("port", instance.name, port.name)
             port_lines = [kind_label]
-            entities.append(
+            wiring_entities.append(
                 InterfaceEntityView(
                     id=port_id,
                     name=port.name,
@@ -472,14 +477,14 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
                     shape="class",
                 )
             )
-            relations.append(
+            wiring_relations.append(
                 InterfaceRelationView(
                     source_id=_node_id("instance", instance.name),
                     target_id=port_id,
                     label="port",
                 )
             )
-            relations.append(
+            wiring_relations.append(
                 InterfaceRelationView(
                     source_id=port_id,
                     target_id=_node_id("if", port.interfaceRef),
@@ -493,7 +498,7 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
             for data_element in interface.dataElements or []:
                 body_lines.append(f"data {data_element.name}: {data_element.typeRef}")
                 referenced_app_types.add(data_element.typeRef)
-                relations.append(
+                contract_relations.append(
                     InterfaceRelationView(
                         source_id=_node_id("if", interface.name),
                         target_id=_node_id("type", data_element.typeRef),
@@ -510,7 +515,7 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
                 if operation.returnType and operation.returnType != "void":
                     signature += f" : {operation.returnType}"
                     if operation.returnType in app_types or operation.returnType in impl_types:
-                        relations.append(
+                        contract_relations.append(
                             InterfaceRelationView(
                                 source_id=_node_id("if", interface.name),
                                 target_id=_node_id("type", operation.returnType),
@@ -525,7 +530,7 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
                 for argument in operation.arguments:
                     if argument.typeRef in app_types:
                         referenced_app_types.add(argument.typeRef)
-                        relations.append(
+                        contract_relations.append(
                             InterfaceRelationView(
                                 source_id=_node_id("if", interface.name),
                                 target_id=_node_id("type", argument.typeRef),
@@ -534,7 +539,7 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
                         )
                     elif argument.typeRef in impl_types:
                         referenced_impl_types.add(argument.typeRef)
-                        relations.append(
+                        contract_relations.append(
                             InterfaceRelationView(
                                 source_id=_node_id("if", interface.name),
                                 target_id=_node_id("type", argument.typeRef),
@@ -545,7 +550,7 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
             if interface.modeGroupRef:
                 body_lines.append(f"modeGroup: {interface.modeGroupRef}")
                 referenced_mode_groups.add(interface.modeGroupRef)
-                relations.append(
+                contract_relations.append(
                     InterfaceRelationView(
                         source_id=_node_id("if", interface.name),
                         target_id=_node_id("mode", interface.modeGroupRef),
@@ -553,26 +558,26 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
                     )
                 )
 
-        entities.append(
-            InterfaceEntityView(
-                id=_node_id("if", interface.name),
-                name=interface.name,
-                stereotype=f"{interface.type}Interface",
-                layer="interfaces",
-                body_lines=body_lines,
-                style_class=f"interface_{interface.type}",
-                fill_color={
-                    "senderReceiver": "#d8e9ff",
-                    "clientServer": "#fff2cc",
-                    "modeSwitch": "#eadcf8",
-                }[interface.type],
-                shape="class",
-            )
+        interface_entity = InterfaceEntityView(
+            id=_node_id("if", interface.name),
+            name=interface.name,
+            stereotype=f"{interface.type}Interface",
+            layer="interfaces",
+            body_lines=body_lines,
+            style_class=f"interface_{interface.type}",
+            fill_color={
+                "senderReceiver": "#d8e9ff",
+                "clientServer": "#fff2cc",
+                "modeSwitch": "#eadcf8",
+            }[interface.type],
+            shape="class",
         )
+        wiring_entities.append(interface_entity)
+        contract_entities.append(interface_entity)
 
     for type_name in sorted(referenced_app_types):
         data_type = app_types[type_name]
-        entities.append(
+        contract_entities.append(
             InterfaceEntityView(
                 id=_node_id("type", data_type.name),
                 name=data_type.name,
@@ -585,7 +590,7 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
             )
         )
         referenced_impl_types.add(data_type.implementationTypeRef)
-        relations.append(
+        contract_relations.append(
             InterfaceRelationView(
                 source_id=_node_id("type", data_type.name),
                 target_id=_node_id("type", data_type.implementationTypeRef),
@@ -594,7 +599,7 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
         )
         if data_type.compuMethodRef and data_type.compuMethodRef in compu_methods:
             referenced_compu_methods.add(data_type.compuMethodRef)
-            relations.append(
+            contract_relations.append(
                 InterfaceRelationView(
                     source_id=_node_id("type", data_type.name),
                     target_id=_node_id("compu", data_type.compuMethodRef),
@@ -613,7 +618,7 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
             body_lines.append(f"array[{data_type.length}] of {data_type.elementTypeRef}")
         for field in data_type.fields:
             body_lines.append(f"field {field.name}: {field.typeRef}")
-        entities.append(
+        contract_entities.append(
             InterfaceEntityView(
                 id=_node_id("type", data_type.name),
                 name=data_type.name,
@@ -638,7 +643,7 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
                 body_lines.append(f"scale: {compu.factor or 0}x + {compu.offset or 0}")
             shape = "class"
             stereotype = "compuMethod"
-        entities.append(
+        contract_entities.append(
             InterfaceEntityView(
                 id=_node_id("compu", compu.name),
                 name=compu.name,
@@ -655,7 +660,7 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
         group = mode_groups[group_name]
         body_lines = [f"initial: {group.initialMode}"]
         body_lines.extend(mode.name for mode in group.modes)
-        entities.append(
+        contract_entities.append(
             InterfaceEntityView(
                 id=_node_id("mode", group.name),
                 name=group.name,
@@ -668,10 +673,20 @@ def _build_interface_view(project: Project) -> InterfaceDiagramView:
             )
         )
 
-    entities = sorted(entities, key=lambda entity: (entity.name, entity.stereotype))
-    layers = _build_interface_layers(entities)
-    relations = sorted(relations, key=lambda relation: (relation.source_id, relation.target_id, relation.label))
-    return InterfaceDiagramView(entities=entities, layers=layers, relations=relations)
+    wiring_entities = sorted(wiring_entities, key=lambda entity: (entity.name, entity.stereotype))
+    contract_entities = sorted(contract_entities, key=lambda entity: (entity.name, entity.stereotype))
+    wiring_layers = _build_interface_layers(wiring_entities)
+    contract_layers = _build_interface_layers(contract_entities)
+    wiring_relations = sorted(
+        wiring_relations, key=lambda relation: (relation.source_id, relation.target_id, relation.label)
+    )
+    contract_relations = sorted(
+        contract_relations, key=lambda relation: (relation.source_id, relation.target_id, relation.label)
+    )
+    return (
+        InterfaceDiagramView(entities=wiring_entities, layers=wiring_layers, relations=wiring_relations),
+        InterfaceDiagramView(entities=contract_entities, layers=contract_layers, relations=contract_relations),
+    )
 
 
 def _runnable_metadata_lines(swc: Swc, runnable_name: str) -> List[str]:
@@ -844,9 +859,11 @@ def _behavior_runnable_grid_columns(runnable_count: int) -> int:
 
 def build_diagram_views(project: Project) -> DiagramBuild:
     project = _sort_project_for_export(project)
+    interfaces_wiring, interfaces_contracts = _build_interface_views(project)
     return DiagramBuild(
         composition=_build_composition_view(project),
-        interfaces=_build_interface_view(project),
+        interfaces_wiring=interfaces_wiring,
+        interfaces_contracts=interfaces_contracts,
         behaviors=[_build_behavior_view(swc) for swc in project.swcs],
     )
 
@@ -868,13 +885,23 @@ def write_diagram_outputs(project: Project, template_dir: Path, out: Path, fmt: 
     env = _env(template_dir)
     views = build_diagram_views(project)
     out.mkdir(parents=True, exist_ok=True)
+    legacy_interface = out / f"interfaces{backend.extension}"
+    if legacy_interface.exists():
+        legacy_interface.unlink()
 
     rendered: List[tuple[Path, str]] = [
         (
             out / _composition_filename(views.composition.system_name, backend.extension),
             _render_template(env, backend.composition_template, view=views.composition),
         ),
-        (out / f"interfaces{backend.extension}", _render_template(env, backend.interfaces_template, view=views.interfaces)),
+        (
+            out / f"interfaces_wiring{backend.extension}",
+            _render_template(env, backend.interfaces_wiring_template, view=views.interfaces_wiring),
+        ),
+        (
+            out / f"interfaces_contracts{backend.extension}",
+            _render_template(env, backend.interfaces_contracts_template, view=views.interfaces_contracts),
+        ),
     ]
 
     for behavior in views.behaviors:
