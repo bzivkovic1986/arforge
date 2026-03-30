@@ -107,6 +107,12 @@ python -m arforge.cli export examples/autosar.project.yaml --out build/out --spl
 python -m arforge.cli generate diagram examples/autosar.project.yaml --format plantuml --out build/diagrams
 ```
 
+The diagram generator writes:
+- `composition_<System>.puml`
+- `interfaces_wiring.puml`
+- `interfaces_contracts.puml`
+- `behavior_<SWC>.puml`
+
 ### Run tests
 
 ```bash
