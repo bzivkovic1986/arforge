@@ -2,45 +2,49 @@
 title Composition View - {{ view.system_name }}
 top to bottom direction
 skinparam shadowing false
-skinparam packageStyle rectangle
+skinparam componentStyle rectangle
 skinparam nodesep 70
 skinparam ranksep 90
-skinparam linetype ortho
-skinparam rectangle {
+skinparam component {
   RoundCorner 12
 }
+skinparam legendBackgroundColor #FFFFFF
+skinparam legendBorderColor #FFFFFF
+skinparam legendEntrySeparator #FFFFFF
 
-package "{{ view.composition_name }}" as {{ view.boundary_id }} {
-{% for row in view.rows %}
-  together {
-{% for instance in row.instances %}
-    rectangle "{{ instance.name }}\n{{ instance.type_label }}" as {{ instance.id }} {{ instance.fill_color }} {
+{% for instance in view.instances %}
+component "{{ instance.name }}\n{{ instance.type_label }}" as {{ instance.id }} {{ instance.fill_color }} {
 {% for port in instance.incoming_ports %}
-      rectangle "{{ port.name }}\n{{ port.kind_label }}" as {{ port.id }} {{ port.fill_color }}
+  portin "{{ port.name }}" as {{ port.id }} {{ port.fill_color }}
 {% endfor %}
 {% for port in instance.outgoing_ports %}
-      rectangle "{{ port.name }}\n{{ port.kind_label }}" as {{ port.id }} {{ port.fill_color }}
-{% endfor %}
-    }
-{% endfor %}
-  }
+  portout "{{ port.name }}" as {{ port.id }} {{ port.fill_color }}
 {% endfor %}
 }
-
-{% for link in view.row_links %}
-{{ link.source_id }} -[hidden]{{ link.direction }}-> {{ link.target_id }}
 {% endfor %}
+
 {% for connector in view.assembly_connectors %}
-{{ connector.source_id }} -{{ connector.direction_hint }}-> {{ connector.target_id }} : {{ connector.label }}
+{{ connector.source_id }} -{{ connector.line_style }}-> {{ connector.target_id }}
 {% endfor %}
 {% for connector in view.delegation_connectors %}
-{{ connector.source_id }} ..{{ connector.direction_hint }}.> {{ connector.target_id }} : {{ connector.label }}
+{{ connector.source_id }} ..{{ connector.line_style }}.> {{ connector.target_id }}
 {% endfor %}
 
-legend right
-  |= Kind |= Meaning |
-  | SR | SenderReceiver |
-  | C/S | ClientServer |
-  | Mode | ModeSwitch |
+legend bottom
+|=    |= SWC Type |
+|<back:#d6e4ff>        </back>| Application SWC |
+|<back:#d8f3dc>        </back>| Service SWC |
+|<back:#ffe5b4>        </back>| Complex Device Driver |
+|=    |= Port Type |
+|<back:#b7efc5>        </back>| Provided S/R |
+|<back:#9ec5fe>        </back>| Required S/R |
+|<back:#fff3bf>        </back>| Provided C/S |
+|<back:#ffcf99>        </back>| Required C/S |
+|<back:#e0bbff>        </back>| Provided ModeSwitch |
+|<back:#ffb3c6>        </back>| Required ModeSwitch |
+|=    |= Connector Type |= Description |
+|<back:#2e8b57>        </back>| Sender/Receiver connector |
+|<back:#c77d00>        </back>| Client/Server connector |
+|<back:#8e44ad>        </back>| ModeSwitch connector |
 endlegend
 @enduml

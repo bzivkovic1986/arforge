@@ -248,7 +248,16 @@ def test_generate_diagrams_contain_expected_smoke_fragments(
     assert composition_name in composition_text
     assert "Rp_PowerState" in composition_text
     assert "(Application SWC)" in composition_text
-    assert ": SpeedSensor" not in composition_text
+    assert 'component "SpeedSensor_1\\n(Application SWC)"' in composition_text
+    assert 'portout "Pp_VehicleSpeed"' in composition_text
+    assert 'portin "Rp_PowerState"' in composition_text
+    assert "Provided S/R" in composition_text
+    assert "Required ModeSwitch" in composition_text
+    assert "[#2e8b57]" in composition_text
+    assert "[#8e44ad,dashed]" in composition_text
+    assert ": C/S" not in composition_text
+    assert "Application SWC" in composition_text
+    assert "Client/Server connector" in composition_text
     assert interface_name in interfaces_text
     assert "SpeedDisplay_1" in interfaces_text
     assert "Rp_VehicleSpeed" in interfaces_text

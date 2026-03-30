@@ -197,16 +197,16 @@ def _node_id(*parts: str) -> str:
 def _port_style(port: Port) -> tuple[str, str, str]:
     token = f"{port.interfaceType}_{port.direction}"
     if token == "senderReceiver_provides":
-        return ("SR provides", "srProvides", "#d9f2d9")
+        return ("SR provides", "srProvides", "#b7efc5")
     if token == "senderReceiver_requires":
-        return ("SR requires", "srRequires", "#d8e9ff")
+        return ("SR requires", "srRequires", "#9ec5fe")
     if token == "clientServer_provides":
-        return ("C/S provides", "csProvides", "#fff2cc")
+        return ("C/S provides", "csProvides", "#fff3bf")
     if token == "clientServer_requires":
-        return ("C/S requires", "csRequires", "#fce5cd")
+        return ("C/S requires", "csRequires", "#ffcf99")
     if token == "modeSwitch_provides":
-        return ("ModeSwitch provides", "msProvides", "#eadcf8")
-    return ("ModeSwitch requires", "msRequires", "#f4d6ff")
+        return ("ModeSwitch provides", "msProvides", "#e0bbff")
+    return ("ModeSwitch requires", "msRequires", "#ffb3c6")
 
 
 def _port_extra_label(port: Port) -> str | None:
@@ -231,27 +231,22 @@ def _connector_port_type(connection: Connection, project: Project) -> Port | Non
     return next((port for port in swc.ports if port.name == connection.from_port), None)
 
 
-def _connector_label(connection: Connection, source_port: Port | None) -> tuple[str, str]:
-    if connection.dataElement:
-        selector = connection.dataElement
-    elif connection.operation:
-        selector = connection.operation
-    elif source_port and source_port.interfaceType == "modeSwitch" and source_port.modeGroupRef:
-        selector = source_port.modeGroupRef
-    else:
-        selector = ""
+def _swc_fill_color(category: str) -> str:
+    return {
+        "application": "#d6e4ff",
+        "service": "#d8f3dc",
+        "complexDeviceDriver": "#ffe5b4",
+    }.get(category, "#f7f7f7")
 
+
+def _connector_style(source_port: Port | None) -> str:
     if source_port is None:
-        return (selector, "assembly")
-
-    kind_map = {
-        "senderReceiver": "SR",
-        "clientServer": "C/S",
-        "modeSwitch": "Mode",
-    }
-    prefix = kind_map.get(source_port.interfaceType, "Conn")
-    label = prefix if not selector else f"{prefix} {selector}"
-    return (label, "assembly")
+        return "[#666666]"
+    return {
+        "senderReceiver": "[#2e8b57]",
+        "clientServer": "[#c77d00,bold]",
+        "modeSwitch": "[#8e44ad,dashed]",
+    }.get(source_port.interfaceType, "[#666666]")
 
 
 def _sorted_unique(items: Iterable[str]) -> List[str]:
@@ -303,7 +298,7 @@ def _build_composition_view(project: Project) -> CompositionDiagramView:
                 name=instance.name,
                 type_name=instance.typeRef,
                 type_label=_swc_category_label(swc.category),
-                fill_color="#f7f7f7",
+                fill_color=_swc_fill_color(swc.category),
                 incoming_ports=[port for port in ports if "requires" in port.kind_label],
                 outgoing_ports=[port for port in ports if "provides" in port.kind_label],
             )
@@ -318,7 +313,7 @@ def _build_composition_view(project: Project) -> CompositionDiagramView:
     assembly_connectors: List[CompositionConnectorView] = []
     for connector in project.system.composition.connectors:
         source_port = _connector_port_type(connector, project)
-        label, line_style = _connector_label(connector, source_port)
+        line_style = _connector_style(source_port)
         direction_hint = _connector_direction_hint(
             connector.from_instance,
             connector.to_instance,
@@ -328,7 +323,7 @@ def _build_composition_view(project: Project) -> CompositionDiagramView:
             CompositionConnectorView(
                 source_id=_node_id(connector.from_instance, connector.from_port),
                 target_id=_node_id(connector.to_instance, connector.to_port),
-                label=label,
+                label="",
                 line_style=line_style,
                 direction_hint=direction_hint,
             )
