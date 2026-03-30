@@ -10,7 +10,7 @@ skinparam rectangle {
   RoundCorner 12
 }
 
-package "{{ view.swc_name }}" {
+package "{{ view.swc_name }}\n{{ view.swc_type_label }}" #f7f7f7 {
 {% for port in view.incoming_ports %}
   rectangle "{{ port.name }}\n{{ port.kind_label }}" as {{ port.id }} {{ port.fill_color }}
 {% endfor %}

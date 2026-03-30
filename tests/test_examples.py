@@ -247,6 +247,8 @@ def test_generate_diagrams_contain_expected_smoke_fragments(
 
     assert composition_name in composition_text
     assert "Rp_PowerState" in composition_text
+    assert "(Application SWC)" in composition_text
+    assert ": SpeedSensor" not in composition_text
     assert interface_name in interfaces_text
     assert "SpeedDisplay_1" in interfaces_text
     assert "Rp_VehicleSpeed" in interfaces_text
@@ -394,6 +396,17 @@ def test_behavior_diagram_uses_runnable_grid_for_larger_behaviors() -> None:
 
     assert view.runnable_columns == 2
     assert [len(row.runnables) for row in view.runnable_rows] == [2, 2, 2, 1]
+
+
+def test_behavior_diagram_keeps_small_runnable_sets_in_one_row() -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    view = next(
+        behavior for behavior in build_diagram_views(project).behaviors if behavior.swc_name == "SpeedDisplay"
+    )
+
+    assert len(view.runnables) == 4
+    assert view.runnable_columns == 4
+    assert [len(row.runnables) for row in view.runnable_rows] == [4]
 
 
 @pytest.mark.parametrize(

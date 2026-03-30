@@ -14,11 +14,10 @@ package "{{ view.composition_name }}" as {{ view.boundary_id }} {
 {% for row in view.rows %}
   together {
 {% for instance in row.instances %}
-    rectangle "{{ instance.name }}" as {{ instance.id }} {
+    rectangle "{{ instance.name }}\n{{ instance.type_label }}" as {{ instance.id }} {{ instance.fill_color }} {
 {% for port in instance.incoming_ports %}
       rectangle "{{ port.name }}\n{{ port.kind_label }}" as {{ port.id }} {{ port.fill_color }}
 {% endfor %}
-      rectangle ": {{ instance.type_name }}" as {{ instance.header_id }} {{ instance.body_fill_color }}
 {% for port in instance.outgoing_ports %}
       rectangle "{{ port.name }}\n{{ port.kind_label }}" as {{ port.id }} {{ port.fill_color }}
 {% endfor %}

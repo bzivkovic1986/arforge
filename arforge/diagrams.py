@@ -36,8 +36,8 @@ class CompositionInstanceView:
     id: str
     name: str
     type_name: str
-    header_id: str
-    body_fill_color: str
+    type_label: str
+    fill_color: str
     incoming_ports: List[CompositionPortView]
     outgoing_ports: List[CompositionPortView]
 
@@ -136,6 +136,7 @@ class BehaviorEdgeView:
 @dataclass(frozen=True)
 class BehaviorDiagramView:
     swc_name: str
+    swc_type_label: str
     incoming_ports: List[BehaviorPortView]
     outgoing_ports: List[BehaviorPortView]
     runnable_columns: int
@@ -273,8 +274,8 @@ def _build_composition_view(project: Project) -> CompositionDiagramView:
                 id=_node_id(instance.name),
                 name=instance.name,
                 type_name=instance.typeRef,
-                header_id=_node_id(instance.name, "body"),
-                body_fill_color="#f7f7f7",
+                type_label=_swc_category_label(swc.category),
+                fill_color="#f7f7f7",
                 incoming_ports=[port for port in ports if "requires" in port.kind_label],
                 outgoing_ports=[port for port in ports if "provides" in port.kind_label],
             )
@@ -325,8 +326,8 @@ def _build_composition_view(project: Project) -> CompositionDiagramView:
         for left, right in zip(row.instances, row.instances[1:]):
             row_links.append(
                 CompositionRowLinkView(
-                    source_id=left.header_id,
-                    target_id=right.header_id,
+                    source_id=left.id,
+                    target_id=right.id,
                     direction="right",
                 )
             )
@@ -334,8 +335,8 @@ def _build_composition_view(project: Project) -> CompositionDiagramView:
         if upper_row.instances and lower_row.instances:
             row_links.append(
                 CompositionRowLinkView(
-                    source_id=upper_row.instances[0].header_id,
-                    target_id=lower_row.instances[0].header_id,
+                    source_id=upper_row.instances[0].id,
+                    target_id=lower_row.instances[0].id,
                     direction="down",
                 )
             )
@@ -359,6 +360,14 @@ def _composition_grid_columns(instance_count: int) -> int:
     if instance_count <= 8:
         return 2
     return 3
+
+
+def _swc_category_label(category: str) -> str:
+    return {
+        "application": "(Application SWC)",
+        "service": "(Service SWC)",
+        "complexDeviceDriver": "(Complex Device Driver)",
+    }.get(category, f"({category})")
 
 
 def _connector_direction_hint(
@@ -767,6 +776,7 @@ def _build_behavior_view(swc: Swc) -> BehaviorDiagramView:
 
     return BehaviorDiagramView(
         swc_name=swc.name,
+        swc_type_label=_swc_category_label(swc.category),
         incoming_ports=incoming_ports,
         outgoing_ports=outgoing_ports,
         runnable_columns=runnable_columns,
@@ -778,7 +788,7 @@ def _build_behavior_view(swc: Swc) -> BehaviorDiagramView:
 
 def _behavior_runnable_grid_columns(runnable_count: int) -> int:
     if runnable_count <= 4:
-        return 1
+        return max(1, runnable_count)
     if runnable_count <= 8:
         return 2
     return 3
