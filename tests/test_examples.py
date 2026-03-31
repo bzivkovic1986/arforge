@@ -440,8 +440,6 @@ def test_cli_generate_diagram_smoke(diagram_format: str, expected_names: list[st
             "generate",
             "diagram",
             str(VALID_PROJECT),
-            "--format",
-            diagram_format,
             "--out",
             str(out_dir),
         ],

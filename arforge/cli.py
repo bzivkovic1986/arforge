@@ -334,25 +334,12 @@ def init(
 @generate_app.command("diagram")
 def generate_diagram(
     project: Path,
-    fmt: Annotated[
-        str,
-        typer.Option(
-            "--format",
-            help="Diagram backend to render.",
-            case_sensitive=False,
-        ),
-    ],
     out: Path = typer.Option(..., "--out", help="Output directory for generated diagram files."),
 ):
     """Validate then generate standard architecture diagrams."""
-    normalized_format = fmt.lower()
-    if normalized_format not in BACKENDS:
-        console.print("[red]Error:[/red] --format must be: plantuml")
-        raise typer.Exit(code=2)
-
     try:
         project_model = load_and_validate_aggregator(project)
-        written = write_diagram_outputs(project_model, template_dir=_default_template_dir(), out=out, fmt=normalized_format)
+        written = write_diagram_outputs(project_model, template_dir=_default_template_dir(), out=out, fmt="plantuml")
     except ValidationError as e:
         console.print(Panel.fit(f"[red]FAILED[/red] {project}", title="generate diagram"))
         for msg in e.errors:

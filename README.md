@@ -104,7 +104,7 @@ python -m arforge.cli validate examples/autosar.project.yaml
 python -m arforge.cli export examples/autosar.project.yaml --out build/out --split-by-swc
 
 # Generate architecture diagrams
-python -m arforge.cli generate diagram examples/autosar.project.yaml --format plantuml --out build/diagrams
+python -m arforge.cli generate diagram examples/autosar.project.yaml --out build/diagrams
 ```
 
 The diagram generator writes:

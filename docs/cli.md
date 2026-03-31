@@ -140,14 +140,13 @@ The custom template directory must contain the same template filenames as the bu
 Validate the project and generate the standard architecture diagram set.
 
 ```bash
-python -m arforge.cli generate diagram <project.yaml> --format plantuml --out <dir>
+python -m arforge.cli generate diagram <project.yaml> --out <dir>
 ```
 
 **Options:**
 
 | Option | Description |
 |---|---|
-| `--format plantuml` | Write PlantUML sources with `.puml` extension. |
 | `--out DIR` | Output directory for generated diagram files. Required. |
 
 **Generated views:**
@@ -162,7 +161,7 @@ python -m arforge.cli generate diagram <project.yaml> --format plantuml --out <d
 **Examples:**
 
 ```bash
-python -m arforge.cli generate diagram examples/autosar.project.yaml --format plantuml --out build/diagrams_plantuml
+python -m arforge.cli generate diagram examples/autosar.project.yaml --out build/diagrams_plantuml
 ```
 
 The command generates the standard view set as PlantUML source files.
