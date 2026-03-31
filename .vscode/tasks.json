@@ -128,8 +128,6 @@
         "generate",
         "diagram",
         "${config:arforge.projectFile}",
-        "--format",
-        "plantuml",
         "--out",
         "build/diagrams_plantuml",
       ],
