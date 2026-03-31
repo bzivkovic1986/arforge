@@ -26,3 +26,7 @@ applicationDataTypes:
     description: "Health status of the chip"
     implementationTypeRef: "Impl_ChipHealthStatus"
     compuMethodRef: "CM_ChipHealthStatus_Enum"
+  - name: App_MeasurementValue
+    implementationTypeRef: Impl_MeasurementValue
+    compuMethodRef: CM_MeasurementValue_Raw
+    unitRef: val

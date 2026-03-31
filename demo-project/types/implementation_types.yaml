@@ -13,3 +13,5 @@ implementationDataTypes:
     baseTypeRef: uint8
   - name: "Impl_ChipHealthStatus"
     baseTypeRef: "uint8"
+  - name: Impl_MeasurementValue
+    baseTypeRef: uint8

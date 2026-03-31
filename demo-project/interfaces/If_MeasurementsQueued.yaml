@@ -3,4 +3,4 @@ interface:
   type: senderReceiver
   dataElements:
     - name: Value
-      typeRef: uint8
+      typeRef: App_MeasurementValue

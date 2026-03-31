@@ -46,3 +46,8 @@ compuMethods:
         label: "Chip overvoltage error"
       - value: 2
         label: "Chip undervoltage error"
+  - name: CM_MeasurementValue_Raw
+    category: linear
+    factor: 1
+    offset: 0
+    unitRef: val
