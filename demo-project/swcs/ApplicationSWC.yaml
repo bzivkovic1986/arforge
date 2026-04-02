@@ -13,6 +13,11 @@ swc:
           operation: "SetEventStatus"
         - port: "Rp_DiagHandling"
           operation: "GetEventStatus"
+      writes:
+        - port: Pp_CanSpeedPdu
+          dataElement: SignalValue
+        - port: Pp_CanSpeedPdu
+          dataElement: SignalQualifier
     - name: "Runnable_MeasQueued"
       dataReceiveEvents:
         - port: Rp_MeasQueued
@@ -39,3 +44,6 @@ swc:
     - name: Rp_CanCommState
       interfaceRef: If_CanCommState
       direction: requires
+    - name: Pp_CanSpeedPdu
+      interfaceRef: If_CanSpeedPdu
+      direction: provides

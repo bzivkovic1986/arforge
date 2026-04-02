@@ -51,3 +51,31 @@ compuMethods:
     factor: 1
     offset: 0
     unitRef: val
+  - name: CM_CanSignalValue_Linear
+    category: linear
+    factor: 10
+    offset: 500
+    unitRef: km_per_h
+  - name: CM_SignalQualifier_Enum
+    category: textTable
+    entries:
+      - value: 0
+        label: Signal valid
+      - value: 1
+        label: Signal invalid
+      - value: 2
+        label: Signal substituted
+  - name: CM_IgnitionState_Enum
+    category: textTable
+    entries:
+      - value: 0
+        label: Ignition ON
+      - value: 1
+        label: Ignition OFF
+  - name: CM_SpeedSensorState
+    category: textTable
+    entries:
+      - value: 0
+        label: Speed Sensor OK
+      - value: 1
+        label: Speed Sensor NOK

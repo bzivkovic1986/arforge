@@ -16,3 +16,6 @@ swc:
     - name: PpFakeChip
       direction: provides
       interfaceRef: If_FakeChipHandling
+    - name: PpIgnitionState
+      direction: provides
+      interfaceRef: If_IgnitionState

@@ -42,3 +42,6 @@ swc:
     - name: Pp_CanState
       interfaceRef: If_CanCommState
       direction: provides
+    - name: RpSpeedSensorState
+      direction: requires
+      interfaceRef: If_SpeedSensorState

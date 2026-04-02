@@ -10,6 +10,11 @@ swc:
       writes:
         - port: "Pp_VehicleSpeed"
           dataElement: "VehicleSpeed"
+      reads:
+        - port: Rp_CanSpeedPdu
+          dataElement: SignalValue
+        - port: Rp_CanSpeedPdu
+          dataElement: SignalQualifier
   ports:
     - name: "Pp_VehicleSpeed"
       description: "Provided sender-receiver port for publishing speed."
@@ -19,3 +24,12 @@ swc:
       description: "Provided mode switch port for ECU power state."
       direction: "provides"
       interfaceRef: "If_PowerState"
+    - name: Rp_CanSpeedPdu
+      interfaceRef: If_CanSpeedPdu
+      direction: requires
+    - name: RpIgnitionState
+      direction: requires
+      interfaceRef: If_IgnitionState
+    - name: PpSpeedSensorState
+      direction: provides
+      interfaceRef: If_SpeedSensorState
