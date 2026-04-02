@@ -254,8 +254,8 @@ def test_generate_diagrams_contain_expected_smoke_fragments(
     assert 'portin "Rp_PowerState"' in composition_text
     assert "Provided S/R" in composition_text
     assert "Required ModeSwitch" in composition_text
-    assert "[#2e8b57]" in composition_text
-    assert "[#8e44ad,dashed]" in composition_text
+    assert "[#2e8b57,bold]" in composition_text
+    assert "[#8e44ad,bold,dashed]" in composition_text
     assert ": C/S" not in composition_text
     assert "Application SWC" in composition_text
     assert "Client/Server connector" in composition_text

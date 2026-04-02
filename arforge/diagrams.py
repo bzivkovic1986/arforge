@@ -247,9 +247,9 @@ def _connector_style(source_port: Port | None) -> str:
     if source_port is None:
         return "[#666666]"
     return {
-        "senderReceiver": "[#2e8b57]",
+        "senderReceiver": "[#2e8b57,bold]",
         "clientServer": "[#c77d00,bold]",
-        "modeSwitch": "[#8e44ad,dashed]",
+        "modeSwitch": "[#8e44ad,bold,dashed]",
     }.get(source_port.interfaceType, "[#666666]")
 
 

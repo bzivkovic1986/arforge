@@ -24,9 +24,9 @@ component "{{ view.swc_name }}" as swc__{{ view.swc_name }} {{ view.swc_fill_col
 {% for edge in view.edges %}
 {% if edge.style_class == "modeEdge" %}
 {% if edge.label %}
-{{ edge.source_id }} -[#8e44ad,dashed]-> {{ edge.target_id }} : {{ edge.label }}
+{{ edge.source_id }} -[#8e44ad,bold,dashed]-> {{ edge.target_id }} : {{ edge.label }}
 {% else %}
-{{ edge.source_id }} -[#8e44ad,dashed]-> {{ edge.target_id }}
+{{ edge.source_id }} -[#8e44ad,bold,dashed]-> {{ edge.target_id }}
 {% endif %}
 {% elif edge.style_class == "callEdge" or edge.style_class == "eventEdge" %}
 {% if edge.label %}
@@ -36,9 +36,9 @@ component "{{ view.swc_name }}" as swc__{{ view.swc_name }} {{ view.swc_fill_col
 {% endif %}
 {% else %}
 {% if edge.label %}
-{{ edge.source_id }} -[#2e8b57]-> {{ edge.target_id }} : {{ edge.label }}
+{{ edge.source_id }} -[#2e8b57,bold]-> {{ edge.target_id }} : {{ edge.label }}
 {% else %}
-{{ edge.source_id }} -[#2e8b57]-> {{ edge.target_id }}
+{{ edge.source_id }} -[#2e8b57,bold]-> {{ edge.target_id }}
 {% endif %}
 {% endif %}
 {% endfor %}
