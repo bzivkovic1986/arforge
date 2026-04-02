@@ -108,6 +108,30 @@
       },
       "args": ["-m", "pytest", "-q"],
       "problemMatcher": []
+    },
+    {
+      "label": "arforge: generate Plantuml",
+      "type": "shell",
+      "command": "${workspaceFolder}${/}.venv${/}bin${/}python",
+      "windows": {
+        "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+      },
+      "linux": {
+        "command": "${workspaceFolder}/.venv/bin/python"
+      },
+      "osx": {
+        "command": "${workspaceFolder}/.venv/bin/python"
+      },
+      "args": [
+        "-m",
+        "arforge.cli",
+        "generate",
+        "diagram",
+        "${config:arforge.projectFile}",
+        "--out",
+        "build/diagrams_plantuml",
+      ],
+      "problemMatcher": []
     }
   ]
 }

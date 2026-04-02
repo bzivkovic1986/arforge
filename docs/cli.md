@@ -135,6 +135,39 @@ The custom template directory must contain the same template filenames as the bu
 
 ---
 
+## `generate diagram`
+
+Validate the project and generate the standard architecture diagram set.
+
+```bash
+python -m arforge.cli generate diagram <project.yaml> --out <dir>
+```
+
+**Options:**
+
+| Option | Description |
+|---|---|
+| `--out DIR` | Output directory for generated diagram files. Required. |
+
+**Generated views:**
+
+| File pattern | Purpose |
+|---|---|
+| `composition_<System>.<ext>` | Composition / topology view with instances, ports, and connectors |
+| `interfaces_wiring.<ext>` | Interface wiring view with component instances, instantiated ports, and referenced interfaces |
+| `interfaces_contracts.<ext>` | Interface contract view with interfaces, referenced types, compu methods, and mode groups |
+| `behavior_<SWC>.<ext>` | Behavior view per SWC type with ports, runnables, and behavior relations |
+
+**Examples:**
+
+```bash
+python -m arforge.cli generate diagram examples/autosar.project.yaml --out build/diagrams_plantuml
+```
+
+The command generates the standard view set as PlantUML source files.
+
+---
+
 ## Running via VS Code tasks
 
 If you are working in VS Code, all commands above are available as pre-configured tasks under `Terminal → Run Task`. The active project manifest is resolved from the `arforge.projectFile` setting in `.vscode/settings.json`.

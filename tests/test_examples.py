@@ -12,6 +12,18 @@ import pytest
 import yaml
 
 from arforge.exporter import write_outputs, write_outputs_with_report
+from arforge.diagrams import build_diagram_views, write_diagram_outputs
+from arforge.model import (
+    ComponentPrototype,
+    Composition,
+    Interface,
+    OperationInvokedEvent,
+    Port,
+    Project,
+    Runnable,
+    Swc,
+    System,
+)
 from arforge.semantic_validation import Finding, FindingSeverity
 from arforge.validate import ValidationError, build_semantic_report, load_aggregator, load_and_validate_aggregator
 
@@ -21,6 +33,13 @@ VALID_PROJECT = REPO_ROOT / "examples" / "autosar.project.yaml"
 INVALID_DIR = REPO_ROOT / "examples" / "invalid"
 SHARED_EXAMPLE_OUTPUT = "DEMO_SharedTypes.arxml"
 SYSTEM_EXAMPLE_OUTPUT = "DemoSystem.arxml"
+PLANTUML_DIAGRAM_OUTPUTS = [
+    "composition_DemoSystem.puml",
+    "interfaces_wiring.puml",
+    "interfaces_contracts.puml",
+    "behavior_SpeedDisplay.puml",
+    "behavior_SpeedSensor.puml",
+]
 WARNING_ONLY_PROJECT = INVALID_DIR / "project_connected_sr_port_unused.yaml"
 ERROR_PROJECT = INVALID_DIR / "project_bad_runnable_access.yaml"
 MIXED_PROJECT = INVALID_DIR / "project_sr_read_unconnected.yaml"
@@ -185,6 +204,253 @@ def test_cli_export_smoke() -> None:
         text=True,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize(
+    ("diagram_format", "expected_names"),
+    [
+        ("plantuml", PLANTUML_DIAGRAM_OUTPUTS),
+    ],
+)
+def test_generate_diagrams_writes_expected_files(tmp_path: Path, diagram_format: str, expected_names: list[str]) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / diagram_format
+
+    written = write_diagram_outputs(project, template_dir=template_dir, out=out_dir, fmt=diagram_format)
+
+    assert [artifact.path.name for artifact in written] == expected_names
+
+
+@pytest.mark.parametrize(
+    ("diagram_format", "composition_name", "interface_name", "behavior_name"),
+    [
+        ("plantuml", "SpeedSensor_1", "If_VehicleSpeed", "Runnable_PublishVehicleSpeed"),
+    ],
+)
+def test_generate_diagrams_contain_expected_smoke_fragments(
+    tmp_path: Path,
+    diagram_format: str,
+    composition_name: str,
+    interface_name: str,
+    behavior_name: str,
+) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / diagram_format
+
+    _ = write_diagram_outputs(project, template_dir=template_dir, out=out_dir, fmt=diagram_format)
+    extension = ".puml"
+
+    composition_text = (out_dir / f"composition_DemoSystem{extension}").read_text(encoding="utf-8")
+    interfaces_wiring_text = (out_dir / f"interfaces_wiring{extension}").read_text(encoding="utf-8")
+    interfaces_contracts_text = (out_dir / f"interfaces_contracts{extension}").read_text(encoding="utf-8")
+    behavior_text = (out_dir / f"behavior_SpeedSensor{extension}").read_text(encoding="utf-8")
+
+    assert composition_name in composition_text
+    assert "Rp_PowerState" in composition_text
+    assert 'component "SpeedSensor_1"' in composition_text
+    assert 'portout "Pp_VehicleSpeed"' in composition_text
+    assert 'portin "Rp_PowerState"' in composition_text
+    assert "Provided S/R" in composition_text
+    assert "Required ModeSwitch" in composition_text
+    assert "[#2e8b57,bold]" in composition_text
+    assert "[#8e44ad,bold,dashed]" in composition_text
+    assert ": C/S" not in composition_text
+    assert "Application SWC" in composition_text
+    assert "Client/Server connector" in composition_text
+    assert interface_name in interfaces_wiring_text
+    assert "SpeedDisplay_1" in interfaces_wiring_text
+    assert "Rp_VehicleSpeed" in interfaces_wiring_text
+    assert interface_name in interfaces_contracts_text
+    assert "Mdg_PowerState" in interfaces_contracts_text
+    assert "type__App_VehicleSpeed --> type__Impl_VehicleSpeed_U16 : impl" in interfaces_contracts_text
+    assert behavior_name in behavior_text
+    assert "Pp_VehicleSpeed" in behavior_text
+
+
+@pytest.mark.parametrize(
+    ("diagram_format", "expected_names"),
+    [
+        ("plantuml", PLANTUML_DIAGRAM_OUTPUTS),
+    ],
+)
+def test_generate_diagrams_is_deterministic(tmp_path: Path, diagram_format: str, expected_names: list[str]) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out1 = tmp_path / f"{diagram_format}_1"
+    out2 = tmp_path / f"{diagram_format}_2"
+
+    _ = write_diagram_outputs(project, template_dir=template_dir, out=out1, fmt=diagram_format)
+    _ = write_diagram_outputs(project, template_dir=template_dir, out=out2, fmt=diagram_format)
+
+    assert sorted(path.name for path in out1.iterdir()) == sorted(expected_names)
+    assert sorted(path.name for path in out2.iterdir()) == sorted(expected_names)
+
+    for name in expected_names:
+        data1 = (out1 / name).read_bytes()
+        data2 = (out2 / name).read_bytes()
+        assert data1 == data2
+        assert hashlib.sha256(data1).hexdigest() == hashlib.sha256(data2).hexdigest()
+
+
+def test_composition_diagram_uses_multi_column_layout_for_larger_systems() -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    expanded_project = replace(
+        project,
+        system=replace(
+            project.system,
+            composition=replace(
+                project.system.composition,
+                components=sorted(
+                    [
+                        *project.system.composition.components,
+                        replace(project.system.composition.components[0], name="SpeedDisplay_2", typeRef="SpeedDisplay"),
+                        replace(project.system.composition.components[1], name="SpeedSensor_2", typeRef="SpeedSensor"),
+                        replace(project.system.composition.components[0], name="SpeedDisplay_3", typeRef="SpeedDisplay"),
+                    ],
+                    key=lambda component: component.name,
+                ),
+            ),
+        ),
+    )
+
+    view = build_diagram_views(expanded_project).composition
+
+    assert view.grid_columns == 2
+    assert [len(row.instances) for row in view.rows] == [2, 2, 1]
+
+
+def test_behavior_diagram_places_server_trigger_ports_in_incoming_lane() -> None:
+    project = Project(
+        autosar_version="4.2",
+        rootPackage="DEMO",
+        baseTypes=[],
+        implementationDataTypes=[],
+        applicationDataTypes=[],
+        units=[],
+        compuMethods=[],
+        modeDeclarationGroups=[],
+        interfaces=[
+            Interface(
+                name="If_Diagnostics",
+                type="clientServer",
+                operations=[],
+            )
+        ],
+        swcs=[
+            Swc(
+                name="DiagServer",
+                ports=[
+                    Port(
+                        name="Pp_Diagnostics",
+                        direction="provides",
+                        interfaceRef="If_Diagnostics",
+                        interfaceType="clientServer",
+                    ),
+                    Port(
+                        name="Rp_DiagnosticsClient",
+                        direction="requires",
+                        interfaceRef="If_Diagnostics",
+                        interfaceType="clientServer",
+                    ),
+                ],
+                runnables=[
+                    Runnable(
+                        name="Runnable_HandleRequest",
+                        operationInvokedEvents=[
+                            OperationInvokedEvent(
+                                port="Pp_Diagnostics",
+                                operation="ReadDtc",
+                            )
+                        ],
+                    )
+                ],
+            )
+        ],
+        system=System(
+            name="DemoSystem",
+            composition=Composition(
+                name="Composition_DemoSystem",
+                components=[ComponentPrototype(name="DiagServer_1", typeRef="DiagServer")],
+                connectors=[],
+            ),
+        ),
+    )
+
+    view = build_diagram_views(project).behaviors[0]
+
+    assert [port.name for port in view.incoming_ports] == ["Pp_Diagnostics", "Rp_DiagnosticsClient"]
+    assert [port.name for port in view.outgoing_ports] == []
+
+
+def test_behavior_diagram_uses_runnable_grid_for_larger_behaviors() -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    speed_display = next(swc for swc in project.swcs if swc.name == "SpeedDisplay")
+    expanded_runnables = sorted(
+        [
+            *speed_display.runnables,
+            Runnable(name="Runnable_Extra1"),
+            Runnable(name="Runnable_Extra2"),
+            Runnable(name="Runnable_Extra3"),
+        ],
+        key=lambda runnable: runnable.name,
+    )
+    expanded_project = replace(
+        project,
+        swcs=[
+            replace(swc, runnables=expanded_runnables) if swc.name == "SpeedDisplay" else swc
+            for swc in project.swcs
+        ],
+    )
+
+    view = next(behavior for behavior in build_diagram_views(expanded_project).behaviors if behavior.swc_name == "SpeedDisplay")
+
+    assert view.runnable_columns == 2
+    assert [len(row.runnables) for row in view.runnable_rows] == [2, 2, 2, 1]
+
+
+def test_behavior_diagram_keeps_small_runnable_sets_in_one_row() -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    view = next(
+        behavior for behavior in build_diagram_views(project).behaviors if behavior.swc_name == "SpeedDisplay"
+    )
+
+    assert len(view.runnables) == 4
+    assert view.runnable_columns == 4
+    assert [len(row.runnables) for row in view.runnable_rows] == [4]
+
+
+@pytest.mark.parametrize(
+    ("diagram_format", "expected_names"),
+    [
+        ("plantuml", PLANTUML_DIAGRAM_OUTPUTS),
+    ],
+)
+def test_cli_generate_diagram_smoke(diagram_format: str, expected_names: list[str]) -> None:
+    out_dir = REPO_ROOT / "build" / f"test_diagrams_{diagram_format}"
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "arforge.cli",
+            "generate",
+            "diagram",
+            str(VALID_PROJECT),
+            "--out",
+            str(out_dir),
+        ],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert sorted(path.name for path in out_dir.iterdir()) == sorted(expected_names)
 
 
 def test_warning_only_project_passes_validation_and_preserves_warning_report() -> None:

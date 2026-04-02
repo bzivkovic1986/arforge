@@ -1,0 +1,63 @@
+@startuml
+title Behavior View - {{ view.swc_name }}
+top to bottom direction
+skinparam legendBackgroundColor #FFFFFF
+skinparam legendBorderColor #FFFFFF
+skinparam legendEntrySeparator #FFFFFF
+
+component "{{ view.swc_name }}" as swc__{{ view.swc_name }} {{ view.swc_fill_color }} {
+{% for port in view.incoming_ports %}
+  portin "{{ port.name }}" as {{ port.id }} {{ port.fill_color }}
+{% endfor %}
+
+{% for row in view.runnable_rows %}
+{% for runnable in row.runnables %}
+  component "{{ runnable.name }}{% for line in runnable.metadata_lines %}\n{{ line }}{% endfor %}" as {{ runnable.id }} #e9e4df
+{% endfor %}
+{% endfor %}
+
+{% for port in view.outgoing_ports %}
+  portout "{{ port.name }}" as {{ port.id }} {{ port.fill_color }}
+{% endfor %}
+}
+
+{% for edge in view.edges %}
+{% if edge.style_class == "modeEdge" %}
+{% if edge.label %}
+{{ edge.source_id }} -[#8e44ad,bold,dashed]-> {{ edge.target_id }} : {{ edge.label }}
+{% else %}
+{{ edge.source_id }} -[#8e44ad,bold,dashed]-> {{ edge.target_id }}
+{% endif %}
+{% elif edge.style_class == "callEdge" or edge.style_class == "eventEdge" %}
+{% if edge.label %}
+{{ edge.source_id }} -[#c77d00,bold]-> {{ edge.target_id }} : {{ edge.label }}
+{% else %}
+{{ edge.source_id }} -[#c77d00,bold]-> {{ edge.target_id }}
+{% endif %}
+{% else %}
+{% if edge.label %}
+{{ edge.source_id }} -[#2e8b57,bold]-> {{ edge.target_id }} : {{ edge.label }}
+{% else %}
+{{ edge.source_id }} -[#2e8b57,bold]-> {{ edge.target_id }}
+{% endif %}
+{% endif %}
+{% endfor %}
+
+legend bottom
+|=    |= SWC Type |
+|<back:#d6e4ff>        </back>| Application SWC |
+|<back:#d8f3dc>        </back>| Service SWC |
+|<back:#ffe5b4>        </back>| Complex Device Driver |
+|=    |= Port Type |
+|<back:#b7efc5>        </back>| Provided S/R |
+|<back:#9ec5fe>        </back>| Required S/R |
+|<back:#fff3bf>        </back>| Provided C/S |
+|<back:#ffcf99>        </back>| Required C/S |
+|<back:#e0bbff>        </back>| Provided ModeSwitch |
+|<back:#ffb3c6>        </back>| Required ModeSwitch |
+|=    |= Connector Type |= Description |
+|<back:#2e8b57>        </back>| Sender/Receiver connector |
+|<back:#c77d00>        </back>| Client/Server connector |
+|<back:#8e44ad>        </back>| ModeSwitch connector |
+endlegend
+@enduml

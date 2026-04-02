@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 from time import perf_counter
+from typing import Annotated
 
 import typer
 from rich.console import Console
 from rich.panel import Panel
 
+from .diagrams import BACKENDS, write_diagram_outputs
 from .exporter import ExportInputSummary, InputPatternExpansion, write_outputs, write_outputs_with_report
 from .scaffold import scaffold_project
 from .validate import (
@@ -24,6 +26,8 @@ app = typer.Typer(
         "ARForge (AUTOSAR Classic YAML -> ARXML).\n"
     ),
 )
+generate_app = typer.Typer(help="Generate derived artifacts.")
+app.add_typer(generate_app, name="generate")
 
 console = Console()
 
@@ -325,6 +329,26 @@ def init(
     console.print(Panel.fit(f"[green]Scaffold created[/green] ({mode})", title="init"))
     for p in written:
         console.print(f" - {p}")
+
+
+@generate_app.command("diagram")
+def generate_diagram(
+    project: Path,
+    out: Path = typer.Option(..., "--out", help="Output directory for generated diagram files."),
+):
+    """Validate then generate standard architecture diagrams."""
+    try:
+        project_model = load_and_validate_aggregator(project)
+        written = write_diagram_outputs(project_model, template_dir=_default_template_dir(), out=out, fmt="plantuml")
+    except ValidationError as e:
+        console.print(Panel.fit(f"[red]FAILED[/red] {project}", title="generate diagram"))
+        for msg in e.errors:
+            console.print(f" - {msg}")
+        raise typer.Exit(code=2)
+
+    console.print(Panel.fit("[green]Diagram generation complete[/green]", title="generate diagram"))
+    for artifact in written:
+        console.print(f" - {artifact.path}")
 
 
 if __name__ == "__main__":
