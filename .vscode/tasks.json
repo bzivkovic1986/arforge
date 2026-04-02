@@ -132,6 +132,32 @@
         "build/diagrams_plantuml",
       ],
       "problemMatcher": []
+    },
+    {
+      "label": "arforge: generate C-code",
+      "type": "shell",
+      "command": "${workspaceFolder}${/}.venv${/}bin${/}python",
+      "windows": {
+        "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+      },
+      "linux": {
+        "command": "${workspaceFolder}/.venv/bin/python"
+      },
+      "osx": {
+        "command": "${workspaceFolder}/.venv/bin/python"
+      },
+      "args": [
+        "-m",
+        "arforge.cli",
+        "generate",
+        "code",
+        "${config:arforge.projectFile}",
+        "--lang",
+        "c",
+        "--out",
+        "build/code",
+      ],
+      "problemMatcher": []
     }
   ]
 }
