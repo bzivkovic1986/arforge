@@ -30,3 +30,16 @@ applicationDataTypes:
     implementationTypeRef: Impl_MeasurementValue
     compuMethodRef: CM_MeasurementValue_Raw
     unitRef: val
+  - name: App_CanSignalValue
+    implementationTypeRef: Impl_CanSignalValue
+    compuMethodRef: CM_CanSignalValue_Linear
+    unitRef: km_per_h
+  - name: App_SignalQualifier
+    implementationTypeRef: Impl_SignalQualifier
+    compuMethodRef: CM_SignalQualifier_Enum
+  - name: App_IgnitionState
+    implementationTypeRef: Impl_IgnitionState
+    compuMethodRef: CM_IgnitionState_Enum
+  - name: App_SpeedSensorState
+    implementationTypeRef: Impl_SpeedSensorState
+    compuMethodRef: CM_SpeedSensorState

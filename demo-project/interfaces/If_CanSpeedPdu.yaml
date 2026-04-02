@@ -1,0 +1,8 @@
+interface:
+  name: If_CanSpeedPdu
+  type: senderReceiver
+  dataElements:
+    - name: SignalValue
+      typeRef: App_CanSignalValue
+    - name: SignalQualifier
+      typeRef: App_SignalQualifier

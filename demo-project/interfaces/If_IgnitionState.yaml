@@ -1,0 +1,6 @@
+interface:
+  name: If_IgnitionState
+  type: clientServer
+  operations:
+    - name: GetIgnitionState
+      returnType: App_IgnitionState

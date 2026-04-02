@@ -1,0 +1,6 @@
+interface:
+  name: If_SpeedSensorState
+  type: senderReceiver
+  dataElements:
+    - name: Status
+      typeRef: App_SpeedSensorState
