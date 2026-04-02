@@ -168,6 +168,41 @@ The command generates the standard view set as PlantUML source files.
 
 ---
 
+## `generate code`
+
+Validate the project and generate starter SWC code skeletons.
+
+```bash
+python -m arforge.cli generate code <project.yaml> --out <dir> [options]
+```
+
+**Options:**
+
+| Option | Description |
+|---|---|
+| `--out DIR` | Output directory for generated code files. Required. |
+| `--lang TEXT` | Code generation backend. Currently `c`. |
+| `--templates DIR` | Use an alternate Jinja2 template directory instead of the built-in templates. |
+
+**Generated files:**
+
+For each SWC type, ARForge writes:
+
+| File pattern | Purpose |
+|---|---|
+| `<SwcName>.h` | Generated runnable declarations with include guard |
+| `<SwcName>.c` | Generated runnable stubs with modeled trigger comments and RTE placeholder usage |
+
+**Examples:**
+
+```bash
+python -m arforge.cli generate code examples/autosar.project.yaml --lang c --out build/code
+```
+
+The generated output is a deterministic starter skeleton, not a complete AUTOSAR RTE integration or application implementation.
+
+---
+
 ## Running via VS Code tasks
 
 If you are working in VS Code, all commands above are available as pre-configured tasks under `Terminal → Run Task`. The active project manifest is resolved from the `arforge.projectFile` setting in `.vscode/settings.json`.

@@ -11,6 +11,7 @@ import sys
 import pytest
 import yaml
 
+from arforge.codegen import write_code_outputs
 from arforge.exporter import write_outputs, write_outputs_with_report
 from arforge.diagrams import build_diagram_views, write_diagram_outputs
 from arforge.model import (
@@ -198,6 +199,32 @@ def test_cli_export_smoke() -> None:
 
     result = subprocess.run(
         [sys.executable, "-m", "arforge.cli", "export", str(VALID_PROJECT), "--out", str(out_dir), "--split-by-swc"],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_cli_generate_code_smoke() -> None:
+    out_dir = REPO_ROOT / "build" / "test_cli_generate_code_examples"
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "arforge.cli",
+            "generate",
+            "code",
+            str(VALID_PROJECT),
+            "--lang",
+            "c",
+            "--out",
+            str(out_dir),
+        ],
         cwd=REPO_ROOT,
         check=False,
         capture_output=True,
@@ -683,6 +710,73 @@ def test_split_export_reports_aligned_example_outputs(tmp_path: Path) -> None:
         "SpeedSensor.arxml",
         SYSTEM_EXAMPLE_OUTPUT,
     ]
+
+
+def test_generate_code_writes_expected_files_for_example_project(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "code"
+
+    written = write_code_outputs(project, template_dir=template_dir, out=out_dir, lang="c")
+
+    assert [path.name for path in written] == [
+        "SpeedDisplay.h",
+        "SpeedDisplay.c",
+        "SpeedSensor.h",
+        "SpeedSensor.c",
+    ]
+
+
+def test_generate_code_contains_expected_runnable_names_and_rte_placeholders(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out_dir = tmp_path / "code"
+
+    _ = write_code_outputs(project, template_dir=template_dir, out=out_dir, lang="c")
+
+    speed_display_header = (out_dir / "SpeedDisplay.h").read_text(encoding="utf-8")
+    speed_display_source = (out_dir / "SpeedDisplay.c").read_text(encoding="utf-8")
+    speed_sensor_source = (out_dir / "SpeedSensor.c").read_text(encoding="utf-8")
+
+    assert "#ifndef ARFORGE_SPEEDDISPLAY_H" in speed_display_header
+    assert "void Runnable_OnPowerOn(void);" in speed_display_header
+    assert "void Runnable_ReadVehicleSpeed(void);" in speed_display_header
+    assert "void Runnable_ReadVehicleSpeedImplicit(void);" in speed_display_header
+    assert "void Runnable_ReadVehicleSpeedQueued(void);" in speed_display_header
+    assert "Trigger: ModeSwitchEvent(Rp_PowerState -> ON)" in speed_display_header
+    assert "Trigger: TimingEvent(10 ms)" in speed_display_header
+
+    assert "Rte_Read_Rp_VehicleSpeed_VehicleSpeed" in speed_display_source
+    assert "Rte_Read_Rp_VehicleSpeedImplicit_VehicleSpeed" in speed_display_source
+    assert "Rte_Read_Rp_VehicleSpeedQueued_VehicleSpeed" in speed_display_source
+    assert "uint16 rp_vehicle_speed_vehicle_speed = 0;" in speed_display_source
+    assert "uint16 rp_vehicle_speed_implicit_vehicle_speed = 0;" in speed_display_source
+    assert "uint16 rp_vehicle_speed_queued_vehicle_speed = 0;" in speed_display_source
+    assert "Trigger: ModeSwitchEvent(Rp_PowerState -> ON)" in speed_display_source
+    assert "React to the ECU entering the ON power mode." in speed_display_source
+
+    assert "Rte_Write_Pp_VehicleSpeed_VehicleSpeed" in speed_sensor_source
+    assert "Trigger: TimingEvent(10 ms)" in speed_sensor_source
+
+
+def test_generate_code_is_deterministic(tmp_path: Path) -> None:
+    project = load_and_validate_aggregator(VALID_PROJECT)
+    template_dir = REPO_ROOT / "templates"
+    out1 = tmp_path / "code1"
+    out2 = tmp_path / "code2"
+
+    _ = write_code_outputs(project, template_dir=template_dir, out=out1, lang="c")
+    _ = write_code_outputs(project, template_dir=template_dir, out=out2, lang="c")
+
+    files1 = sorted(p.relative_to(out1) for p in out1.rglob("*.*"))
+    files2 = sorted(p.relative_to(out2) for p in out2.rglob("*.*"))
+    assert files1 == files2
+
+    for rel in files1:
+        data1 = (out1 / rel).read_bytes()
+        data2 = (out2 / rel).read_bytes()
+        assert data1 == data2
+        assert hashlib.sha256(data1).hexdigest() == hashlib.sha256(data2).hexdigest()
 
 
 def test_split_export_system_contains_one_clear_end_to_end_connection(tmp_path: Path) -> None:

@@ -77,6 +77,7 @@ def test_init_default_creates_valid_project(tmp_path: Path) -> None:
     assert "interfaces/If_PowerState.yaml" in readme
     assert "python -m arforge.cli validate autosar.project.yaml" in readme
     assert "python -m arforge.cli export autosar.project.yaml --out build/out --split-by-swc" in readme
+    assert "python -m arforge.cli generate code autosar.project.yaml --lang c --out build/code" in readme
     assert 'modeDeclarationGroups:' in project_yaml
     assert '- "modes/*.yaml"' in project_yaml
     assert 'description: "Power state modes used by the scaffolded mode-switch interface."' in modes_yaml
