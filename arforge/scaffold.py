@@ -70,6 +70,12 @@ Export ARXML:
 ```bash
 python -m arforge.cli export autosar.project.yaml --out build/out --split-by-swc
 ```
+
+Generate C skeletons:
+
+```bash
+python -m arforge.cli generate code autosar.project.yaml --lang c --out build/code
+```
 """
 
 

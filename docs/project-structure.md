@@ -1,6 +1,6 @@
 # Project Structure
 
-An ARForge project is a set of YAML files referenced by a single aggregator manifest. The manifest tells ARForge where to find each input category. Everything else — validation, export — flows from that manifest.
+An ARForge project is a set of YAML files referenced by a single aggregator manifest. The manifest tells ARForge where to find each input category. Everything else - validation, export, and generation - flows from that manifest.
 
 ## Scaffold layout
 
@@ -8,7 +8,7 @@ Running `arforge init my-project` produces this layout:
 
 ```
 my-project/
-├── autosar.project.yaml       ← aggregator manifest
+├── autosar.project.yaml       <- aggregator manifest
 ├── types/
 │   ├── base_types.yaml
 │   ├── implementation_types.yaml
@@ -61,23 +61,23 @@ All paths are resolved relative to the manifest file. This means the manifest an
 
 ## What belongs where
 
-**`types/`** — data type definitions, split across three files by convention.
+**`types/`** - data type definitions, split across three files by convention.
 
-- `base_types.yaml` — platform-level types (`uint8`, `uint16`, etc.)
-- `implementation_types.yaml` — implementation data types backed by base types; scalars, arrays, structs
-- `application_types.yaml` — application data types with optional constraints, unit references, and compu method references
+- `base_types.yaml` - platform-level types (`uint8`, `uint16`, etc.)
+- `implementation_types.yaml` - implementation data types backed by base types; scalars, arrays, structs
+- `application_types.yaml` - application data types with optional constraints, unit references, and compu method references
 
-**`units/`** — physical unit definitions referenced by application types and compu methods.
+**`units/`** - physical unit definitions referenced by application types and compu methods.
 
-**`compu_methods/`** — computation method definitions (`linear`, `textTable`) that describe physical scaling for application types.
+**`compu_methods/`** - computation method definitions (`linear`, `textTable`) that describe physical scaling for application types.
 
-**`modes/`** — `ModeDeclarationGroup` definitions. Each group defines a named set of modes with an initial mode. Groups are referenced by mode-switch interfaces and resolved transitively through mode-switch ports to `modeSwitchEvents` on runnables. Unused mode groups are flagged by `CORE-014`.
+**`modes/`** - `ModeDeclarationGroup` definitions. Each group defines a named set of modes with an initial mode. Groups are referenced by mode-switch interfaces and resolved transitively through mode-switch ports to `modeSwitchEvents` on runnables. Unused mode groups are flagged by `CORE-014`.
 
-**`interfaces/`** — one file per interface. Each file defines a single sender-receiver, client-server, or mode-switch interface. Keeping one interface per file makes diffs clean and makes glob patterns in the manifest work well.
+**`interfaces/`** - one file per interface. Each file defines a single sender-receiver, client-server, or mode-switch interface. Keeping one interface per file makes diffs clean and makes glob patterns in the manifest work well.
 
-**`swcs/`** — one file per SWC type. Each file defines a single SWC type with its ports, runnables, events, and ComSpec.
+**`swcs/`** - one file per SWC type. Each file defines a single SWC type with its ports, runnables, events, and ComSpec.
 
-**`system.yaml`** — the system composition. Declares component prototypes (instances of SWC types) and the port-level assembly connectors between them. There is one system file per project.
+**`system.yaml`** - the system composition. Declares component prototypes (instances of SWC types) and the port-level assembly connectors between them. There is one system file per project.
 
 ## Build output
 
@@ -90,7 +90,7 @@ build/
 ├── MY_PROJECT_SharedTypes.arxml
 ├── SpeedSensor.arxml
 ├── SpeedDisplay.arxml
-└── Composition_DemoSystem.arxml
+└── DemoSystem.arxml
 ```
 
 Monolithic export produces a single combined file:
@@ -99,11 +99,22 @@ Monolithic export produces a single combined file:
 build/all.arxml
 ```
 
+Code generation writes per-SWC starter artifacts under the path passed to `arforge generate code`, for example:
+
+```
+build/code/
+├── SpeedSensor.h
+├── SpeedSensor.c
+├── SpeedDisplay.h
+└── SpeedDisplay.c
+```
+
 ## VS Code setup
 
 ARForge ships with a `.vscode/` directory that configures the editor automatically when you open the repository root in VS Code.
 
 **Required extensions:**
+
 - [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
 - [YAML](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) (Red Hat)
 
@@ -117,15 +128,17 @@ The VS Code tasks resolve the project manifest from a single setting in `.vscode
 "arforge.projectFile": "examples/autosar.project.yaml"
 ```
 
-Change this path to point to your own project manifest. All tasks — validate, export, init, pytest — pick it up automatically.
+Change this path to point to your own project manifest. All tasks - validate, export, generate, init, and pytest - pick it up automatically.
 
-**Available tasks** (`Terminal → Run Task`):
+**Available tasks** (`Terminal -> Run Task`):
 
 | Task | What it runs |
 |---|---|
 | `arforge: validate project` | `arforge validate <projectFile> -vv` |
 | `arforge: export project (split by swc)` | `arforge export <projectFile> --out build --split-by-swc -vv` |
 | `arforge: export project (monolithic)` | `arforge export <projectFile> --out build/DemoProject.arxml -vv` |
+| `arforge: generate Plantuml` | `arforge generate diagram <projectFile> --out build/diagrams_plantuml` |
+| `arforge: generate C-code` | `arforge generate code <projectFile> --lang c --out build/code` |
 | `arforge: init project` | `arforge init demo-project` |
 | `arforge: pytest` | `pytest -q` |
 
@@ -136,13 +149,13 @@ Tasks resolve the correct Python executable for both Linux and Windows using VS 
 At the repository level, the ARForge implementation itself is organized as follows. This is relevant for contributors.
 
 ```
-arforge/                    ← CLI, loader, model, validation, export, scaffold
-arforge/validation/cases/   ← domain-organized semantic validation cases
-schemas/                    ← JSON Schema files for all input categories
-templates/                  ← Jinja2 ARXML templates
-examples/                   ← valid example project
-examples/invalid/           ← invalid model fixtures used by the test suite
-tests/                      ← pytest coverage
-docs/                       ← this documentation
-.vscode/                    ← VS Code schema, task, and settings configuration
+arforge/                    <- CLI, loader, model, validation, export, codegen, scaffold
+arforge/validation/cases/   <- domain-organized semantic validation cases
+schemas/                    <- JSON Schema files for all input categories
+templates/                  <- Jinja2 ARXML, codegen, and diagram templates
+examples/                   <- valid example project
+examples/invalid/           <- invalid model fixtures used by the test suite
+tests/                      <- pytest coverage
+docs/                       <- this documentation
+.vscode/                    <- VS Code schema, task, and settings configuration
 ```

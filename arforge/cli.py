@@ -8,6 +8,7 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 
+from .codegen import supported_languages, write_code_outputs
 from .diagrams import BACKENDS, write_diagram_outputs
 from .exporter import ExportInputSummary, InputPatternExpansion, write_outputs, write_outputs_with_report
 from .scaffold import scaffold_project
@@ -349,6 +350,37 @@ def generate_diagram(
     console.print(Panel.fit("[green]Diagram generation complete[/green]", title="generate diagram"))
     for artifact in written:
         console.print(f" - {artifact.path}")
+
+
+@generate_app.command("code")
+def generate_code(
+    project: Path,
+    out: Path = typer.Option(..., "--out", help="Output directory for generated code files."),
+    lang: str = typer.Option(
+        "c",
+        "--lang",
+        help=f"Code generation backend. Supported values: {', '.join(supported_languages())}.",
+    ),
+    templates: Path = typer.Option(None, help="Template directory"),
+):
+    """Validate then generate SWC code skeletons."""
+    template_dir = templates or _default_template_dir()
+
+    try:
+        project_model = load_and_validate_aggregator(project)
+        written = write_code_outputs(project_model, template_dir=template_dir, out=out, lang=lang)
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(code=2)
+    except ValidationError as e:
+        console.print(Panel.fit(f"[red]FAILED[/red] {project}", title="generate code"))
+        for msg in e.errors:
+            console.print(f" - {msg}")
+        raise typer.Exit(code=2)
+
+    console.print(Panel.fit("[green]Code generation complete[/green]", title="generate code"))
+    for artifact in written:
+        console.print(f" - {artifact}")
 
 
 if __name__ == "__main__":

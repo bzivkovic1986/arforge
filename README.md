@@ -47,6 +47,7 @@ Current implementation targets a practical AUTOSAR Classic 4.2 subset:
 | **System composition** | Component prototypes, SWC type references, port-level assembly connectors for SR, CS, and mode-switch |
 | **Validation** | 191 stable finding codes, three severity levels (error/warning/info), verbose diagnostics |
 | **Export** | Jinja2-based ARXML, monolithic or split-by-SWC, deterministic ordering |
+| **Code skeletons** | Template-driven C `.h` / `.c` starter files generated from validated SWC models |
 | **Diagrams** | Unified `generate diagram` command for PlantUML architecture views |
 
 ---
@@ -103,9 +104,14 @@ python -m arforge.cli validate examples/autosar.project.yaml
 # Export — monolithic or split by SWC
 python -m arforge.cli export examples/autosar.project.yaml --out build/out --split-by-swc
 
+# Generate starter C skeletons for SWCs
+python -m arforge.cli generate code examples/autosar.project.yaml --lang c --out build/code
+
 # Generate architecture diagrams
 python -m arforge.cli generate diagram examples/autosar.project.yaml --out build/diagrams
 ```
+
+`generate code` produces deterministic starter skeletons for each SWC, for example `<SwcName>.h` and `<SwcName>.c`. The output is intentionally scaffold-level code with `Rte_Read_*`, `Rte_Write_*`, and `Rte_Call_*` placeholders rather than full AUTOSAR RTE integration.
 
 The diagram generator writes:
 - `composition_<System>.puml`
@@ -140,6 +146,8 @@ Once installed, open the repository root in VS Code. Schema-backed autocompletio
 | `arforge: validate project` | Validate the configured project manifest |
 | `arforge: export project (split by swc)` | Export ARXML, one file per SWC |
 | `arforge: export project (monolithic)` | Export ARXML as a single file |
+| `arforge: generate Plantuml` | Generate the PlantUML diagram set |
+| `arforge: generate C-code` | Generate C SWC starter skeletons |
 | `arforge: init project` | Scaffold a new project |
 | `arforge: pytest` | Run the full test suite |
 
