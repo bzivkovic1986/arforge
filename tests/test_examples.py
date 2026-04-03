@@ -753,6 +753,7 @@ def test_generate_code_contains_expected_runnable_names_and_rte_placeholders(tmp
     assert "uint16 rp_vehicle_speed_implicit_vehicle_speed = 0;" in speed_display_source
     assert "uint16 rp_vehicle_speed_queued_vehicle_speed = 0;" in speed_display_source
     assert "Trigger: ModeSwitchEvent(Rp_PowerState -> ON)" in speed_display_source
+    assert "TODO: handle modeled mode-switch trigger(s) for this runnable." in speed_display_source
     assert "React to the ECU entering the ON power mode." in speed_display_source
 
     assert "Rte_Write_Pp_VehicleSpeed_VehicleSpeed" in speed_sensor_source

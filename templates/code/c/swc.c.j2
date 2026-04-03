@@ -23,6 +23,9 @@ void {{ runnable.name }}(void)
 {% endif %}
 {% endfor %}
 {% endif %}
+{% if runnable.has_mode_switch_events %}
+    /* TODO: handle modeled mode-switch trigger(s) for this runnable. */
+{% endif %}
 {% if runnable.reads %}
     /* Sender-receiver reads */
 {% for read in runnable.reads %}

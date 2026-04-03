@@ -287,6 +287,7 @@ def _build_runnable_model(
         "name": runnable.name,
         "description": runnable.description,
         "trigger_lines": trigger_lines,
+        "has_mode_switch_events": bool(runnable.modeSwitchEvents),
         "reads": read_entries,
         "writes": write_entries,
         "calls": call_entries,
