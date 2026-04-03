@@ -146,6 +146,8 @@ Once installed, open the repository root in VS Code. Schema-backed autocompletio
 | `arforge: validate project` | Validate the configured project manifest |
 | `arforge: export project (split by swc)` | Export ARXML, one file per SWC |
 | `arforge: export project (monolithic)` | Export ARXML as a single file |
+| `arforge: generate Plantuml` | Generate the PlantUML diagram set |
+| `arforge: generate C-code` | Generate C SWC starter skeletons |
 | `arforge: init project` | Scaffold a new project |
 | `arforge: pytest` | Run the full test suite |
 

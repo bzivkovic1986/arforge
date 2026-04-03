@@ -31,13 +31,13 @@ python -m arforge.cli init my-ecu
 python -m arforge.cli init my-ecu --name MyEcu --no-example
 ```
 
-The scaffold creates a ready-to-validate project with a working example — a `SpeedSensor` and `SpeedDisplay` SWC wired together through a sender-receiver and a mode-switch flow. Use `--no-example` if you want only the directory structure.
+The scaffold creates a ready-to-validate project with a working example - a `SpeedSensor` and `SpeedDisplay` SWC wired together through a sender-receiver and a mode-switch flow. Use `--no-example` if you want only the directory structure.
 
 ---
 
 ## `validate`
 
-Load a project manifest and run full validation — schema validation followed by semantic validation.
+Load a project manifest and run full validation - schema validation followed by semantic validation.
 
 ```bash
 python -m arforge.cli validate <project.yaml> [options]
@@ -47,15 +47,15 @@ python -m arforge.cli validate <project.yaml> [options]
 
 | Option | Description |
 |---|---|
-| `-v` | Verbose — show per-case execution information. |
-| `-vv` | Very verbose — show case descriptions and full execution detail. |
+| `-v` | Verbose - show per-case execution information. |
+| `-vv` | Very verbose - show case descriptions and full execution detail. |
 
 **Exit codes:**
 
 | Code | Meaning |
 |---|---|
-| `0` | Validation passed — no error-severity findings |
-| `1` | One or more error-severity findings exist |
+| `0` | Validation passed - no error-severity findings |
+| `2` | One or more error-severity findings exist, or project loading/schema validation failed |
 
 Warnings and infos are always reported but never cause a non-zero exit.
 
@@ -68,7 +68,7 @@ python -m arforge.cli validate examples/autosar.project.yaml
 # With verbose output
 python -m arforge.cli validate examples/autosar.project.yaml -vv
 
-# In CI — fail the pipeline on any error finding
+# In CI - fail the pipeline on any error finding
 python -m arforge.cli validate examples/autosar.project.yaml || exit 1
 ```
 
@@ -116,7 +116,7 @@ build/out/
 ├── DEMO_SharedTypes.arxml
 ├── SpeedSensor.arxml
 ├── SpeedDisplay.arxml
-└── Composition_DemoSystem.arxml
+└── DemoSystem.arxml
 ```
 
 **Monolithic export:**
@@ -125,7 +125,7 @@ build/out/
 python -m arforge.cli export examples/autosar.project.yaml --out build/all.arxml
 ```
 
-**Custom templates** — for OEM-specific ARXML profiles:
+**Custom templates** - for OEM-specific ARXML profiles:
 
 ```bash
 python -m arforge.cli export examples/autosar.project.yaml --out build/out --templates my-templates/
@@ -205,9 +205,9 @@ The generated output is a deterministic starter skeleton, not a complete AUTOSAR
 
 ## Running via VS Code tasks
 
-If you are working in VS Code, all commands above are available as pre-configured tasks under `Terminal → Run Task`. The active project manifest is resolved from the `arforge.projectFile` setting in `.vscode/settings.json`.
+If you are working in VS Code, all commands above are available as pre-configured tasks under `Terminal -> Run Task`. The active project manifest is resolved from the `arforge.projectFile` setting in `.vscode/settings.json`.
 
-See [Project Structure — VS Code setup](./project-structure.md#vs-code-setup) for details.
+See [Project Structure - VS Code setup](./project-structure.md#vs-code-setup) for details.
 
 ---
 
