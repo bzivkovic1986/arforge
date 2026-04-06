@@ -10,11 +10,16 @@ swc:
       writes:
         - port: "Pp_VehicleSpeed"
           dataElement: "VehicleSpeed"
+        - port: PpSpeedSensorState
+          dataElement: Status
       reads:
         - port: Rp_CanSpeedPdu
           dataElement: SignalValue
         - port: Rp_CanSpeedPdu
           dataElement: SignalQualifier
+      calls:
+        - port: RpIgnitionState
+          operation: GetIgnitionState
   ports:
     - name: "Pp_VehicleSpeed"
       description: "Provided sender-receiver port for publishing speed."

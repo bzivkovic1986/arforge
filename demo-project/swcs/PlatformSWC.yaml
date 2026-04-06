@@ -24,6 +24,9 @@ swc:
       operationInvokedEvents:
         - port: "Pp_DiagHandling"
           operation: "SetEventStatus"
+      reads:
+        - port: RpSpeedSensorState
+          dataElement: Status
   ports:
     - name: "Pp_EcuVariant"
       direction: "provides"

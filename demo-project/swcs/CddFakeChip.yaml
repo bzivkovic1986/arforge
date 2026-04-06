@@ -12,6 +12,10 @@ swc:
       operationInvokedEvents:
         - port: PpFakeChip
           operation: GetVoltage
+    - name: Runnable_IgnitionState
+      operationInvokedEvents:
+        - port: PpIgnitionState
+          operation: GetIgnitionState
   ports:
     - name: PpFakeChip
       direction: provides
