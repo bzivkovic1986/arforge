@@ -1,0 +1,82 @@
+# ARForge: Compu methods for the Brake ECU showcase.
+compuMethods:
+  - name: "CM_BrakeEnable"
+    description: "Text table for the boolean brake-enable command."
+    category: "textTable"
+    entries:
+      - value: 0
+        label: "DISABLED"
+      - value: 1
+        label: "ENABLED"
+  - name: "CM_BrakePedal_Percent"
+    description: "Identity scaling for brake pedal position."
+    category: "linear"
+    unitRef: "percent"
+    factor: 1.0
+    offset: 0.0
+    physMin: 0
+    physMax: 100
+  - name: "CM_BrakeStatus"
+    description: "Brake state values surfaced to diagnostics and logging."
+    category: "textTable"
+    entries:
+      - value: 0
+        label: "RELEASED"
+      - value: 1
+        label: "APPLYING"
+      - value: 2
+        label: "ACTIVE"
+      - value: 3
+        label: "DEGRADED"
+      - value: 4
+        label: "FAULT"
+  - name: "CM_BrakeTorque_Nm"
+    description: "Identity scaling for torque request."
+    category: "linear"
+    unitRef: "newton_meter"
+    factor: 1.0
+    offset: 0.0
+    physMin: 0
+    physMax: 4000
+  - name: "CM_DiagnosticStatus"
+    description: "Condensed diagnostic snapshot values."
+    category: "textTable"
+    entries:
+      - value: 0
+        label: "OK"
+      - value: 1
+        label: "MONITORING"
+      - value: 2
+        label: "PLAUSIBILITY_FAULT"
+      - value: 3
+        label: "SERVICE_REQUIRED"
+  - name: "CM_EcuMode"
+    description: "Text table mirroring the brake ECU mode declaration group."
+    category: "textTable"
+    entries:
+      - value: 0
+        label: "OFF"
+      - value: 1
+        label: "INIT"
+      - value: 2
+        label: "NORMAL"
+      - value: 3
+        label: "DEGRADED"
+      - value: 4
+        label: "DIAG"
+  - name: "CM_SlipRatio_Percent"
+    description: "Identity scaling for estimated slip ratio."
+    category: "linear"
+    unitRef: "percent"
+    factor: 1.0
+    offset: 0.0
+    physMin: 0
+    physMax: 100
+  - name: "CM_WheelSpeed_Kph"
+    description: "Identity scaling for wheel speed."
+    category: "linear"
+    unitRef: "km_per_h"
+    factor: 1.0
+    offset: 0.0
+    physMin: 0
+    physMax: 300

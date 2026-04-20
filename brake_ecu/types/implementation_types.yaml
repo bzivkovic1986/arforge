@@ -1,0 +1,11 @@
+# ARForge: Implementation data types for the Brake ECU showcase.
+implementationDataTypes:
+  - name: "Boolean"
+    description: "Boolean-style value stored on an 8-bit base type."
+    baseTypeRef: "uint8"
+  - name: "UInt8"
+    description: "Project-wide unsigned 8-bit implementation type."
+    baseTypeRef: "uint8"
+  - name: "UInt16"
+    description: "Project-wide unsigned 16-bit implementation type."
+    baseTypeRef: "uint16"

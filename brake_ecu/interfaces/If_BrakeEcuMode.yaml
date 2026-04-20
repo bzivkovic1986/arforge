@@ -1,0 +1,6 @@
+# ARForge: Mode switch interface for the Brake ECU operating modes.
+interface:
+  name: "If_BrakeEcuMode"
+  description: "Mode switch interface for the Brake ECU operating state."
+  type: "modeSwitch"
+  modeGroupRef: "Mdg_BrakeEcuMode"

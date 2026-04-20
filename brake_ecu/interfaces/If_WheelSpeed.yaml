@@ -1,0 +1,9 @@
+# ARForge: Wheel speed signal used by the Brake ECU.
+interface:
+  name: "If_WheelSpeed"
+  description: "Sender-receiver interface carrying wheel speed."
+  type: "senderReceiver"
+  dataElements:
+    - name: "WheelSpeed"
+      description: "Current wheel speed in kilometers per hour."
+      typeRef: "App_WheelSpeed"

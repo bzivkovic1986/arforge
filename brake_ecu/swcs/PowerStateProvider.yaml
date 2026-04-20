@@ -1,0 +1,13 @@
+# ARForge: Simple mode publisher SWC.
+swc:
+  name: "PowerStateProvider"
+  description: "Publishes the Brake ECU operating mode to the control, logger, and diagnostics branches."
+  runnables:
+    - name: "Runnable_InitializeBrakeMode"
+      description: "Initializes the brake ECU mode source."
+      initEvent: true
+  ports:
+    - name: "Pp_BrakeEcuMode"
+      description: "Provided mode switch port distributed to all Brake ECU consumers."
+      direction: "provides"
+      interfaceRef: "If_BrakeEcuMode"

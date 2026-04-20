@@ -1,0 +1,44 @@
+# ARForge: Slip estimation SWC.
+swc:
+  name: "SlipEstimator"
+  description: "Estimates wheel slip from conditioned wheel-speed and pedal inputs."
+  runnables:
+    - name: "Runnable_EstimateSlip"
+      description: "Combines wheel speeds and brake pedal demand into a slip ratio estimate."
+      timingEventMs: 10
+      reads:
+        - port: "Rp_BrakePedal"
+          dataElement: "BrakePedalPosition"
+        - port: "Rp_WheelSpeedFrontLeft"
+          dataElement: "WheelSpeed"
+        - port: "Rp_WheelSpeedFrontRightImplicit"
+          dataElement: "WheelSpeed"
+      writes:
+        - port: "Pp_SlipRatio"
+          dataElement: "SlipRatio"
+  ports:
+    - name: "Pp_SlipRatio"
+      description: "Published slip ratio for the controller and diagnostics."
+      direction: "provides"
+      interfaceRef: "If_SlipRatio"
+    - name: "Rp_BrakePedal"
+      description: "Conditioned pedal input."
+      direction: "requires"
+      interfaceRef: "If_BrakePedal"
+      comSpec:
+        mode: "explicit"
+        initValue: 0
+    - name: "Rp_WheelSpeedFrontLeft"
+      description: "Explicit front-left wheel-speed input."
+      direction: "requires"
+      interfaceRef: "If_WheelSpeed"
+      comSpec:
+        mode: "explicit"
+        initValue: 0
+    - name: "Rp_WheelSpeedFrontRightImplicit"
+      description: "Implicit front-right wheel-speed input."
+      direction: "requires"
+      interfaceRef: "If_WheelSpeed"
+      comSpec:
+        mode: "implicit"
+        initValue: 0

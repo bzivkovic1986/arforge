@@ -1,0 +1,75 @@
+# ARForge: Status and telemetry logging SWC.
+swc:
+  name: "StatusLogger"
+  description: "Consumes top-level brake outputs and calls the diagnostic manager for additional context."
+  runnables:
+    - name: "Runnable_LogBrakeStatus"
+      description: "Consumes queued brake-status updates whenever a new sample arrives."
+      dataReceiveEvents:
+        - port: "Rp_BrakeStatusQueued"
+          dataElement: "BrakeStatus"
+      reads:
+        - port: "Rp_BrakeStatusQueued"
+          dataElement: "BrakeStatus"
+    - name: "Runnable_LogControlState"
+      description: "Periodically samples outputs and enriches them with diagnostic service calls."
+      timingEventMs: 20
+      reads:
+        - port: "Rp_BrakeEnable"
+          dataElement: "BrakeEnable"
+        - port: "Rp_BrakeTorqueRequest"
+          dataElement: "BrakeTorqueRequest"
+        - port: "Rp_SlipRatio"
+          dataElement: "SlipRatio"
+      calls:
+        - port: "Rp_BrakeDiagnostics"
+          operation: "GetCurrentMode"
+          timeoutMs: 100
+        - port: "Rp_BrakeDiagnostics"
+          operation: "GetDiagnosticSnapshot"
+          timeoutMs: 100
+    - name: "Runnable_OnDiagMode"
+      description: "Lets the logger react when the ECU enters DIAG mode."
+      modeSwitchEvents:
+        - port: "Rp_BrakeEcuMode"
+          mode: "DIAG"
+  ports:
+    - name: "Rp_BrakeDiagnostics"
+      description: "Required diagnostic service port connected to the top-level diagnostic manager."
+      direction: "requires"
+      interfaceRef: "If_BrakeDiagnostics"
+      comSpec:
+        callMode: "synchronous"
+        timeoutMs: 100
+    - name: "Rp_BrakeEnable"
+      description: "Implicit brake-enable input from the reusable control subcomposition."
+      direction: "requires"
+      interfaceRef: "If_BrakeEnable"
+      comSpec:
+        mode: "implicit"
+        initValue: 0
+    - name: "Rp_BrakeEcuMode"
+      description: "Brake ECU mode input used for DIAG-mode logging."
+      direction: "requires"
+      interfaceRef: "If_BrakeEcuMode"
+    - name: "Rp_BrakeStatusQueued"
+      description: "Queued brake status input used to demonstrate queued sender-receiver handling."
+      direction: "requires"
+      interfaceRef: "If_BrakeStatus"
+      comSpec:
+        mode: "queued"
+        queueLength: 8
+    - name: "Rp_BrakeTorqueRequest"
+      description: "Current torque request from the reusable control subcomposition."
+      direction: "requires"
+      interfaceRef: "If_BrakeTorqueRequest"
+      comSpec:
+        mode: "explicit"
+        initValue: 0
+    - name: "Rp_SlipRatio"
+      description: "Current slip ratio estimate from the reusable control subcomposition."
+      direction: "requires"
+      interfaceRef: "If_SlipRatio"
+      comSpec:
+        mode: "explicit"
+        initValue: 0

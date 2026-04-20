@@ -1,0 +1,53 @@
+# ARForge: Plausibility supervision SWC.
+swc:
+  name: "BrakePlausibilityMonitor"
+  description: "Monitors wheel speed and pedal coherence and publishes a brake status value."
+  runnables:
+    - name: "Runnable_CheckPlausibility"
+      description: "Evaluates incoming signals and updates the brake status."
+      timingEventMs: 20
+      reads:
+        - port: "Rp_BrakePedal"
+          dataElement: "BrakePedalPosition"
+        - port: "Rp_WheelSpeedFrontLeft"
+          dataElement: "WheelSpeed"
+        - port: "Rp_WheelSpeedFrontRight"
+          dataElement: "WheelSpeed"
+      writes:
+        - port: "Pp_BrakeStatus"
+          dataElement: "BrakeStatus"
+    - name: "Runnable_OnDegradedMode"
+      description: "Allows the monitor to react immediately when the controller enters DEGRADED mode."
+      modeSwitchEvents:
+        - port: "Rp_BrakeEcuMode"
+          mode: "DEGRADED"
+  ports:
+    - name: "Pp_BrakeStatus"
+      description: "Published status value shared with the controller and top-level services."
+      direction: "provides"
+      interfaceRef: "If_BrakeStatus"
+    - name: "Rp_BrakeEcuMode"
+      description: "Internal brake ECU mode forwarded by the controller."
+      direction: "requires"
+      interfaceRef: "If_BrakeEcuMode"
+    - name: "Rp_BrakePedal"
+      description: "Conditioned pedal input used for plausibility checks."
+      direction: "requires"
+      interfaceRef: "If_BrakePedal"
+      comSpec:
+        mode: "explicit"
+        initValue: 0
+    - name: "Rp_WheelSpeedFrontLeft"
+      description: "Front-left wheel speed used in plausibility comparisons."
+      direction: "requires"
+      interfaceRef: "If_WheelSpeed"
+      comSpec:
+        mode: "explicit"
+        initValue: 0
+    - name: "Rp_WheelSpeedFrontRight"
+      description: "Front-right wheel speed used in plausibility comparisons."
+      direction: "requires"
+      interfaceRef: "If_WheelSpeed"
+      comSpec:
+        mode: "explicit"
+        initValue: 0

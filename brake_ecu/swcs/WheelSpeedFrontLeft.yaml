@@ -1,0 +1,26 @@
+# ARForge: Front-left wheel speed conditioning SWC.
+swc:
+  name: "WheelSpeedFrontLeft"
+  description: "Filters the delegated raw front-left wheel speed and republishes it for the control chain."
+  runnables:
+    - name: "Runnable_FilterFrontLeftWheelSpeed"
+      description: "Reads the boundary wheel-speed sample and republishes the conditioned signal."
+      timingEventMs: 5
+      reads:
+        - port: "Rp_WheelSpeedRawIn"
+          dataElement: "WheelSpeed"
+      writes:
+        - port: "Pp_WheelSpeedFrontLeft"
+          dataElement: "WheelSpeed"
+  ports:
+    - name: "Pp_WheelSpeedFrontLeft"
+      description: "Conditioned front-left wheel speed."
+      direction: "provides"
+      interfaceRef: "If_WheelSpeed"
+    - name: "Rp_WheelSpeedRawIn"
+      description: "Delegated raw front-left wheel-speed input."
+      direction: "requires"
+      interfaceRef: "If_WheelSpeed"
+      comSpec:
+        mode: "explicit"
+        initValue: 0

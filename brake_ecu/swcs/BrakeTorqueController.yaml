@@ -1,0 +1,68 @@
+# ARForge: Core torque controller SWC.
+swc:
+  name: "BrakeTorqueController"
+  description: "Calculates brake torque request and brake-enable output from pedal, slip, status, and mode."
+  runnables:
+    - name: "Runnable_CalculateBrakeTorque"
+      description: "Calculates the brake torque and enable decision."
+      timingEventMs: 10
+      reads:
+        - port: "Rp_BrakePedal"
+          dataElement: "BrakePedalPosition"
+        - port: "Rp_BrakeStatus"
+          dataElement: "BrakeStatus"
+        - port: "Rp_SlipRatio"
+          dataElement: "SlipRatio"
+      writes:
+        - port: "Pp_BrakeEnable"
+          dataElement: "BrakeEnable"
+        - port: "Pp_BrakeTorqueRequest"
+          dataElement: "BrakeTorqueRequest"
+    - name: "Runnable_OnDegradedMode"
+      description: "Prepares the controller for degraded operation."
+      modeSwitchEvents:
+        - port: "Rp_BrakeEcuModeIn"
+          mode: "DEGRADED"
+    - name: "Runnable_OnNormalMode"
+      description: "Prepares the controller for nominal braking."
+      modeSwitchEvents:
+        - port: "Rp_BrakeEcuModeIn"
+          mode: "NORMAL"
+  ports:
+    - name: "Pp_BrakeEnable"
+      description: "Brake-enable output forwarded to the composition boundary."
+      direction: "provides"
+      interfaceRef: "If_BrakeEnable"
+    - name: "Pp_BrakeEcuMode"
+      description: "Internal mode distribution for dependent control SWCs."
+      direction: "provides"
+      interfaceRef: "If_BrakeEcuMode"
+    - name: "Pp_BrakeTorqueRequest"
+      description: "Brake torque request forwarded to the composition boundary."
+      direction: "provides"
+      interfaceRef: "If_BrakeTorqueRequest"
+    - name: "Rp_BrakeEcuModeIn"
+      description: "Delegated top-level Brake ECU mode."
+      direction: "requires"
+      interfaceRef: "If_BrakeEcuMode"
+    - name: "Rp_BrakePedal"
+      description: "Conditioned pedal input."
+      direction: "requires"
+      interfaceRef: "If_BrakePedal"
+      comSpec:
+        mode: "explicit"
+        initValue: 0
+    - name: "Rp_BrakeStatus"
+      description: "Current plausibility status used to gate torque output."
+      direction: "requires"
+      interfaceRef: "If_BrakeStatus"
+      comSpec:
+        mode: "explicit"
+        initValue: 0
+    - name: "Rp_SlipRatio"
+      description: "Slip estimate used to shape torque demand."
+      direction: "requires"
+      interfaceRef: "If_SlipRatio"
+      comSpec:
+        mode: "explicit"
+        initValue: 0

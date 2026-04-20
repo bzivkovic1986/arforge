@@ -1,0 +1,9 @@
+# ARForge: Torque request output from the brake controller.
+interface:
+  name: "If_BrakeTorqueRequest"
+  description: "Sender-receiver interface for the requested brake torque."
+  type: "senderReceiver"
+  dataElements:
+    - name: "BrakeTorqueRequest"
+      description: "Current torque request in Newton meters."
+      typeRef: "App_BrakeTorqueRequest"

@@ -1,0 +1,11 @@
+# ARForge: Units for the Brake ECU showcase.
+units:
+  - name: "km_per_h"
+    description: "Wheel speed unit."
+    displayName: "km/h"
+  - name: "newton_meter"
+    description: "Brake torque request unit."
+    displayName: "Nm"
+  - name: "percent"
+    description: "Normalized percentage unit."
+    displayName: "%"

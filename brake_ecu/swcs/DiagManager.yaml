@@ -1,0 +1,56 @@
+# ARForge: Top-level diagnostic manager SWC.
+swc:
+  name: "DiagManager"
+  description: "Provides brake diagnostic services while sampling top-level status and slip outputs."
+  category: "service"
+  runnables:
+    - name: "Runnable_OnDiagMode"
+      description: "Allows diagnostic handling to react when the ECU enters DIAG mode."
+      modeSwitchEvents:
+        - port: "Rp_BrakeEcuMode"
+          mode: "DIAG"
+    - name: "Runnable_ProvideBrakeDiagnostics"
+      description: "Implements the public diagnostic service operations."
+      operationInvokedEvents:
+        - port: "Pp_BrakeDiagnostics"
+          operation: "GetBrakeStatus"
+        - port: "Pp_BrakeDiagnostics"
+          operation: "GetCurrentMode"
+        - port: "Pp_BrakeDiagnostics"
+          operation: "GetDiagnosticSnapshot"
+        - port: "Pp_BrakeDiagnostics"
+          operation: "ResetPlausibilityFault"
+      raisesErrors:
+        - operation: "ResetPlausibilityFault"
+          error: "REQUEST_DENIED"
+    - name: "Runnable_ScanBrakeHealth"
+      description: "Samples the brake status and slip outputs for diagnostic state management."
+      timingEventMs: 20
+      reads:
+        - port: "Rp_BrakeStatus"
+          dataElement: "BrakeStatus"
+        - port: "Rp_SlipRatio"
+          dataElement: "SlipRatio"
+  ports:
+    - name: "Pp_BrakeDiagnostics"
+      description: "Provided diagnostic service interface for the Brake ECU."
+      direction: "provides"
+      interfaceRef: "If_BrakeDiagnostics"
+    - name: "Rp_BrakeEcuMode"
+      description: "Brake ECU mode input used for diagnostic mode entry."
+      direction: "requires"
+      interfaceRef: "If_BrakeEcuMode"
+    - name: "Rp_BrakeStatus"
+      description: "Top-level brake status input from the reusable control subcomposition."
+      direction: "requires"
+      interfaceRef: "If_BrakeStatus"
+      comSpec:
+        mode: "explicit"
+        initValue: 0
+    - name: "Rp_SlipRatio"
+      description: "Top-level slip ratio input from the reusable control subcomposition."
+      direction: "requires"
+      interfaceRef: "If_SlipRatio"
+      comSpec:
+        mode: "explicit"
+        initValue: 0

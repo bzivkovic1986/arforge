@@ -1,0 +1,26 @@
+# ARForge: Brake pedal conditioning SWC.
+swc:
+  name: "BrakePedalSensor"
+  description: "Filters the delegated raw brake pedal input and republishes a normalized pedal signal."
+  runnables:
+    - name: "Runnable_FilterBrakePedal"
+      description: "Reads the incoming pedal sample and republishes the conditioned value."
+      timingEventMs: 5
+      reads:
+        - port: "Rp_BrakePedalRawIn"
+          dataElement: "BrakePedalPosition"
+      writes:
+        - port: "Pp_BrakePedal"
+          dataElement: "BrakePedalPosition"
+  ports:
+    - name: "Pp_BrakePedal"
+      description: "Conditioned pedal value for the inner control chain."
+      direction: "provides"
+      interfaceRef: "If_BrakePedal"
+    - name: "Rp_BrakePedalRawIn"
+      description: "Delegated raw pedal input from the composition boundary."
+      direction: "requires"
+      interfaceRef: "If_BrakePedal"
+      comSpec:
+        mode: "explicit"
+        initValue: 0

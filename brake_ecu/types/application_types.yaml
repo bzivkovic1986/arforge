@@ -1,0 +1,62 @@
+# ARForge: Application data types used by the Brake ECU showcase interfaces.
+applicationDataTypes:
+  - name: "App_BrakeEnable"
+    description: "Boolean brake-enable output used by the controller and logger."
+    implementationTypeRef: "Boolean"
+    constraint:
+      min: 0
+      max: 1
+    compuMethodRef: "CM_BrakeEnable"
+  - name: "App_BrakePedalPosition"
+    description: "Normalized brake pedal position in percent."
+    implementationTypeRef: "UInt8"
+    constraint:
+      min: 0
+      max: 100
+    unitRef: "percent"
+    compuMethodRef: "CM_BrakePedal_Percent"
+  - name: "App_BrakeStatus"
+    description: "Controller status for the brake path and plausibility supervision."
+    implementationTypeRef: "UInt8"
+    constraint:
+      min: 0
+      max: 4
+    compuMethodRef: "CM_BrakeStatus"
+  - name: "App_BrakeTorqueRequest"
+    description: "Requested brake torque in Newton meters."
+    implementationTypeRef: "UInt16"
+    constraint:
+      min: 0
+      max: 4000
+    unitRef: "newton_meter"
+    compuMethodRef: "CM_BrakeTorque_Nm"
+  - name: "App_DiagnosticStatus"
+    description: "Compressed diagnostic snapshot returned by the diagnostic manager."
+    implementationTypeRef: "UInt8"
+    constraint:
+      min: 0
+      max: 3
+    compuMethodRef: "CM_DiagnosticStatus"
+  - name: "App_EcuMode"
+    description: "Diagnostic-friendly representation of the brake ECU operating mode."
+    implementationTypeRef: "UInt8"
+    constraint:
+      min: 0
+      max: 4
+    compuMethodRef: "CM_EcuMode"
+  - name: "App_SlipRatio"
+    description: "Estimated wheel slip ratio in percent."
+    implementationTypeRef: "UInt8"
+    constraint:
+      min: 0
+      max: 100
+    unitRef: "percent"
+    compuMethodRef: "CM_SlipRatio_Percent"
+  - name: "App_WheelSpeed"
+    description: "Wheel speed in kilometers per hour."
+    implementationTypeRef: "UInt16"
+    constraint:
+      min: 0
+      max: 300
+    unitRef: "km_per_h"
+    compuMethodRef: "CM_WheelSpeed_Kph"

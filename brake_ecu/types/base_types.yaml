@@ -1,0 +1,14 @@
+# ARForge: Base type definitions for the Brake ECU showcase.
+baseTypes:
+  - name: "uint8"
+    description: "Unsigned 8-bit platform integer."
+    bitLength: 8
+    signedness: "unsigned"
+    nativeDeclaration: "uint8"
+    category: "fixedLength"
+  - name: "uint16"
+    description: "Unsigned 16-bit platform integer."
+    bitLength: 16
+    signedness: "unsigned"
+    nativeDeclaration: "uint16"
+    category: "fixedLength"

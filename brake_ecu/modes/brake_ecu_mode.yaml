@@ -1,0 +1,18 @@
+# ARForge: Mode declaration group for the Brake ECU showcase.
+modeDeclarationGroups:
+  - name: "Mdg_BrakeEcuMode"
+    description: "Operating modes for the Brake ECU."
+    category: "explicitOrder"
+    initialMode: "OFF"
+    onTransitionValue: 255
+    modes:
+      - name: "OFF"
+        value: 0
+      - name: "INIT"
+        value: 1
+      - name: "NORMAL"
+        value: 2
+      - name: "DEGRADED"
+        value: 3
+      - name: "DIAG"
+        value: 4

@@ -1,0 +1,9 @@
+# ARForge: Slip ratio estimate used by control and diagnostics.
+interface:
+  name: "If_SlipRatio"
+  description: "Sender-receiver interface for the estimated slip ratio."
+  type: "senderReceiver"
+  dataElements:
+    - name: "SlipRatio"
+      description: "Estimated slip ratio in percent."
+      typeRef: "App_SlipRatio"

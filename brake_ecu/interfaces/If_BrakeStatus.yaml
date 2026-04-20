@@ -1,0 +1,9 @@
+# ARForge: Brake state signal shared with diagnostics and logging.
+interface:
+  name: "If_BrakeStatus"
+  description: "Sender-receiver interface for the monitored brake status."
+  type: "senderReceiver"
+  dataElements:
+    - name: "BrakeStatus"
+      description: "Current brake status state machine value."
+      typeRef: "App_BrakeStatus"

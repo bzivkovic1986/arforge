@@ -1,0 +1,9 @@
+# ARForge: Brake enable status propagated to logging.
+interface:
+  name: "If_BrakeEnable"
+  description: "Sender-receiver interface carrying the controller brake-enable output."
+  type: "senderReceiver"
+  dataElements:
+    - name: "BrakeEnable"
+      description: "Boolean enable command used by the logger."
+      typeRef: "App_BrakeEnable"

@@ -1,0 +1,24 @@
+# ARForge: Brake ECU showcase project manifest
+# A richer demo that exercises subcomposition wiring, SR/C/S communication,
+# mode switching, and deterministic monolithic/split export paths.
+autosar:
+  version: "4.2"
+  rootPackage: "BRAKE_DEMO"
+
+inputs:
+  baseTypes: "types/base_types.yaml"
+  implementationDataTypes: "types/implementation_types.yaml"
+  applicationDataTypes: "types/application_types.yaml"
+  units:
+    - "units/units.yaml"
+  compuMethods:
+    - "compu_methods/compu_methods.yaml"
+  modeDeclarationGroups:
+    - "modes/*.yaml"
+  interfaces:
+    - "interfaces/*.yaml"
+  swcs:
+    - "swcs/*.yaml"
+  subcompositions:
+    - "subcompositions/*.yaml"
+  system: "system.yaml"

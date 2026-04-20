@@ -1,0 +1,9 @@
+# ARForge: Pedal position signal used by the Brake ECU.
+interface:
+  name: "If_BrakePedal"
+  description: "Sender-receiver interface carrying normalized brake pedal position."
+  type: "senderReceiver"
+  dataElements:
+    - name: "BrakePedalPosition"
+      description: "Current brake pedal position in percent."
+      typeRef: "App_BrakePedalPosition"

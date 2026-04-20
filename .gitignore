@@ -5,5 +5,9 @@ __pycache__/
 build/
 dist/
 *.arxml
+*.c
+*.puml
+*.html
+*.xml
 
 .DS_Store
