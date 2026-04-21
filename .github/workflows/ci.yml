@@ -3,7 +3,7 @@ name: CI
 # Example GitHub Actions workflow for ARForge CI/CD.
 # It installs dependencies, runs pytest, validates the brake ECU demo project,
 # exports ARXML for the brake ECU demo in monolithic and split layouts,
-# generates additional derived artifacts,
+# generates additional derived artifacts including PlantUML diagrams,
 # and uploads the generated outputs as build artifacts.
 # Users can reuse this workflow by replacing the project manifest paths
 # with their own autosar.project.yaml files.
@@ -44,6 +44,7 @@ jobs:
       - name: Generate additional artifacts
         run: |
           python -m arforge.cli report brake_ecu/autosar.project.yaml --out build/brake_report.md
+          python -m arforge.cli generate diagram brake_ecu/autosar.project.yaml --out build/brake_diagrams
           python -m arforge.cli generate code brake_ecu/autosar.project.yaml --lang c --out build/brake_code
 
       - name: Upload generated artifacts
@@ -54,4 +55,5 @@ jobs:
             build/brake_out
             build/brake_split
             build/brake_report.md
+            build/brake_diagrams
             build/brake_code
