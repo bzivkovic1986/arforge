@@ -1,0 +1,57 @@
+name: CI
+
+# Example GitHub Actions workflow for ARForge CI/CD.
+# It installs dependencies, runs pytest, validates the brake ECU demo project,
+# exports ARXML for the brake ECU demo in monolithic and split layouts,
+# generates additional derived artifacts,
+# and uploads the generated outputs as build artifacts.
+# Users can reuse this workflow by replacing the project manifest paths
+# with their own autosar.project.yaml files.
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run tests
+        run: pytest -q
+
+      - name: Validate brake ECU project
+        run: python -m arforge.cli validate brake_ecu/autosar.project.yaml -vv
+
+      - name: Export brake ECU ARXML
+        run: |
+          python -m arforge.cli export brake_ecu/autosar.project.yaml --out build/brake_out/brake_ecu.arxml
+          python -m arforge.cli export brake_ecu/autosar.project.yaml --out build/brake_split --split-by-swc
+
+      - name: Generate additional artifacts
+        run: |
+          python -m arforge.cli report brake_ecu/autosar.project.yaml --out build/brake_report.md
+          python -m arforge.cli generate code brake_ecu/autosar.project.yaml --lang c --out build/brake_code
+
+      - name: Upload generated artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: brake-ecu-generated-artifacts
+          path: |
+            build/brake_out
+            build/brake_split
+            build/brake_report.md
+            build/brake_code
