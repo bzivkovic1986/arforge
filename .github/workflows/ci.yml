@@ -34,7 +34,7 @@ jobs:
         run: pytest -q
 
       - name: Validate brake ECU project
-        run: python -m arforge.cli validate brake_ecu/autosar.project.yaml -vv
+        run: python -m arforge.cli validate brake_ecu/autosar.project.yaml --profile brake_ecu/validation_profiles/naming.yaml -vv
 
       - name: Export brake ECU ARXML
         run: |

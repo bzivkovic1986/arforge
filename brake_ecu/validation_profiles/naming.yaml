@@ -1,0 +1,8 @@
+profile:
+  name: "BrakeEcuNaming"
+  mode: "core+extensions"
+
+extensions:
+  - module: "custom_rules"
+    rules:
+      - "rule_placeholder_naming"
