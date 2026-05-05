@@ -1,0 +1,24 @@
+# ARForge: Wheel-speed capture CDD for the Brake ECU showcase.
+swc:
+  name: "WheelSpeedCaptureDriver"
+  description: "Captures raw front-axle wheel-speed samples and publishes them into the brake-control path."
+  category: "complexDeviceDriver"
+  package: "Components/Drivers"
+  runnables:
+    - name: "Runnable_CaptureWheelSpeeds"
+      description: "Publishes raw front-left and front-right wheel-speed samples from the capture hardware path."
+      timingEventMs: 5
+      writes:
+        - port: "Pp_WheelSpeedFrontLeftRaw"
+          dataElement: "WheelSpeed"
+        - port: "Pp_WheelSpeedFrontRightRaw"
+          dataElement: "WheelSpeed"
+  ports:
+    - name: "Pp_WheelSpeedFrontLeftRaw"
+      description: "Raw front-left wheel-speed sample exported by the capture driver."
+      direction: "provides"
+      interfaceRef: "If_WheelSpeed"
+    - name: "Pp_WheelSpeedFrontRightRaw"
+      description: "Raw front-right wheel-speed sample exported by the capture driver."
+      direction: "provides"
+      interfaceRef: "If_WheelSpeed"

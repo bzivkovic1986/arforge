@@ -3,6 +3,7 @@ interface:
   name: "If_BrakeDiagnostics"
   description: "Client-server interface exposing brake ECU status and maintenance services."
   type: "clientServer"
+  package: "Interfaces/Diagnostics"
   operations:
     - name: "GetBrakeStatus"
       description: "Returns the current brake status value."
@@ -13,13 +14,25 @@ interface:
     - name: "GetDiagnosticSnapshot"
       description: "Returns a compressed diagnostic snapshot."
       returnType: "App_DiagnosticStatus"
+    - name: "NormalizeFaultCode"
+      description: "Normalizes a diagnostic fault code in place and returns the normalized value."
+      arguments:
+        - name: "FaultCode"
+          direction: "inout"
+          typeRef: "UInt8"
+      returnType: "UInt8"
+    - name: "ReadBrakeSnapshot"
+      description: "Returns a diagnostic snapshot through an OUT parameter."
+      arguments:
+        - name: "Snapshot"
+          direction: "out"
+          typeRef: "App_DiagnosticStatus"
     - name: "ResetPlausibilityFault"
       description: "Clears the plausibility monitor latch when service conditions allow it."
       arguments:
         - name: "RequesterId"
           direction: "in"
           typeRef: "UInt8"
-      returnType: "void"
       possibleErrors:
         - name: "REQUEST_DENIED"
           code: 1

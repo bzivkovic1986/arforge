@@ -3,6 +3,7 @@ swc:
   name: "DiagManager"
   description: "Provides brake diagnostic services while sampling top-level status and slip outputs."
   category: "service"
+  package: "Components/Diagnostics"
   runnables:
     - name: "Runnable_OnDiagMode"
       description: "Allows diagnostic handling to react when the ECU enters DIAG mode."
@@ -11,6 +12,9 @@ swc:
           mode: "DIAG"
     - name: "Runnable_ProvideBrakeDiagnostics"
       description: "Implements the public diagnostic service operations."
+      modeConditions:
+        - port: "Rp_BrakeEcuMode"
+          mode: "DIAG"
       operationInvokedEvents:
         - port: "Pp_BrakeDiagnostics"
           operation: "GetBrakeStatus"
@@ -18,6 +22,10 @@ swc:
           operation: "GetCurrentMode"
         - port: "Pp_BrakeDiagnostics"
           operation: "GetDiagnosticSnapshot"
+        - port: "Pp_BrakeDiagnostics"
+          operation: "NormalizeFaultCode"
+        - port: "Pp_BrakeDiagnostics"
+          operation: "ReadBrakeSnapshot"
         - port: "Pp_BrakeDiagnostics"
           operation: "ResetPlausibilityFault"
       raisesErrors:
@@ -28,7 +36,11 @@ swc:
       timingEventMs: 20
       reads:
         - port: "Rp_BrakeStatus"
-          dataElement: "BrakeStatus"
+          dataElement: "BrakeState"
+        - port: "Rp_BrakeStatus"
+          dataElement: "DegradationLevel"
+        - port: "Rp_BrakeStatus"
+          dataElement: "FaultActive"
         - port: "Rp_SlipRatio"
           dataElement: "SlipRatio"
   ports:
@@ -44,9 +56,6 @@ swc:
       description: "Top-level brake status input from the reusable control subcomposition."
       direction: "requires"
       interfaceRef: "If_BrakeStatus"
-      comSpec:
-        mode: "explicit"
-        initValue: 0
     - name: "Rp_SlipRatio"
       description: "Top-level slip ratio input from the reusable control subcomposition."
       direction: "requires"

@@ -2,6 +2,7 @@
 modeDeclarationGroups:
   - name: "Mdg_BrakeEcuMode"
     description: "Operating modes for the Brake ECU."
+    package: "Modes/BrakeControl"
     category: "explicitOrder"
     initialMode: "OFF"
     onTransitionValue: 255

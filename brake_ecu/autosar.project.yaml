@@ -4,6 +4,7 @@
 autosar:
   version: "4.2"
   rootPackage: "BRAKE_DEMO"
+  packageLayoutRef: "packages/brake_ecu_layout.yaml"
 
 inputs:
   baseTypes: "types/base_types.yaml"

@@ -30,6 +30,18 @@ compuMethods:
         label: "DEGRADED"
       - value: 4
         label: "FAULT"
+  - name: "CM_DegradationLevel"
+    description: "Degradation bands used by the logger and diagnostic path."
+    category: "textTable"
+    entries:
+      - value: 0
+        label: "NONE"
+      - value: 1
+        label: "LIMITED"
+      - value: 2
+        label: "FALLBACK"
+      - value: 3
+        label: "LOCKED"
   - name: "CM_BrakeTorque_Nm"
     description: "Identity scaling for torque request."
     category: "linear"
@@ -64,6 +76,14 @@ compuMethods:
         label: "DEGRADED"
       - value: 4
         label: "DIAG"
+  - name: "CM_FaultActive"
+    description: "Boolean state for the brake fault-active indicator."
+    category: "textTable"
+    entries:
+      - value: 0
+        label: "INACTIVE"
+      - value: 1
+        label: "ACTIVE"
   - name: "CM_SlipRatio_Percent"
     description: "Identity scaling for estimated slip ratio."
     category: "linear"

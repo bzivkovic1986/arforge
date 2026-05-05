@@ -6,11 +6,20 @@ swc:
     - name: "Runnable_CalculateBrakeTorque"
       description: "Calculates the brake torque and enable decision."
       timingEventMs: 10
+      modeConditions:
+        - port: "Rp_BrakeEcuModeIn"
+          mode: "DEGRADED"
+        - port: "Rp_BrakeEcuModeIn"
+          mode: "NORMAL"
       reads:
         - port: "Rp_BrakePedal"
           dataElement: "BrakePedalPosition"
         - port: "Rp_BrakeStatus"
-          dataElement: "BrakeStatus"
+          dataElement: "BrakeState"
+        - port: "Rp_BrakeStatus"
+          dataElement: "DegradationLevel"
+        - port: "Rp_BrakeStatus"
+          dataElement: "FaultActive"
         - port: "Rp_SlipRatio"
           dataElement: "SlipRatio"
       writes:
@@ -56,9 +65,6 @@ swc:
       description: "Current plausibility status used to gate torque output."
       direction: "requires"
       interfaceRef: "If_BrakeStatus"
-      comSpec:
-        mode: "explicit"
-        initValue: 0
     - name: "Rp_SlipRatio"
       description: "Slip estimate used to shape torque demand."
       direction: "requires"

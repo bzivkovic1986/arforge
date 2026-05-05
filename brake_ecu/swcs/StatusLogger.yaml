@@ -2,15 +2,31 @@
 swc:
   name: "StatusLogger"
   description: "Consumes top-level brake outputs and calls the diagnostic manager for additional context."
+  package: "Components/Logging"
   runnables:
     - name: "Runnable_LogBrakeStatus"
-      description: "Consumes queued brake-status updates whenever a new sample arrives."
+      description: "Consumes brake-state updates whenever the brake-control path enters degraded supervision."
       dataReceiveEvents:
-        - port: "Rp_BrakeStatusQueued"
-          dataElement: "BrakeStatus"
+        - port: "Rp_BrakeStatus"
+          dataElement: "BrakeState"
+      modeConditions:
+        - port: "Rp_BrakeEcuMode"
+          mode: "DEGRADED"
       reads:
-        - port: "Rp_BrakeStatusQueued"
-          dataElement: "BrakeStatus"
+        - port: "Rp_BrakeStatus"
+          dataElement: "BrakeState"
+        - port: "Rp_BrakeStatus"
+          dataElement: "DegradationLevel"
+        - port: "Rp_BrakeStatus"
+          dataElement: "FaultActive"
+    - name: "Runnable_LogQueuedBrakeTorque"
+      description: "Consumes queued brake-torque samples to demonstrate queued receiver handling on a single-element interface."
+      dataReceiveEvents:
+        - port: "Rp_BrakeTorqueRequestQueued"
+          dataElement: "BrakeTorqueRequest"
+      reads:
+        - port: "Rp_BrakeTorqueRequestQueued"
+          dataElement: "BrakeTorqueRequest"
     - name: "Runnable_LogControlState"
       description: "Periodically samples outputs and enriches them with diagnostic service calls."
       timingEventMs: 20
@@ -27,6 +43,12 @@ swc:
           timeoutMs: 100
         - port: "Rp_BrakeDiagnostics"
           operation: "GetDiagnosticSnapshot"
+          timeoutMs: 100
+        - port: "Rp_BrakeDiagnostics"
+          operation: "NormalizeFaultCode"
+          timeoutMs: 100
+        - port: "Rp_BrakeDiagnostics"
+          operation: "ReadBrakeSnapshot"
           timeoutMs: 100
     - name: "Runnable_OnDiagMode"
       description: "Lets the logger react when the ECU enters DIAG mode."
@@ -52,13 +74,10 @@ swc:
       description: "Brake ECU mode input used for DIAG-mode logging."
       direction: "requires"
       interfaceRef: "If_BrakeEcuMode"
-    - name: "Rp_BrakeStatusQueued"
-      description: "Queued brake status input used to demonstrate queued sender-receiver handling."
+    - name: "Rp_BrakeStatus"
+      description: "Brake status input exposing the multi-element status contract."
       direction: "requires"
       interfaceRef: "If_BrakeStatus"
-      comSpec:
-        mode: "queued"
-        queueLength: 8
     - name: "Rp_BrakeTorqueRequest"
       description: "Current torque request from the reusable control subcomposition."
       direction: "requires"
@@ -66,6 +85,13 @@ swc:
       comSpec:
         mode: "explicit"
         initValue: 0
+    - name: "Rp_BrakeTorqueRequestQueued"
+      description: "Queued brake torque request input used to demonstrate queued sender-receiver handling on a single-element interface."
+      direction: "requires"
+      interfaceRef: "If_BrakeTorqueRequest"
+      comSpec:
+        mode: "queued"
+        queueLength: 8
     - name: "Rp_SlipRatio"
       description: "Current slip ratio estimate from the reusable control subcomposition."
       direction: "requires"

@@ -4,6 +4,7 @@
 subcomposition:
   name: "SubComposition_BrakeControl"
   description: "Reusable brake control cluster with delegated raw inputs, internal estimation and plausibility logic, and exported brake outputs."
+  package: "Compositions/BrakeControl"
   ports:
     - name: "Pp_BrakeEnableOut"
       description: "Outer brake-enable output delegated from the controller."

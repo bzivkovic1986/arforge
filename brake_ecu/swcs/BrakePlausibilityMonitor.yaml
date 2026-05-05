@@ -15,7 +15,11 @@ swc:
           dataElement: "WheelSpeed"
       writes:
         - port: "Pp_BrakeStatus"
-          dataElement: "BrakeStatus"
+          dataElement: "BrakeState"
+        - port: "Pp_BrakeStatus"
+          dataElement: "DegradationLevel"
+        - port: "Pp_BrakeStatus"
+          dataElement: "FaultActive"
     - name: "Runnable_OnDegradedMode"
       description: "Allows the monitor to react immediately when the controller enters DEGRADED mode."
       modeSwitchEvents:

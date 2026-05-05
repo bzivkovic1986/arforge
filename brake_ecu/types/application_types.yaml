@@ -22,6 +22,14 @@ applicationDataTypes:
       min: 0
       max: 4
     compuMethodRef: "CM_BrakeStatus"
+  - name: "App_DegradationLevel"
+    description: "Coarse degradation level published alongside the brake state."
+    implementationTypeRef: "UInt8"
+    constraint:
+      min: 0
+      max: 3
+    compuMethodRef: "CM_DegradationLevel"
+    package: "DataTypes/Application/Status"
   - name: "App_BrakeTorqueRequest"
     description: "Requested brake torque in Newton meters."
     implementationTypeRef: "UInt16"
@@ -44,6 +52,13 @@ applicationDataTypes:
       min: 0
       max: 4
     compuMethodRef: "CM_EcuMode"
+  - name: "App_FaultActive"
+    description: "Boolean flag indicating that the brake path currently reports a fault."
+    implementationTypeRef: "Boolean"
+    constraint:
+      min: 0
+      max: 1
+    compuMethodRef: "CM_FaultActive"
   - name: "App_SlipRatio"
     description: "Estimated wheel slip ratio in percent."
     implementationTypeRef: "UInt8"

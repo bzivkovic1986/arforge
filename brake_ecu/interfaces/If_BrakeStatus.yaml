@@ -1,9 +1,16 @@
 # ARForge: Brake state signal shared with diagnostics and logging.
 interface:
   name: "If_BrakeStatus"
-  description: "Sender-receiver interface for the monitored brake status."
+  description: "Sender-receiver interface for the monitored brake state, fault flag, and degradation level."
   type: "senderReceiver"
+  package: "Interfaces/Brake"
   dataElements:
-    - name: "BrakeStatus"
+    - name: "BrakeState"
       description: "Current brake status state machine value."
       typeRef: "App_BrakeStatus"
+    - name: "DegradationLevel"
+      description: "Current degradation level associated with the brake state."
+      typeRef: "App_DegradationLevel"
+    - name: "FaultActive"
+      description: "Boolean indicator that the brake path currently reports a fault."
+      typeRef: "App_FaultActive"

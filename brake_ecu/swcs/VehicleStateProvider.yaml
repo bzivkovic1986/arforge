@@ -1,28 +1,16 @@
 # ARForge: Synthetic vehicle input provider SWC for the showcase project.
 swc:
   name: "VehicleStateProvider"
-  description: "Publishes wheel-speed and brake-pedal inputs that feed the reusable Brake Control subcomposition."
+  description: "Publishes the brake-pedal input that feeds the reusable Brake Control subcomposition."
   runnables:
     - name: "Runnable_PublishBrakeInputs"
-      description: "Publishes a coherent set of wheel-speed and brake-pedal inputs."
+      description: "Publishes the normalized brake-pedal input for the reusable brake-control path."
       timingEventMs: 5
       writes:
         - port: "Pp_BrakePedal"
           dataElement: "BrakePedalPosition"
-        - port: "Pp_WheelSpeedFrontLeft"
-          dataElement: "WheelSpeed"
-        - port: "Pp_WheelSpeedFrontRight"
-          dataElement: "WheelSpeed"
   ports:
     - name: "Pp_BrakePedal"
       description: "Top-level brake pedal source."
       direction: "provides"
       interfaceRef: "If_BrakePedal"
-    - name: "Pp_WheelSpeedFrontLeft"
-      description: "Top-level front-left wheel-speed source."
-      direction: "provides"
-      interfaceRef: "If_WheelSpeed"
-    - name: "Pp_WheelSpeedFrontRight"
-      description: "Top-level front-right wheel-speed source."
-      direction: "provides"
-      interfaceRef: "If_WheelSpeed"
