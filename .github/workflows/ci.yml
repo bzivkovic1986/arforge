@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: pip install -r requirements-dev.txt
+      - name: Ruff (report only)
+        run: ruff check . --exit-zero --statistics
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.14"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -r requirements-dev.txt
+      - run: pytest -q
+
+  # End-to-end smoke test: run the real CLI against examples/minimal so a
+  # regression in validate/export/report/generate fails CI, not just unit tests.
+  # Point these paths at your own autosar.project.yaml to reuse the job.
+  demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: pip install -r requirements.txt
+
+      - name: Validate
+        run: python -m arforge.cli validate examples/minimal/autosar.project.yaml --profile examples/features/validation_profiles/naming.yaml -vv
+
+      - name: Export ARXML (monolithic and split)
+        run: |
+          python -m arforge.cli export examples/minimal/autosar.project.yaml --out build/minimal/minimal.arxml
+          python -m arforge.cli export examples/minimal/autosar.project.yaml --out build/minimal-split --split-by-swc
+
+      - name: Generate derived artifacts
+        run: |
+          python -m arforge.cli report examples/minimal/autosar.project.yaml --out build/minimal-report.md
+          python -m arforge.cli generate diagram examples/minimal/autosar.project.yaml --out build/minimal-diagrams
+          python -m arforge.cli generate code examples/minimal/autosar.project.yaml --lang c --out build/minimal-code
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: minimal-generated-artifacts
+          path: build/

@@ -50,7 +50,9 @@ For new features, the usual implementation order is:
 ## Development Notes
 
 - Python 3.11+
+- `pip install -r requirements-dev.txt`
 - Run tests with `pytest -q`
+- Check lint with `ruff check .`
 - Prefer incremental changes over broad refactors
 - Keep validation rules isolated and readable instead of building monolithic checks
 
